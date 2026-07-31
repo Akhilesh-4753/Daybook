@@ -34,7 +34,11 @@ export const TodayScreen = ({
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Header userName={user?.name || 'Akhilesh'} notificationCount={1} onNotificationPress={onOpenMore} />
+      <Header
+        userName={user?.name || 'Akhilesh'}
+        user={user}
+        onProfilePress={onOpenMore}
+      />
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Progress Card */}

@@ -18,6 +18,7 @@ import { useSecurity } from '../context/SecurityContext';
 import { useTasks } from '../context/TaskContext';
 import { useAuth } from '../context/AuthContext';
 import { Icon } from '../components/Icons';
+import { ImageCropModal } from '../components/ImageCropModal';
 import { BackupService } from '../services/BackupService';
 import { SecurityService } from '../services/SecurityService';
 
@@ -31,6 +32,10 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
   const [isEditProfileVisible, setIsEditProfileVisible] = useState(false);
   const [editName, setEditName] = useState(user?.name || 'Akhilesh');
   const [editPhotoUri, setEditPhotoUri] = useState(user?.photoUri || null);
+
+  // WhatsApp-Style Image Crop Modal State
+  const [tempRawPhotoUri, setTempRawPhotoUri] = useState(null);
+  const [isCropModalVisible, setIsCropModalVisible] = useState(false);
 
   // Image Source Options Modal State
   const [isImageOptionsVisible, setIsImageOptionsVisible] = useState(false);
@@ -106,13 +111,14 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
       const result = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.7,
+        quality: 0.8,
         base64: true,
       });
       if (!result.canceled && result.assets && result.assets[0]) {
         const asset = result.assets[0];
         const formattedUri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
-        setEditPhotoUri(formattedUri);
+        setTempRawPhotoUri(formattedUri);
+        setIsCropModalVisible(true);
       }
     } catch (e) {
       console.warn('Camera error:', e);
@@ -133,17 +139,23 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.7,
+        quality: 0.8,
         base64: true,
       });
       if (!result.canceled && result.assets && result.assets[0]) {
         const asset = result.assets[0];
         const formattedUri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
-        setEditPhotoUri(formattedUri);
+        setTempRawPhotoUri(formattedUri);
+        setIsCropModalVisible(true);
       }
     } catch (e) {
       console.warn('Gallery pick error:', e);
     }
+  };
+
+  const handleCropDone = (finalCroppedUri) => {
+    setEditPhotoUri(finalCroppedUri);
+    setIsCropModalVisible(false);
   };
 
   const handleRemovePhoto = () => {
@@ -293,7 +305,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
         >
           <View style={styles.avatarWrapper}>
             {user?.photoUri ? (
-              <Image source={{ uri: user.photoUri }} style={styles.avatarImg} />
+              <Image source={{ uri: user.photoUri }} style={styles.avatarImg} resizeMode="cover" />
             ) : (
               <View style={[styles.avatarBg, { backgroundColor: theme.colors.primary }]}>
                 <Text style={styles.avatarText}>
@@ -383,6 +395,14 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
         <View style={{ height: 20 }} />
       </ScrollView>
 
+      {/* WhatsApp-Style Interactive Crop Modal */}
+      <ImageCropModal
+        visible={isCropModalVisible}
+        imageUri={tempRawPhotoUri}
+        onClose={() => setIsCropModalVisible(false)}
+        onCropDone={handleCropDone}
+      />
+
       {/* Edit User Profile Modal */}
       <Modal
         visible={isEditProfileVisible}
@@ -414,7 +434,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
                 activeOpacity={0.8}
               >
                 {editPhotoUri ? (
-                  <Image source={{ uri: editPhotoUri }} style={styles.editAvatarImg} />
+                  <Image source={{ uri: editPhotoUri }} style={styles.editAvatarImg} resizeMode="cover" />
                 ) : (
                   <View style={[styles.editAvatarBg, { backgroundColor: theme.colors.primary }]}>
                     <Text style={styles.editAvatarText}>
