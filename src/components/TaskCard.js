@@ -6,6 +6,21 @@ import { Icon } from './Icons';
 export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDeleteTask }) => {
   const { theme } = useTheme();
 
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isOverdue = !task.completed && task.date && task.date < todayStr;
+
+  const getFormattedCreatedDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+      }
+    } catch (e) {}
+    return dateStr;
+  };
+
   const getPriorityBadge = (priority) => {
     switch (priority) {
       case 'High':
@@ -38,11 +53,18 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
       style={[
         styles.card,
         {
-          backgroundColor: theme.colors.card,
-          borderColor: isSelected ? theme.colors.primary : theme.colors.border,
+          backgroundColor: isOverdue
+            ? 'rgba(239, 68, 68, 0.05)'
+            : theme.colors.card,
+          borderColor: isSelected
+            ? theme.colors.primary
+            : isOverdue
+            ? '#EF4444'
+            : theme.colors.border,
         },
         task.completed && styles.completedCard,
         isSelected && { borderWidth: 2, backgroundColor: theme.colors.surfaceVariant },
+        isOverdue && !isSelected && { borderWidth: 1.5 },
       ]}
     >
       {/* Checkbox */}
@@ -54,6 +76,8 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
               ? theme.colors.success
               : isSelected
               ? theme.colors.primary
+              : isOverdue
+              ? '#EF4444'
               : theme.colors.textMuted,
             backgroundColor: task.completed
               ? theme.colors.success
@@ -94,7 +118,7 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
             </Text>
           </View>
 
-          {/* Priority Pill */}
+          {/* Priority Badge */}
           <View style={[styles.priorityBadge, { backgroundColor: badgeStyle.bg }]}>
             <View style={[styles.priorityDot, { backgroundColor: badgeStyle.dotColor }]} />
             <Text style={[styles.priorityText, { color: badgeStyle.text }]}>
@@ -105,6 +129,15 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
 
         {/* Subtitle / Meta row */}
         <View style={styles.metaRow}>
+          {/* Overdue Badge */}
+          {isOverdue && (
+            <View style={styles.overdueBadge}>
+              <Text style={styles.overdueText}>
+                ⚠️ Overdue ({getFormattedCreatedDate(task.date)})
+              </Text>
+            </View>
+          )}
+
           {task.time ? (
             <View style={styles.metaItem}>
               <Icon name="clock" size={12} color={theme.colors.textMuted} />
@@ -222,12 +255,24 @@ const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     marginTop: 6,
+    gap: 8,
+  },
+  overdueBadge: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  overdueText: {
+    color: '#EF4444',
+    fontSize: 11,
+    fontWeight: '700',
   },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
   },
   metaText: {
     fontSize: 12,

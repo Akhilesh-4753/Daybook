@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
           email: firebaseUser.email,
           uid: firebaseUser.uid,
           photoUri: (savedUser && savedUser.photoUri) || firebaseUser.photoURL || null,
+          createdAt: (savedUser && savedUser.createdAt) || '2026-06-01',
           productivityScore: 87,
           streak: 12,
         };
