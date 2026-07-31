@@ -1,5 +1,4 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 export const Icon = ({ name, size = 22, color = '#6366F1' }) => {
   const iconMap = {
@@ -31,6 +30,8 @@ export const Icon = ({ name, size = 22, color = '#6366F1' }) => {
     cloud: '☁️',
     palette: '🎨',
     refresh: '🔄',
+    backspace: '⌫',
+    delete: '⌫',
   };
 
   const symbol = iconMap[name] || '📌';

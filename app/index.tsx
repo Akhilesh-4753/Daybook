@@ -241,6 +241,9 @@ function MainApp() {
             </View>
           </View>
         </Modal>
+
+        {/* Security App Lock Modal Overlay */}
+        <SecurityLockModal />
       </View>
     </SafeAreaView>
   );

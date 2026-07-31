@@ -1,9 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
-import { Icon } from './Icons';
 
-export const Header = ({ userName = 'Akhilesh', notificationCount = 1, onNotificationPress }) => {
+export const Header = ({ userName = 'Akhilesh' }) => {
   const { theme } = useTheme();
 
   const getGreeting = () => {
@@ -34,25 +33,6 @@ export const Header = ({ userName = 'Akhilesh', notificationCount = 1, onNotific
           {getFormattedDate()}
         </Text>
       </View>
-
-      <TouchableOpacity
-        style={[
-          styles.bellButton,
-          {
-            backgroundColor: theme.colors.cardSecondary,
-            borderColor: theme.colors.border,
-          },
-        ]}
-        onPress={onNotificationPress}
-        activeOpacity={0.7}
-      >
-        <Icon name="bell" size={20} color={theme.colors.primary} />
-        {notificationCount > 0 && (
-          <View style={[styles.badge, { backgroundColor: theme.colors.danger }]}>
-            <Text style={styles.badgeText}>{notificationCount}</Text>
-          </View>
-        )}
-      </TouchableOpacity>
     </View>
   );
 };
@@ -87,30 +67,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 2,
     fontWeight: '400',
-  },
-  bellButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    position: 'relative',
-  },
-  badge: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    minWidth: 18,
-    height: 18,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
   },
 });

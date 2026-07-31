@@ -40,18 +40,37 @@ export const SecurityLockModal = () => {
   };
 
   const verify = async (inputPin) => {
-    const success = await unlockWithPin(inputPin);
-    if (!success) {
-      Vibration.vibrate(200);
-      setErrorMsg('Incorrect PIN. Please try again.');
+    try {
+      const success = await unlockWithPin(inputPin);
+      if (!success) {
+        try {
+          if (Vibration && typeof Vibration.vibrate === 'function') {
+            Vibration.vibrate(200);
+          }
+        } catch (e) {}
+        setErrorMsg('Incorrect PIN. Please try again.');
+        setPin('');
+      } else {
+        setPin('');
+        setErrorMsg('');
+      }
+    } catch (e) {
+      setErrorMsg('Verification error. Try again.');
       setPin('');
     }
   };
 
   const handleBioUnlock = async () => {
-    const success = await unlockWithBiometrics();
-    if (!success) {
-      setErrorMsg('Biometric authentication failed.');
+    try {
+      const success = await unlockWithBiometrics();
+      if (!success) {
+        setErrorMsg('Biometric authentication failed or cancelled.');
+      } else {
+        setPin('');
+        setErrorMsg('');
+      }
+    } catch (e) {
+      setErrorMsg('Biometrics unavailable.');
     }
   };
 
