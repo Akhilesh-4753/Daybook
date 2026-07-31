@@ -14,9 +14,9 @@ import { TaskCard } from '../components/TaskCard';
 import { Icon } from '../components/Icons';
 
 export const TodayScreen = ({
-  tasks,
+  tasks = [],
   user,
-  reminders,
+  reminders = [],
   selectedTaskIds = [],
   onToggleSelectTask,
   onMarkSelectedCompleted,
@@ -92,9 +92,11 @@ export const TodayScreen = ({
               { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
             ]}
           >
-            <View style={[styles.illustrationBg, { backgroundColor: theme.colors.surfaceVariant }]}>
-              <Icon name="sparkles" size={48} color={theme.colors.primary} />
-            </View>
+            <Image
+              source={require('../../assets/images/empty_state_illustration.png')}
+              style={styles.emptyStateImage}
+              resizeMode="contain"
+            />
             <Text style={[styles.emptyTitle, { color: theme.colors.textPrimary }]}>
               No tasks for today.
             </Text>
@@ -120,7 +122,6 @@ export const TodayScreen = ({
             />
           ))
         )}
-
 
         {/* Pending tasks highlight badge */}
         {activeTasks.length > 0 && (
@@ -154,7 +155,8 @@ export const TodayScreen = ({
                 <TaskCard
                   key={task.id}
                   task={task}
-                  onToggleCheckbox={onToggleCheckbox}
+                  isSelected={false}
+                  onToggleCheckbox={onToggleSelectTask}
                   onDeleteTask={onDeleteTask}
                 />
               ))}
@@ -243,7 +245,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
@@ -260,12 +261,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: 10,
   },
-  illustrationBg: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+  emptyStateImage: {
+    width: 180,
+    height: 140,
     marginBottom: 16,
   },
   emptyTitle: {

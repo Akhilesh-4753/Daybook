@@ -33,12 +33,12 @@ try {
 }
 
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "daybook-app.firebaseapp.com",
-  projectId: "daybook-app",
-  storageBucket: "daybook-app.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  apiKey: "AIzaSyAEorrO3QzHxEBuYH5K50gkxlP-qijuuO8",
+  authDomain: "daybook-cf7c1.firebaseapp.com",
+  projectId: "daybook-cf7c1",
+  storageBucket: "daybook-cf7c1.firebasestorage.app",
+  messagingSenderId: "466314575330",
+  appId: "1:466314575330:android:0d41f22eb68925ba1ecdbb"
 };
 
 // Auto-detect configuration state

@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { subscribeToAuthChanges, logoutUser, signUpUser, loginUser } from '../services/firebase';
-import { StorageService } from '../services/storage';
+import { PreferencesService } from '../services/PreferencesService';
 
 const AuthContext = createContext();
 
@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadInitialUser();
+    loadInitialSession();
 
     const unsubscribe = subscribeToAuthChanges((firebaseUser) => {
       if (firebaseUser) {
@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
         };
         setUser(userData);
         setIsAuthenticated(true);
+        PreferencesService.saveSession(userData);
       }
       setLoading(false);
     });
@@ -30,43 +31,66 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
-  const loadInitialUser = async () => {
+  const loadInitialSession = async () => {
     try {
-      const savedUser = await StorageService.getUser();
+      const savedUser = await PreferencesService.getSession();
       if (savedUser) {
         setUser(savedUser);
+        setIsAuthenticated(true);
       }
     } catch (e) {
-      console.error(e);
+      console.error('Session restore error:', e);
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     const res = await loginUser(email, password);
-    setUser(res.user);
+    const userData = {
+      name: res.user.displayName || email.split('@')[0],
+      email: res.user.email || email,
+      uid: res.user.uid,
+      productivityScore: 87,
+      streak: 12,
+    };
+    setUser(userData);
     setIsAuthenticated(true);
+    await PreferencesService.saveSession(userData);
     return res;
-  };
+  }, []);
 
-  const signup = async (name, email, password) => {
+  const signup = useCallback(async (name, email, password) => {
     const res = await signUpUser(name, email, password);
-    setUser(res.user);
+    const userData = {
+      name: res.user.displayName || name,
+      email: res.user.email || email,
+      uid: res.user.uid,
+      productivityScore: 100,
+      streak: 1,
+    };
+    setUser(userData);
     setIsAuthenticated(true);
+    await PreferencesService.saveSession(userData);
     return res;
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await logoutUser();
+    await PreferencesService.clearSession();
     setIsAuthenticated(false);
     setUser(null);
-  };
+  }, []);
 
-  const handleSetUser = (userData) => {
+  const handleSetUser = useCallback((userData) => {
     setUser(userData);
     setIsAuthenticated(!!userData);
-  };
+    if (userData) {
+      PreferencesService.saveSession(userData);
+    } else {
+      PreferencesService.clearSession();
+    }
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -83,7 +107,6 @@ export const AuthProvider = ({ children }) => {
       {children}
     </AuthContext.Provider>
   );
-
 };
 
 export const useAuth = () => useContext(AuthContext);

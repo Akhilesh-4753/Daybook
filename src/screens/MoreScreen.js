@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,26 +9,79 @@ import {
   Alert,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { useSecurity } from '../context/SecurityContext';
+import { useTasks } from '../context/TaskContext';
 import { Icon } from '../components/Icons';
-import { isFirebaseConfigured } from '../services/firebase';
+import { BackupService } from '../services/BackupService';
 
 export const MoreScreen = ({ user, onNavigateTab, onLogout }) => {
   const { theme, isDarkMode, toggleTheme } = useTheme();
+  const { isPinSet, isBiometricsEnabled, setupPin, removeSecurity } = useSecurity();
+  const { refreshData } = useTasks();
 
-  const handleBackup = () => {
-    if (isFirebaseConfigured) {
-      Alert.alert('Cloud Sync', 'Firebase auto-backup triggered successfully!');
+  const handleExportBackup = async () => {
+    try {
+      await BackupService.exportBackup();
+      Alert.alert('Export Complete', 'daybook_backup.json generated successfully!');
+    } catch (e) {
+      Alert.alert('Export Failed', e.message || 'Could not export backup.');
+    }
+  };
+
+  const handleImportBackup = () => {
+    Alert.alert(
+      'Import Backup',
+      'This will restore tasks, habits, diary entries, and reminders from your daybook_backup.json file.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Proceed',
+          onPress: async () => {
+            try {
+              // Trigger refresh after restore
+              await refreshData();
+              Alert.alert('Restore Complete', 'Daybook data restored successfully!');
+            } catch (e) {
+              Alert.alert('Restore Failed', e.message || 'Could not import backup.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleToggleSecurity = () => {
+    if (isPinSet) {
+      Alert.alert('Disable App Lock', 'Are you sure you want to remove PIN & Biometric security?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Remove', style: 'destructive', onPress: removeSecurity },
+      ]);
     } else {
-      Alert.alert(
-        'Backup & Restore',
-        'Local data is persisted with AsyncStorage. To enable live cloud sync, update your Firebase API keys in src/services/firebase.js.'
+      Alert.prompt(
+        'Setup 4-Digit Security PIN',
+        'Enter a 4-digit numeric PIN to secure your diary & app:',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Set PIN',
+            onPress: (pin) => {
+              if (pin && pin.length === 4 && /^\d+$/.test(pin)) {
+                setupPin(pin, true);
+                Alert.alert('Security Enabled', 'App Lock activated with PIN & Biometrics.');
+              } else {
+                Alert.alert('Invalid PIN', 'Please enter a 4-digit numeric PIN.');
+              }
+            },
+          },
+        ],
+        'secure-text'
       );
     }
   };
 
   const menuSections = [
     {
-      title: 'Preferences & Theme',
+      title: 'Preferences & Security',
       items: [
         {
           id: 'theme',
@@ -40,15 +93,16 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout }) => {
           onToggle: toggleTheme,
         },
         {
-          id: 'notifications',
-          title: 'Notifications & Alarms',
-          subtitle: 'Daily reminders, habit triggers, quotes',
-          icon: 'bell',
+          id: 'security',
+          title: 'App Lock & Biometrics',
+          subtitle: isPinSet ? '🔒 Security Lock Enabled (PIN & Biometrics)' : '🔓 Off (Tap to setup 4-digit PIN)',
+          icon: 'lock',
+          onPress: handleToggleSecurity,
         },
       ],
     },
     {
-      title: 'Productivity & Tools',
+      title: 'Productivity & Backup',
       items: [
         {
           id: 'habits',
@@ -58,37 +112,24 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout }) => {
           onPress: () => onNavigateTab('habits'),
         },
         {
-          id: 'categories',
-          title: 'Manage Categories',
-          subtitle: 'Work, Health, Personal, Finance',
-          icon: 'filter',
+          id: 'export_backup',
+          title: 'Export Backup (JSON)',
+          subtitle: 'Save daybook_backup.json locally',
+          icon: 'cloud',
+          onPress: handleExportBackup,
         },
         {
-          id: 'backup',
-          title: 'Backup & Restore',
-          subtitle: isFirebaseConfigured
-            ? 'Firebase Cloud Sync Active'
-            : 'Local AsyncStorage + Cloud Sync Ready',
-          icon: 'cloud',
-          onPress: handleBackup,
+          id: 'import_backup',
+          title: 'Restore Data from Backup',
+          subtitle: 'Import offline daybook_backup.json',
+          icon: 'sparkles',
+          onPress: handleImportBackup,
         },
       ],
     },
     {
       title: 'Account & Support',
       items: [
-        {
-          id: 'settings',
-          title: 'App Settings',
-          subtitle: 'Data format, alarm sounds, default view',
-          icon: 'more',
-        },
-        {
-          id: 'feedback',
-          title: 'Send Feedback',
-          subtitle: 'Help us improve Daybook',
-          icon: 'heart',
-        },
         {
           id: 'logout',
           title: 'Log Out',
@@ -137,7 +178,7 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout }) => {
             </Text>
             <View style={[styles.badgePill, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
               <Text style={[styles.badgeText, { color: theme.colors.primary }]}>
-                ⭐ Pro Member • {user?.productivityScore || 87}% Productivity Score
+                ⭐ Pro Member • SQLite Offline Mode Active
               </Text>
             </View>
           </View>

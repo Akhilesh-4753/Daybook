@@ -17,6 +17,9 @@ import { CompletionModal } from '../src/components/CompletionModal';
 import { DeleteConfirmModal } from '../src/components/DeleteConfirmModal';
 import { Icon } from '../src/components/Icons';
 
+import { SecurityProvider } from '../src/context/SecurityContext';
+import { SecurityLockModal } from '../src/components/SecurityLockModal';
+
 function MainApp() {
   const { user, isAuthenticated, logout, setUser } = useAuth();
   const { theme, isDarkMode } = useTheme();
@@ -174,6 +177,9 @@ function MainApp() {
           onFabPress={() => setIsTaskModalVisible(true)}
         />
 
+        {/* Security App Lock Modal */}
+        <SecurityLockModal />
+
         {/* Modals */}
         <AddTaskModal
           visible={isTaskModalVisible}
@@ -241,13 +247,15 @@ function MainApp() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <TaskProvider>
-        <ThemeProvider>
-          <MainApp />
-        </ThemeProvider>
-      </TaskProvider>
-    </AuthProvider>
+    <SecurityProvider>
+      <AuthProvider>
+        <TaskProvider>
+          <ThemeProvider>
+            <MainApp />
+          </ThemeProvider>
+        </TaskProvider>
+      </AuthProvider>
+    </SecurityProvider>
   );
 }
 

@@ -3,133 +3,32 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from '../components/Icons';
-import {
-  signUpUser,
-  loginUser,
-  resetUserPassword,
-  isFirebaseConfigured,
-} from '../services/firebase';
+import { isFirebaseConfigured } from '../services/firebase';
+import { LoginScreen } from './LoginScreen';
+import { SignupScreen } from './SignupScreen';
 
-export const AuthScreen = ({ onAuthSuccess }) => {
+export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
   const { theme } = useTheme();
-
   const [isLoginMode, setIsLoginMode] = useState(true);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = async () => {
-    setErrorMessage('');
-    const cleanEmail = email.trim();
-    const cleanPassword = password.trim();
-
-    if (!cleanEmail || !cleanPassword) {
-      setErrorMessage('Please fill in both email and password.');
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanEmail)) {
-      setErrorMessage('Please enter a valid email address (e.g. user@example.com).');
-      return;
-    }
-
-    if (cleanPassword.length < 6) {
-      setErrorMessage('Password must be at least 6 characters long.');
-      return;
-    }
-
-    if (!isLoginMode) {
-      if (!name.trim()) {
-        setErrorMessage('Please enter your full name.');
-        return;
-      }
-      if (cleanPassword !== confirmPassword.trim()) {
-        setErrorMessage('Passwords do not match.');
-        return;
-      }
-    }
-
-    setLoading(true);
-    try {
-      if (isLoginMode) {
-        const res = await loginUser(cleanEmail, cleanPassword);
-        const userData = {
-          name: res.user.displayName || cleanEmail.split('@')[0],
-          email: res.user.email || cleanEmail,
-          uid: res.user.uid,
-          productivityScore: 87,
-          streak: 12,
-        };
-        onAuthSuccess && onAuthSuccess(userData);
-      } else {
-        const res = await signUpUser(name.trim(), cleanEmail, cleanPassword);
-        const userData = {
-          name: res.user.displayName || name.trim(),
-          email: res.user.email || cleanEmail,
-          uid: res.user.uid,
-          productivityScore: 100,
-          streak: 1,
-        };
-        onAuthSuccess && onAuthSuccess(userData);
-      }
-    } catch (error) {
-      console.log('Auth error:', error);
-      let msg = error.message || 'An error occurred during authentication.';
-      if (
-        error.code === 'auth/user-not-found' ||
-        error.code === 'auth/wrong-password' ||
-        error.code === 'auth/invalid-credential'
-      ) {
-        msg = 'Invalid email or password. Please try again.';
-      } else if (error.code === 'auth/email-already-in-use') {
-        msg = 'An account with this email address already exists.';
-      } else if (error.code === 'auth/invalid-email') {
-        msg = 'Please enter a valid email address.';
-      } else if (error.code === 'auth/weak-password') {
-        msg = 'Password is too weak. Please use at least 6 characters.';
-      } else if (error.code === 'auth/too-many-requests') {
-        msg = 'Too many failed login attempts. Please wait a few minutes before trying again.';
-      }
-      setErrorMessage(msg);
-    } finally {
-      setLoading(false);
-    }
+  const handleSuccess = (userData) => {
+    if (onAuthSuccess) onAuthSuccess(userData);
+    if (onLoginSuccess) onLoginSuccess(userData);
   };
 
-
-  const handleDemoMode = () => {
-    onAuthSuccess({
+  const handleDemoAccess = () => {
+    handleSuccess({
       name: 'Akhilesh',
       email: 'akhilesh@daybook.app',
       uid: 'demo_user',
       productivityScore: 87,
       streak: 12,
     });
-  };
-
-  const handleForgotPassword = async () => {
-    if (!email.trim()) {
-      Alert.alert('Reset Password', 'Please enter your email address in the field above.');
-      return;
-    }
-    try {
-      await resetUserPassword(email);
-      Alert.alert('Password Reset', `Password reset instructions sent to ${email}`);
-    } catch (e) {
-      Alert.alert('Error', e.message);
-    }
   };
 
   return (
@@ -169,7 +68,7 @@ export const AuthScreen = ({ onAuthSuccess }) => {
             ]}
           >
             {isFirebaseConfigured
-              ? '🔥 Connected to Firebase Auth & Database'
+              ? '🔥 Connected to Firebase (daybook-cf7c1)'
               : '⚡ Firebase Sync Ready (Demo & Offline Mode)'}
           </Text>
         </View>
@@ -197,10 +96,7 @@ export const AuthScreen = ({ onAuthSuccess }) => {
               styles.toggleTab,
               isLoginMode && [styles.activeToggleTab, { backgroundColor: theme.colors.primary }],
             ]}
-            onPress={() => {
-              setIsLoginMode(true);
-              setErrorMessage('');
-            }}
+            onPress={() => setIsLoginMode(true)}
           >
             <Text
               style={[
@@ -217,10 +113,7 @@ export const AuthScreen = ({ onAuthSuccess }) => {
               styles.toggleTab,
               !isLoginMode && [styles.activeToggleTab, { backgroundColor: theme.colors.primary }],
             ]}
-            onPress={() => {
-              setIsLoginMode(false);
-              setErrorMessage('');
-            }}
+            onPress={() => setIsLoginMode(false)}
           >
             <Text
               style={[
@@ -233,138 +126,20 @@ export const AuthScreen = ({ onAuthSuccess }) => {
           </TouchableOpacity>
         </View>
 
-        {/* Error Banner */}
-        {errorMessage ? (
-          <View style={styles.errorBox}>
-            <Text style={styles.errorText}>{errorMessage}</Text>
-          </View>
-        ) : null}
-
-        {/* Form Inputs */}
-        {!isLoginMode && (
-          <View style={styles.fieldGroup}>
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Full Name</Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.colors.surfaceVariant,
-                  color: theme.colors.textPrimary,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-              placeholder="e.g. Akhilesh"
-              placeholderTextColor={theme.colors.textMuted}
-              value={name}
-              onChangeText={setName}
-            />
-          </View>
-        )}
-
-        <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Email Address</Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.colors.surfaceVariant,
-                color: theme.colors.textPrimary,
-                borderColor: theme.colors.border,
-              },
-            ]}
-            placeholder="you@example.com"
-            placeholderTextColor={theme.colors.textMuted}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
+        {/* Active Screen Component */}
+        {isLoginMode ? (
+          <LoginScreen
+            onLoginSuccess={handleSuccess}
+            onSwitchToSignup={() => setIsLoginMode(false)}
+            onDemoAccess={handleDemoAccess}
           />
-        </View>
-
-        <View style={styles.fieldGroup}>
-          <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Password</Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.colors.surfaceVariant,
-                color: theme.colors.textPrimary,
-                borderColor: theme.colors.border,
-              },
-            ]}
-            placeholder="••••••••"
-            placeholderTextColor={theme.colors.textMuted}
-            secureTextEntry={true}
-            value={password}
-            onChangeText={setPassword}
+        ) : (
+          <SignupScreen
+            onSignupSuccess={handleSuccess}
+            onSwitchToLogin={() => setIsLoginMode(true)}
+            onDemoAccess={handleDemoAccess}
           />
-        </View>
-
-        {!isLoginMode && (
-          <View style={styles.fieldGroup}>
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-              Confirm Password
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.colors.surfaceVariant,
-                  color: theme.colors.textPrimary,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-              placeholder="••••••••"
-              placeholderTextColor={theme.colors.textMuted}
-              secureTextEntry={true}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-            />
-          </View>
         )}
-
-        {isLoginMode && (
-          <TouchableOpacity style={styles.forgotBtn} onPress={handleForgotPassword}>
-            <Text style={[styles.forgotText, { color: theme.colors.primary }]}>
-              Forgot Password?
-            </Text>
-          </TouchableOpacity>
-        )}
-
-        {/* Submit Action Button */}
-        <TouchableOpacity
-          style={[styles.submitBtn, { backgroundColor: theme.colors.primary }]}
-          onPress={handleSubmit}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.submitBtnText}>
-              {isLoginMode ? 'Log In to Daybook' : 'Create Account'}
-            </Text>
-          )}
-        </TouchableOpacity>
-
-        {/* Demo Fast Access Button */}
-        <View style={styles.dividerRow}>
-          <View style={[styles.line, { backgroundColor: theme.colors.border }]} />
-          <Text style={[styles.dividerText, { color: theme.colors.textMuted }]}>OR</Text>
-          <View style={[styles.line, { backgroundColor: theme.colors.border }]} />
-        </View>
-
-        <TouchableOpacity
-          style={[
-            styles.demoBtn,
-            { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border },
-          ]}
-          onPress={handleDemoMode}
-        >
-          <Text style={[styles.demoBtnText, { color: theme.colors.textPrimary }]}>
-            🚀 Continue as Demo User (Akhilesh)
-          </Text>
-        </TouchableOpacity>
       </View>
 
       <Text style={[styles.footerText, { color: theme.colors.textMuted }]}>
@@ -455,78 +230,6 @@ const styles = StyleSheet.create({
   toggleText: {
     fontSize: 14,
     fontWeight: '700',
-  },
-  errorBox: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 14,
-  },
-  errorText: {
-    color: '#EF4444',
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  fieldGroup: {
-    marginBottom: 14,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  input: {
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
-    borderWidth: 1,
-  },
-  forgotBtn: {
-    alignSelf: 'flex-end',
-    marginBottom: 16,
-  },
-  forgotText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  submitBtn: {
-    height: 50,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 6,
-  },
-  submitBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  line: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    fontSize: 11,
-    fontWeight: '700',
-    marginHorizontal: 10,
-  },
-  demoBtn: {
-    height: 46,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  demoBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
   footerText: {
     fontSize: 11,
