@@ -10,6 +10,13 @@ try {
   };
 }
 
+const getTodayStr = () => new Date().toISOString().split('T')[0];
+const getTodayFormatted = () => new Date().toLocaleDateString('en-US', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
 
 const TASKS_KEY = '@daybook_tasks';
 const REMINDERS_KEY = '@daybook_reminders';
@@ -26,7 +33,7 @@ export const initialTasks = [
     time: '10:00 AM',
     notes: 'Finish high-fidelity dark & light mode screens for Daybook app.',
     completed: false,
-    date: '2026-07-29',
+    date: getTodayStr(),
   },
   {
     id: 't2',
@@ -36,7 +43,7 @@ export const initialTasks = [
     time: '11:00 AM',
     notes: 'Discuss project milestones and deliverables.',
     completed: false,
-    date: '2026-07-29',
+    date: getTodayStr(),
   },
   {
     id: 't3',
@@ -46,7 +53,7 @@ export const initialTasks = [
     time: '02:00 PM',
     notes: 'Verify invoices before submission.',
     completed: false,
-    date: '2026-07-29',
+    date: getTodayStr(),
   },
   {
     id: 't4',
@@ -56,7 +63,7 @@ export const initialTasks = [
     time: '05:00 PM',
     notes: 'Due date is today.',
     completed: false,
-    date: '2026-07-29',
+    date: getTodayStr(),
   },
   {
     id: 't5',
@@ -66,7 +73,7 @@ export const initialTasks = [
     time: '07:00 AM',
     notes: 'Daily habit goal: 3 liters',
     completed: true,
-    date: '2026-07-29',
+    date: getTodayStr(),
   },
   {
     id: 't6',
@@ -76,7 +83,7 @@ export const initialTasks = [
     time: '06:00 PM',
     notes: 'Leg day routine & 20 min cardio',
     completed: true,
-    date: '2026-07-29',
+    date: getTodayStr(),
   },
   {
     id: 't7',
@@ -86,7 +93,7 @@ export const initialTasks = [
     time: '08:00 PM',
     notes: 'Atomic Habits - Chapter 4',
     completed: true,
-    date: '2026-07-29',
+    date: getTodayStr(),
   },
 ];
 
@@ -96,7 +103,7 @@ export const initialReminders = [
     title: 'Doctor Appointment',
     importance: 'Regular health checkup and routine blood work.',
     notes: "Don't forget to bring previous medical reports.",
-    date: '2026-07-30',
+    date: getTodayStr(),
     time: '10:00 AM',
     alarmTone: 'Default',
     repeat: 'Does not repeat',
@@ -109,7 +116,7 @@ export const initialReminders = [
     title: 'Finish Project Report',
     importance: 'End of month client presentation.',
     notes: 'Include Q3 productivity metrics and budget forecasting.',
-    date: '2026-07-30',
+    date: getTodayStr(),
     time: '04:00 PM',
     alarmTone: 'Chime',
     repeat: 'Weekly',
@@ -122,7 +129,7 @@ export const initialReminders = [
     title: 'Birthday - Rahul',
     importance: " Rahul's 25th Birthday Celebration!",
     notes: 'Buy gift card and call at 12 AM.',
-    date: '2026-07-31',
+    date: getTodayStr(),
     time: '12:00 AM',
     alarmTone: 'Gentle',
     repeat: 'Yearly',
@@ -188,8 +195,8 @@ export const initialHabits = [
 export const initialDiaryEntries = [
   {
     id: 'd1',
-    date: '2026-07-29',
-    formattedDate: 'Wednesday, 29 July 2026',
+    date: getTodayStr(),
+    formattedDate: getTodayFormatted(),
     title: 'Productive Day & Milestone Reached',
     mood: 'happy',
     content:
@@ -197,8 +204,8 @@ export const initialDiaryEntries = [
   },
   {
     id: 'd2',
-    date: '2026-07-28',
-    formattedDate: 'Tuesday, 28 July 2026',
+    date: getTodayStr(),
+    formattedDate: getTodayFormatted(),
     title: 'Planning and System Architecture',
     mood: 'calm',
     content:

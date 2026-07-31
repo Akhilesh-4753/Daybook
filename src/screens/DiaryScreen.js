@@ -13,17 +13,14 @@ import { Icon } from '../components/Icons';
 export const DiaryScreen = ({ diaryEntries = [], onSaveEntry }) => {
   const { theme } = useTheme();
 
-  const todayDateObj = new Date();
-  const defaultDateStr = todayDateObj.toISOString().split('T')[0];
-  const defaultFormattedDate = todayDateObj.toLocaleDateString('en-US', {
+  const now = new Date();
+  const date = now.toISOString().split('T')[0];
+  const formattedDate = now.toLocaleDateString('en-US', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
-
-  const [date] = useState(defaultDateStr);
-  const [formattedDate] = useState(defaultFormattedDate);
   const [title, setTitle] = useState('');
   const [mood, setMood] = useState('happy');
   const [content, setContent] = useState('');

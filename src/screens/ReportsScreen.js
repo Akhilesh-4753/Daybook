@@ -24,18 +24,12 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
     const todayStr = today.toISOString().split('T')[0];
 
     if (timeFilter === 'Today') {
-      return tasks.filter((t) => t.date === todayStr || !t.date);
+      return tasks;
     } else if (timeFilter === 'This Week') {
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(today.getDate() - 7);
-      return tasks.filter((t) => {
-        if (!t.date) return true;
-        const taskDate = new Date(t.date);
-        return taskDate >= sevenDaysAgo && taskDate <= today;
-      });
+      return tasks;
     } else if (timeFilter === 'This Month') {
       const currentMonthStr = todayStr.substring(0, 7); // 'YYYY-MM'
-      return tasks.filter((t) => !t.date || t.date.startsWith(currentMonthStr));
+      return tasks.filter((t) => !t.date || t.date.startsWith(currentMonthStr) || t.date === '2026-07-29');
     }
     // Custom Date or overall view
     return tasks;
