@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,57 +9,85 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from '../components/Icons';
 
-export const CalendarScreen = ({ reminders, onAddReminder }) => {
+export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
   const { theme } = useTheme();
 
-  const [selectedDate, setSelectedDate] = useState('2026-07-29');
-  const [currentMonth, setCurrentMonth] = useState('July 2026');
+  const getTodayStr = () => new Date().toISOString().split('T')[0];
+  const todayStr = getTodayStr();
+
+  const [selectedDate, setSelectedDate] = useState(todayStr);
+
+  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+  const [currentMonthIdx, setCurrentMonthIdx] = useState(new Date().getMonth()); // 0-indexed
+
+  const monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
 
   const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 
-  // Days matrix for July 2026 (Starts on Wednesday July 1)
-  // July has 31 days
-  const calendarDays = [
-    { day: 28, isCurrentMonth: false, dateStr: '2026-06-28' },
-    { day: 29, isCurrentMonth: false, dateStr: '2026-06-29' },
-    { day: 30, isCurrentMonth: false, dateStr: '2026-06-30' },
-    { day: 1, isCurrentMonth: true, dateStr: '2026-07-01' },
-    { day: 2, isCurrentMonth: true, dateStr: '2026-07-02' },
-    { day: 3, isCurrentMonth: true, dateStr: '2026-07-03' },
-    { day: 4, isCurrentMonth: true, dateStr: '2026-07-04' },
-    { day: 5, isCurrentMonth: true, dateStr: '2026-07-05' },
-    { day: 6, isCurrentMonth: true, dateStr: '2026-07-06' },
-    { day: 7, isCurrentMonth: true, dateStr: '2026-07-07' },
-    { day: 8, isCurrentMonth: true, dateStr: '2026-07-08' },
-    { day: 9, isCurrentMonth: true, dateStr: '2026-07-09' },
-    { day: 10, isCurrentMonth: true, dateStr: '2026-07-10' },
-    { day: 11, isCurrentMonth: true, dateStr: '2026-07-11' },
-    { day: 12, isCurrentMonth: true, dateStr: '2026-07-12' },
-    { day: 13, isCurrentMonth: true, dateStr: '2026-07-13' },
-    { day: 14, isCurrentMonth: true, dateStr: '2026-07-14' },
-    { day: 15, isCurrentMonth: true, dateStr: '2026-07-15' },
-    { day: 16, isCurrentMonth: true, dateStr: '2026-07-16' },
-    { day: 17, isCurrentMonth: true, dateStr: '2026-07-17' },
-    { day: 18, isCurrentMonth: true, dateStr: '2026-07-18' },
-    { day: 19, isCurrentMonth: true, dateStr: '2026-07-19' },
-    { day: 20, isCurrentMonth: true, dateStr: '2026-07-20' },
-    { day: 21, isCurrentMonth: true, dateStr: '2026-07-21' },
-    { day: 22, isCurrentMonth: true, dateStr: '2026-07-22' },
-    { day: 23, isCurrentMonth: true, dateStr: '2026-07-23' },
-    { day: 24, isCurrentMonth: true, dateStr: '2026-07-24' },
-    { day: 25, isCurrentMonth: true, dateStr: '2026-07-25' },
-    { day: 26, isCurrentMonth: true, dateStr: '2026-07-26' },
-    { day: 27, isCurrentMonth: true, dateStr: '2026-07-27' },
-    { day: 28, isCurrentMonth: true, dateStr: '2026-07-28' },
-    { day: 29, isCurrentMonth: true, dateStr: '2026-07-29', hasReminder: true },
-    { day: 30, isCurrentMonth: true, dateStr: '2026-07-30', hasReminder: true },
-    { day: 31, isCurrentMonth: true, dateStr: '2026-07-31', hasReminder: true },
-    { day: 1, isCurrentMonth: false, dateStr: '2026-08-01' },
-  ];
+  const handlePrevMonth = () => {
+    if (currentMonthIdx === 0) {
+      setCurrentMonthIdx(11);
+      setCurrentYear((y) => y - 1);
+    } else {
+      setCurrentMonthIdx((m) => m - 1);
+    }
+  };
 
-  const selectedReminders = reminders.filter(
-    (r) => r.date === selectedDate || r.date === '2026-07-30'
-  );
+  const handleNextMonth = () => {
+    if (currentMonthIdx === 11) {
+      setCurrentMonthIdx(0);
+      setCurrentYear((y) => y + 1);
+    } else {
+      setCurrentMonthIdx((m) => m + 1);
+    }
+  };
+
+  // Generate dynamic grid for current month/year
+  const calendarDays = useMemo(() => {
+    const days = [];
+    const firstDayOfMonth = new Date(currentYear, currentMonthIdx, 1);
+    const lastDayOfMonth = new Date(currentYear, currentMonthIdx + 1, 0);
+
+    const startingDayOfWeek = firstDayOfMonth.getDay(); // 0-6
+    const totalDaysInMonth = lastDayOfMonth.getDate();
+
+    // Previous month padding days
+    const prevMonthLastDay = new Date(currentYear, currentMonthIdx, 0).getDate();
+    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
+      const prevDay = prevMonthLastDay - i;
+      const prevMonth = currentMonthIdx === 0 ? 11 : currentMonthIdx - 1;
+      const prevYear = currentMonthIdx === 0 ? currentYear - 1 : currentYear;
+      const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(prevDay).padStart(2, '0')}`;
+      days.push({ day: prevDay, isCurrentMonth: false, dateStr });
+    }
+
+    // Current month days
+    for (let d = 1; d <= totalDaysInMonth; d++) {
+      const dateStr = `${currentYear}-${String(currentMonthIdx + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const hasRem = reminders.some((r) => r.date === dateStr);
+      days.push({ day: d, isCurrentMonth: true, dateStr, hasReminder: hasRem });
+    }
+
+    // Next month padding days
+    const remainingCells = 42 - days.length;
+    for (let d = 1; d <= remainingCells; d++) {
+      const nextMonth = currentMonthIdx === 11 ? 0 : currentMonthIdx + 1;
+      const nextYear = currentMonthIdx === 11 ? currentYear + 1 : currentYear;
+      const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      days.push({ day: d, isCurrentMonth: false, dateStr });
+    }
+
+    return days;
+  }, [currentYear, currentMonthIdx, reminders]);
+
+  const selectedReminders = useMemo(() => {
+    return reminders.filter((r) => r.date === selectedDate);
+  }, [reminders, selectedDate]);
+
+  const isPastDate = selectedDate < todayStr;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -70,7 +98,12 @@ export const CalendarScreen = ({ reminders, onAddReminder }) => {
         </Text>
         <TouchableOpacity
           style={[styles.todayBtn, { backgroundColor: theme.colors.primary }]}
-          onPress={() => setSelectedDate('2026-07-29')}
+          onPress={() => {
+            const today = getTodayStr();
+            setSelectedDate(today);
+            setCurrentYear(new Date().getFullYear());
+            setCurrentMonthIdx(new Date().getMonth());
+          }}
         >
           <Text style={styles.todayBtnText}>Today</Text>
         </TouchableOpacity>
@@ -80,13 +113,13 @@ export const CalendarScreen = ({ reminders, onAddReminder }) => {
         {/* Month Selector Bar */}
         <View style={styles.monthHeader}>
           <Text style={[styles.monthText, { color: theme.colors.textPrimary }]}>
-            {currentMonth}
+            {monthNames[currentMonthIdx]} {currentYear}
           </Text>
           <View style={styles.arrowsRow}>
-            <TouchableOpacity style={styles.arrowBtn}>
+            <TouchableOpacity style={styles.arrowBtn} onPress={handlePrevMonth}>
               <Text style={[styles.arrowText, { color: theme.colors.textSecondary }]}>‹</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.arrowBtn}>
+            <TouchableOpacity style={styles.arrowBtn} onPress={handleNextMonth}>
               <Text style={[styles.arrowText, { color: theme.colors.textSecondary }]}>›</Text>
             </TouchableOpacity>
           </View>
@@ -108,7 +141,7 @@ export const CalendarScreen = ({ reminders, onAddReminder }) => {
         <View style={styles.grid}>
           {calendarDays.map((item, index) => {
             const isSelected = item.dateStr === selectedDate;
-            const hasDots = item.hasReminder || item.dateStr === '2026-07-29';
+            const isTodayCell = item.dateStr === todayStr;
 
             return (
               <TouchableOpacity
@@ -119,6 +152,7 @@ export const CalendarScreen = ({ reminders, onAddReminder }) => {
                     styles.selectedDayCell,
                     { backgroundColor: theme.colors.primary },
                   ],
+                  isTodayCell && !isSelected && { borderWidth: 1, borderColor: theme.colors.primary },
                 ]}
                 onPress={() => setSelectedDate(item.dateStr)}
               >
@@ -138,7 +172,7 @@ export const CalendarScreen = ({ reminders, onAddReminder }) => {
                   {item.day}
                 </Text>
 
-                {hasDots && (
+                {item.hasReminder && (
                   <View style={styles.dotsRow}>
                     <View
                       style={[
@@ -147,16 +181,6 @@ export const CalendarScreen = ({ reminders, onAddReminder }) => {
                           backgroundColor: isSelected
                             ? '#FFFFFF'
                             : theme.colors.secondary,
-                        },
-                      ]}
-                    />
-                    <View
-                      style={[
-                        styles.dot,
-                        {
-                          backgroundColor: isSelected
-                            ? '#FFFFFF'
-                            : theme.colors.success,
                         },
                       ]}
                     />
@@ -169,22 +193,36 @@ export const CalendarScreen = ({ reminders, onAddReminder }) => {
 
         {/* Selected Date Agenda Header */}
         <View style={styles.agendaHeader}>
-          <Text style={[styles.agendaDateTitle, { color: theme.colors.textPrimary }]}>
-            Reminders for {selectedDate}
-          </Text>
-          <TouchableOpacity
-            style={[styles.addReminderBtn, { backgroundColor: theme.colors.primary }]}
-            onPress={() => onAddReminder(selectedDate)}
-          >
-            <Text style={styles.addReminderBtnText}>+ Add Reminder</Text>
-          </TouchableOpacity>
+          <View style={styles.agendaTitleBox}>
+            <Text style={[styles.agendaDateTitle, { color: theme.colors.textPrimary }]}>
+              Reminders for {selectedDate}
+            </Text>
+            {isPastDate && (
+              <Text style={[styles.pastLabel, { color: theme.colors.textMuted }]}>
+                (Past Date - Cannot Add Reminders)
+              </Text>
+            )}
+          </View>
+
+          {/* Hide Add Reminder Button for Past Dates */}
+          {!isPastDate && (
+            <TouchableOpacity
+              style={[styles.addReminderBtn, { backgroundColor: theme.colors.primary }]}
+              onPress={() => onAddReminder && onAddReminder(selectedDate)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.addReminderBtnText}>+ Add Reminder</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Reminders List for Selected Date */}
         {selectedReminders.length === 0 ? (
           <View style={styles.noRemindersBox}>
             <Text style={[styles.noRemindersText, { color: theme.colors.textMuted }]}>
-              No reminders scheduled for this date.
+              {isPastDate
+                ? 'No past reminders found for this date.'
+                : 'No reminders scheduled for this date.'}
             </Text>
           </View>
         ) : (
@@ -218,7 +256,7 @@ export const CalendarScreen = ({ reminders, onAddReminder }) => {
               {rem.importance ? (
                 <View style={[styles.noteBox, { backgroundColor: theme.colors.surfaceVariant }]}>
                   <Text style={[styles.noteImportanceTitle, { color: theme.colors.textSecondary }]}>
-                    💡 Why this date is important:
+                    💡 Importance & Details:
                   </Text>
                   <Text style={[styles.noteImportanceText, { color: theme.colors.textPrimary }]}>
                     {rem.importance}
@@ -286,10 +324,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   arrowBtn: {
-    padding: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   arrowText: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '700',
   },
   daysOfWeekRow: {
@@ -333,9 +372,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   dot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
   },
   agendaHeader: {
     flexDirection: 'row',
@@ -345,9 +384,18 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 14,
   },
+  agendaTitleBox: {
+    flex: 1,
+    marginRight: 10,
+  },
   agendaDateTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
+  },
+  pastLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
   },
   addReminderBtn: {
     paddingHorizontal: 14,

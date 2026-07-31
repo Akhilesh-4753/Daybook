@@ -36,7 +36,7 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate }) => 
       title,
       importance,
       notes,
-      date: selectedDate || new Date().toISOString().split('T')[0],
+      date: selectedDate && selectedDate >= new Date().toISOString().split('T')[0] ? selectedDate : new Date().toISOString().split('T')[0],
       time,
       alarmTone,
       repeat,
