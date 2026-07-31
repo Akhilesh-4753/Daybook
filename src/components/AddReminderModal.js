@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Icon } from './Icons';
 import { TimePickerInput } from './TimePickerInput';
 
-export const AddReminderModal = ({ visible, onClose, onSave, selectedDate }) => {
+export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editingReminder }) => {
   const { theme } = useTheme();
 
   const [title, setTitle] = useState('');
@@ -30,22 +30,43 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate }) => 
   const priorityOptions = ['Normal', 'High', 'Critical'];
   const categoryOptions = ['Work', 'Health', 'Personal', 'Finance'];
 
+  useEffect(() => {
+    if (editingReminder) {
+      setTitle(editingReminder.title || '');
+      setImportance(editingReminder.importance || '');
+      setNotes(editingReminder.notes || '');
+      setTime(editingReminder.time || '10:00 AM');
+      setRepeat(editingReminder.repeat || 'Does not repeat');
+      setPriority(editingReminder.priority || 'High');
+      setAlarmTone(editingReminder.alarmTone || 'Default');
+      setNotification(editingReminder.notification !== false);
+      setCategory(editingReminder.category || 'Work');
+    } else {
+      resetForm();
+    }
+  }, [editingReminder, visible]);
+
   const handleSave = () => {
     if (!title.trim()) return;
-    const newReminder = {
-      id: 'r_' + Date.now(),
+    const reminderData = {
+      id: editingReminder ? editingReminder.id : 'r_' + Date.now(),
       title,
       importance,
       notes,
-      date: selectedDate && selectedDate >= new Date().toISOString().split('T')[0] ? selectedDate : new Date().toISOString().split('T')[0],
+      date: editingReminder
+        ? editingReminder.date
+        : selectedDate && selectedDate >= new Date().toISOString().split('T')[0]
+        ? selectedDate
+        : new Date().toISOString().split('T')[0],
       time,
       alarmTone,
       repeat,
       priority,
       notification,
       category,
+      notificationId: editingReminder ? editingReminder.notificationId : null,
     };
-    onSave(newReminder);
+    onSave(reminderData);
     resetForm();
     onClose();
   };
@@ -76,10 +97,10 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate }) => 
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
               <Text style={[styles.headerTitle, { color: theme.colors.textPrimary }]}>
-                Add Reminder
+                {editingReminder ? 'Edit Reminder' : 'Add Reminder'}
               </Text>
               <Text style={[styles.dateBadge, { color: theme.colors.primary }]}>
-                {selectedDate || 'Today'}
+                {editingReminder ? editingReminder.date : selectedDate || 'Today'}
               </Text>
             </View>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
@@ -261,7 +282,9 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate }) => 
             onPress={handleSave}
             activeOpacity={0.85}
           >
-            <Text style={styles.saveBtnText}>Save Reminder</Text>
+            <Text style={styles.saveBtnText}>
+              {editingReminder ? 'Save Changes' : 'Save Reminder'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

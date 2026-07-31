@@ -8,10 +8,13 @@ import {
   Image,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { useTasks } from '../context/TaskContext';
 import { Header } from '../components/Header';
 import { ProgressCard } from '../components/ProgressCard';
 import { TaskCard } from '../components/TaskCard';
 import { Icon } from '../components/Icons';
+import { AddReminderModal } from '../components/AddReminderModal';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 
 export const TodayScreen = ({
   tasks = [],
@@ -25,13 +28,29 @@ export const TodayScreen = ({
   onDeleteTask,
 }) => {
   const { theme } = useTheme();
+  const { updateReminder, deleteReminder } = useTasks();
+
   const [showCompleted, setShowCompleted] = useState(false);
+  const [editingReminder, setEditingReminder] = useState(null);
+  const [deletingReminder, setDeletingReminder] = useState(null);
 
   const activeTasks = tasks.filter((t) => !t.completed);
   const completedTasks = tasks.filter((t) => t.completed);
-  const upcomingReminders = reminders.slice(0, 2);
+  const upcomingReminders = reminders.slice(0, 4);
 
   const selectedCount = selectedTaskIds.length;
+
+  const handleSaveEditedReminder = async (updated) => {
+    await updateReminder(updated);
+    setEditingReminder(null);
+  };
+
+  const handleConfirmDeleteReminder = async () => {
+    if (deletingReminder) {
+      await deleteReminder(deletingReminder.id, deletingReminder.notificationId);
+      setDeletingReminder(null);
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -58,58 +77,36 @@ export const TodayScreen = ({
         </View>
 
         {/* Common Mark Completed Button */}
-        {activeTasks.length > 0 && (
+        {selectedCount > 0 && (
           <TouchableOpacity
             style={[
               styles.markCompleteButton,
-              {
-                backgroundColor: selectedCount > 0 ? theme.colors.success || '#10B981' : theme.colors.surfaceVariant,
-                borderColor: selectedCount > 0 ? theme.colors.success || '#10B981' : theme.colors.border,
-              },
+              { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
             ]}
             onPress={onMarkSelectedCompleted}
             activeOpacity={0.85}
           >
-            <Icon name="check" size={18} color={selectedCount > 0 ? '#FFFFFF' : theme.colors.textMuted} />
-            <Text
-              style={[
-                styles.markCompleteText,
-                { color: selectedCount > 0 ? '#FFFFFF' : theme.colors.textSecondary },
-              ]}
-            >
-              {selectedCount > 0
-                ? `Mark ${selectedCount} Selected Task${selectedCount > 1 ? 's' : ''} as Completed`
-                : 'Mark Selected as Completed'}
+            <Icon name="check" size={16} color="#FFFFFF" />
+            <Text style={[styles.markCompleteText, { color: '#FFFFFF' }]}>
+              Mark Completed ({selectedCount})
             </Text>
           </TouchableOpacity>
         )}
 
-        {/* Active Tasks or Empty State */}
+        {/* Active Tasks Checklist */}
         {activeTasks.length === 0 ? (
-          <View
-            style={[
-              styles.emptyStateCard,
-              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
-            ]}
-          >
+          <View style={styles.emptyContainer}>
             <Image
               source={require('../../assets/images/empty_state_illustration.png')}
-              style={styles.emptyStateImage}
+              style={styles.emptyIllustration}
               resizeMode="contain"
             />
-            <Text style={[styles.emptyTitle, { color: theme.colors.textPrimary }]}>
-              No tasks for today.
+            <Text style={[styles.emptyText, { color: theme.colors.textPrimary }]}>
+              All done for today! 🎉
             </Text>
-            <Text style={[styles.emptySubtitle, { color: theme.colors.textMuted }]}>
-              Start planning your day and boost your productivity!
+            <Text style={[styles.emptySubtext, { color: theme.colors.textMuted }]}>
+              Enjoy your free time or add a new task above
             </Text>
-            <TouchableOpacity
-              style={[styles.emptyAddBtn, { backgroundColor: theme.colors.primary }]}
-              onPress={onAddTask}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.emptyAddBtnText}>+ Add Task Now</Text>
-            </TouchableOpacity>
           </View>
         ) : (
           activeTasks.map((task) => (
@@ -123,17 +120,7 @@ export const TodayScreen = ({
           ))
         )}
 
-        {/* Pending tasks highlight badge */}
-        {activeTasks.length > 0 && (
-          <View style={[styles.pendingAlert, { backgroundColor: 'rgba(239, 68, 68, 0.1)' }]}>
-            <Icon name="clock" size={16} color={theme.colors.danger} />
-            <Text style={[styles.pendingText, { color: theme.colors.danger }]}>
-              {activeTasks.length} Pending Tasks require your focus today
-            </Text>
-          </View>
-        )}
-
-        {/* Completed Tasks Accordion */}
+        {/* Completed Tasks Toggle */}
         {completedTasks.length > 0 && (
           <View style={styles.completedSection}>
             <TouchableOpacity
@@ -144,7 +131,7 @@ export const TodayScreen = ({
                 Completed ({completedTasks.length})
               </Text>
               <Icon
-                name={showCompleted ? 'chevronRight' : 'chevronRight'}
+                name="chevronRight"
                 size={16}
                 color={theme.colors.textMuted}
               />
@@ -204,12 +191,49 @@ export const TodayScreen = ({
                   </Text>
                 ) : null}
               </View>
+
+              {/* Edit & Delete Action Buttons */}
+              <View style={styles.reminderActions}>
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: theme.colors.surfaceVariant }]}
+                  onPress={() => setEditingReminder(rem)}
+                  activeOpacity={0.7}
+                >
+                  <Icon name="edit" size={15} color={theme.colors.primary} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}
+                  onPress={() => setDeletingReminder(rem)}
+                  activeOpacity={0.7}
+                >
+                  <Icon name="trash" size={15} color={theme.colors.danger || '#EF4444'} />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         ))}
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Edit Reminder Modal */}
+      <AddReminderModal
+        visible={!!editingReminder}
+        editingReminder={editingReminder}
+        onClose={() => setEditingReminder(null)}
+        onSave={handleSaveEditedReminder}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        visible={!!deletingReminder}
+        title="Delete Reminder?"
+        itemTitle={deletingReminder ? deletingReminder.title : ''}
+        itemType="Reminder"
+        onConfirm={handleConfirmDeleteReminder}
+        onCancel={() => setDeletingReminder(null)}
+      />
     </View>
   );
 };
@@ -253,62 +277,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  emptyStateCard: {
-    marginHorizontal: 20,
-    borderRadius: 24,
-    borderWidth: 1,
-    padding: 24,
+  emptyContainer: {
     alignItems: 'center',
-    marginVertical: 10,
+    paddingVertical: 30,
   },
-  emptyStateImage: {
-    width: 180,
-    height: 140,
-    marginBottom: 16,
+  emptyIllustration: {
+    width: 80,
+    height: 80,
+    marginBottom: 12,
+    opacity: 0.6,
   },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 20,
-  },
-  emptyAddBtn: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 14,
-  },
-  emptyAddBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  pendingAlert: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 20,
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  pendingText: {
-    fontSize: 13,
+  emptyText: {
+    fontSize: 16,
     fontWeight: '600',
-    marginLeft: 8,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    marginTop: 4,
   },
   completedSection: {
-    marginTop: 8,
+    marginTop: 12,
   },
   completedHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 8,
   },
   completedTitle: {
     fontSize: 14,
@@ -316,22 +311,22 @@ const styles = StyleSheet.create({
   },
   reminderCard: {
     marginHorizontal: 20,
-    padding: 16,
-    borderRadius: 18,
+    marginBottom: 10,
+    padding: 14,
+    borderRadius: 16,
     borderWidth: 1,
-    marginBottom: 12,
   },
   reminderRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   reminderIconBg: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    marginRight: 12,
   },
   reminderContent: {
     flex: 1,
@@ -346,6 +341,19 @@ const styles = StyleSheet.create({
   },
   reminderNotes: {
     fontSize: 12,
-    marginTop: 4,
+    marginTop: 2,
+  },
+  reminderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginLeft: 8,
+  },
+  actionBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

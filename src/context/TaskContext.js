@@ -28,26 +28,25 @@ export const TaskProvider = ({ children }) => {
       const existingIdx = updatedTasksList.findIndex((t) => t.title.toLowerCase() === habit.title.toLowerCase() && t.date === todayStr);
 
       if (habit.autoAddToday) {
-        // Should be in today's tasks
         if (existingIdx === -1) {
           const habitTask = {
             id: 'h_task_' + habit.id + '_' + Date.now(),
             title: habit.title,
-            category: 'Health',
-            priority: 'Medium',
-            time: '08:00 AM',
-            notes: `Daily Habit Goal (${habit.frequency})`,
+            category: habit.category || 'Health',
+            priority: habit.priority || 'Medium',
+            time: habit.time || '08:00 AM',
+            notes: habit.notes || `Daily Habit Goal`,
             completed: Boolean(habit.completedToday),
             date: todayStr,
             isHabitTask: true,
             habitId: habit.id,
+            icon: habit.icon,
           };
           const savedTask = await TaskRepository.add(habitTask);
           updatedTasksList = [savedTask, ...updatedTasksList];
           changed = true;
         }
       } else {
-        // autoAddToday is false -> remove from today's tasks if present
         if (existingIdx !== -1 && updatedTasksList[existingIdx].isHabitTask) {
           await TaskRepository.delete(updatedTasksList[existingIdx].id);
           updatedTasksList = updatedTasksList.filter((_, idx) => idx !== existingIdx);
@@ -98,7 +97,6 @@ export const TaskProvider = ({ children }) => {
       const updated = prev.map((t) => (t.id === taskId ? { ...t, completed: confirmed ? true : !t.completed } : t));
       const targetTask = updated.find((t) => t.id === taskId);
 
-      // Sync habit completion status if task belongs to a habit
       if (targetTask) {
         setHabits((prevHabits) =>
           prevHabits.map((h) => {
@@ -196,6 +194,11 @@ export const TaskProvider = ({ children }) => {
     setReminders((prev) => [created, ...prev]);
   }, []);
 
+  const updateReminder = useCallback(async (updatedReminder) => {
+    await ReminderRepository.update(updatedReminder);
+    setReminders((prev) => prev.map((r) => (r.id === updatedReminder.id ? updatedReminder : r)));
+  }, []);
+
   const deleteReminder = useCallback(async (reminderId, notificationId) => {
     if (notificationId) {
       await NotificationService.cancelReminder(notificationId);
@@ -226,6 +229,7 @@ export const TaskProvider = ({ children }) => {
       updateHabit,
       deleteHabit,
       addReminder,
+      updateReminder,
       deleteReminder,
       addDiaryEntry,
       refreshData: loadAllData,
@@ -245,6 +249,7 @@ export const TaskProvider = ({ children }) => {
       updateHabit,
       deleteHabit,
       addReminder,
+      updateReminder,
       deleteReminder,
       addDiaryEntry,
       loadAllData,

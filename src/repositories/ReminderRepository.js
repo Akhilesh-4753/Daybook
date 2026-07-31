@@ -43,6 +43,27 @@ export const ReminderRepository = {
     return { ...reminder, id };
   },
 
+  update: async (reminder) => {
+    const db = await getDB();
+    await db.runAsync(
+      `UPDATE reminders SET title = ?, importance = ?, notes = ?, date = ?, time = ?, alarm_tone = ?, repeat_rule = ?, priority = ?, notification = ?, category = ? WHERE id = ?;`,
+      [
+        reminder.title,
+        reminder.importance || '',
+        reminder.notes || '',
+        reminder.date,
+        reminder.time,
+        reminder.alarmTone || 'Default',
+        reminder.repeat || 'Does not repeat',
+        reminder.priority || 'Medium',
+        reminder.notification ? 1 : 0,
+        reminder.category || 'Personal',
+        reminder.id,
+      ]
+    );
+    return reminder;
+  },
+
   updateNotificationId: async (id, notificationId) => {
     const db = await getDB();
     await db.runAsync('UPDATE reminders SET notification_id = ? WHERE id = ?;', [notificationId, id]);

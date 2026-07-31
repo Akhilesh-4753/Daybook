@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,145 +7,164 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { useTasks } from '../context/TaskContext';
 import { Icon } from '../components/Icons';
+import { AddReminderModal } from '../components/AddReminderModal';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 
 export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
   const { theme } = useTheme();
+  const { updateReminder, deleteReminder } = useTasks();
 
-  const getTodayStr = () => new Date().toISOString().split('T')[0];
-  const todayStr = getTodayStr();
-
+  const todayStr = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(todayStr);
 
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [currentMonthIdx, setCurrentMonthIdx] = useState(new Date().getMonth()); // 0-indexed
+  const [editingReminder, setEditingReminder] = useState(null);
+  const [deletingReminder, setDeletingReminder] = useState(null);
+
+  // Month Navigation State
+  const [currentDateObj, setCurrentDateObj] = useState(new Date());
+
+  const year = currentDateObj.getFullYear();
+  const month = currentDateObj.getMonth();
 
   const monthNames = [
     'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'July', 'August', 'September', 'October', 'November', 'December',
   ];
 
-  const daysOfWeek = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-
   const handlePrevMonth = () => {
-    if (currentMonthIdx === 0) {
-      setCurrentMonthIdx(11);
-      setCurrentYear((y) => y - 1);
-    } else {
-      setCurrentMonthIdx((m) => m - 1);
-    }
+    setCurrentDateObj(new Date(year, month - 1, 1));
   };
 
   const handleNextMonth = () => {
-    if (currentMonthIdx === 11) {
-      setCurrentMonthIdx(0);
-      setCurrentYear((y) => y + 1);
-    } else {
-      setCurrentMonthIdx((m) => m + 1);
-    }
+    setCurrentDateObj(new Date(year, month + 1, 1));
   };
 
-  // Generate dynamic grid for current month/year
-  const calendarDays = useMemo(() => {
+  // Generate Days for Calendar Grid cleanly without timezone shifts
+  const generateCalendarDays = () => {
     const days = [];
-    const firstDayOfMonth = new Date(currentYear, currentMonthIdx, 1);
-    const lastDayOfMonth = new Date(currentYear, currentMonthIdx + 1, 0);
 
-    const startingDayOfWeek = firstDayOfMonth.getDay(); // 0-6
-    const totalDaysInMonth = lastDayOfMonth.getDate();
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevMonthLastDay = new Date(year, month, 0).getDate();
+
+    // Previous month info
+    const prevMonthNum = month === 0 ? 12 : month;
+    const prevYear = month === 0 ? year - 1 : year;
 
     // Previous month padding days
-    const prevMonthLastDay = new Date(currentYear, currentMonthIdx, 0).getDate();
-    for (let i = startingDayOfWeek - 1; i >= 0; i--) {
-      const prevDay = prevMonthLastDay - i;
-      const prevMonth = currentMonthIdx === 0 ? 11 : currentMonthIdx - 1;
-      const prevYear = currentMonthIdx === 0 ? currentYear - 1 : currentYear;
-      const dateStr = `${prevYear}-${String(prevMonth + 1).padStart(2, '0')}-${String(prevDay).padStart(2, '0')}`;
-      days.push({ day: prevDay, isCurrentMonth: false, dateStr });
+    for (let i = firstDayIndex - 1; i >= 0; i--) {
+      const dayNum = prevMonthLastDay - i;
+      const dateStr = `${prevYear}-${String(prevMonthNum).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+
+      days.push({
+        day: dayNum,
+        dateStr,
+        isCurrentMonth: false,
+        hasReminder: reminders.some((r) => r.date === dateStr),
+      });
     }
 
     // Current month days
-    for (let d = 1; d <= totalDaysInMonth; d++) {
-      const dateStr = `${currentYear}-${String(currentMonthIdx + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const hasRem = reminders.some((r) => r.date === dateStr);
-      days.push({ day: d, isCurrentMonth: true, dateStr, hasReminder: hasRem });
+    for (let dayNum = 1; dayNum <= totalDaysInMonth; dayNum++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNum).padStart(2, '0')}`;
+
+      days.push({
+        day: dayNum,
+        dateStr,
+        isCurrentMonth: true,
+        hasReminder: reminders.some((r) => r.date === dateStr),
+      });
     }
 
-    // Next month padding days
-    const remainingCells = 42 - days.length;
-    for (let d = 1; d <= remainingCells; d++) {
-      const nextMonth = currentMonthIdx === 11 ? 0 : currentMonthIdx + 1;
-      const nextYear = currentMonthIdx === 11 ? currentYear + 1 : currentYear;
-      const dateStr = `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      days.push({ day: d, isCurrentMonth: false, dateStr });
+    // Next month info
+    const nextMonthNum = month + 2 > 12 ? 1 : month + 2;
+    const nextYear = month + 2 > 12 ? year + 1 : year;
+    const remainingCells = (7 - (days.length % 7)) % 7;
+
+    // Next month padding days to complete grid cells
+    for (let i = 1; i <= remainingCells; i++) {
+      const dateStr = `${nextYear}-${String(nextMonthNum).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+
+      days.push({
+        day: i,
+        dateStr,
+        isCurrentMonth: false,
+        hasReminder: reminders.some((r) => r.date === dateStr),
+      });
     }
 
     return days;
-  }, [currentYear, currentMonthIdx, reminders]);
+  };
 
-  const selectedReminders = useMemo(() => {
-    return reminders.filter((r) => r.date === selectedDate);
-  }, [reminders, selectedDate]);
-
+  const calendarGrid = generateCalendarDays();
+  const selectedReminders = reminders.filter((r) => r.date === selectedDate);
   const isPastDate = selectedDate < todayStr;
+
+  const handleSaveEditedReminder = async (updated) => {
+    await updateReminder(updated);
+    setEditingReminder(null);
+  };
+
+  const handleConfirmDeleteReminder = async () => {
+    if (deletingReminder) {
+      await deleteReminder(deletingReminder.id, deletingReminder.notificationId);
+      setDeletingReminder(null);
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Title Header */}
+      {/* Header */}
       <View style={styles.topHeader}>
         <Text style={[styles.headerTitle, { color: theme.colors.textPrimary }]}>
-          Calendar
+          Calendar & Schedule
         </Text>
-        <TouchableOpacity
-          style={[styles.todayBtn, { backgroundColor: theme.colors.primary }]}
-          onPress={() => {
-            const today = getTodayStr();
-            setSelectedDate(today);
-            setCurrentYear(new Date().getFullYear());
-            setCurrentMonthIdx(new Date().getMonth());
-          }}
-        >
-          <Text style={styles.todayBtnText}>Today</Text>
-        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Month Selector Bar */}
+        {/* Month Navigation */}
         <View style={styles.monthHeader}>
-          <Text style={[styles.monthText, { color: theme.colors.textPrimary }]}>
-            {monthNames[currentMonthIdx]} {currentYear}
+          <Text style={[styles.monthTitle, { color: theme.colors.textPrimary }]}>
+            {monthNames[month]} {year}
           </Text>
-          <View style={styles.arrowsRow}>
-            <TouchableOpacity style={styles.arrowBtn} onPress={handlePrevMonth}>
-              <Text style={[styles.arrowText, { color: theme.colors.textSecondary }]}>‹</Text>
+
+          <View style={styles.navRow}>
+            <TouchableOpacity
+              style={[styles.navBtn, { backgroundColor: theme.colors.cardSecondary }]}
+              onPress={handlePrevMonth}
+            >
+              <Text style={[styles.navArrow, { color: theme.colors.textPrimary }]}>‹</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.arrowBtn} onPress={handleNextMonth}>
-              <Text style={[styles.arrowText, { color: theme.colors.textSecondary }]}>›</Text>
+
+            <TouchableOpacity
+              style={[styles.navBtn, { backgroundColor: theme.colors.cardSecondary }]}
+              onPress={handleNextMonth}
+            >
+              <Text style={[styles.navArrow, { color: theme.colors.textPrimary }]}>›</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Days of Week Header */}
-        <View style={styles.daysOfWeekRow}>
-          {daysOfWeek.map((day) => (
-            <Text
-              key={day}
-              style={[styles.dayOfWeekText, { color: theme.colors.textMuted }]}
-            >
-              {day}
+        <View style={styles.weekHeader}>
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => (
+            <Text key={d} style={[styles.weekDayText, { color: theme.colors.textMuted }]}>
+              {d}
             </Text>
           ))}
         </View>
 
-        {/* Calendar Grid */}
-        <View style={styles.grid}>
-          {calendarDays.map((item, index) => {
-            const isSelected = item.dateStr === selectedDate;
-            const isTodayCell = item.dateStr === todayStr;
+        {/* Calendar Days Grid */}
+        <View style={styles.gridContainer}>
+          {calendarGrid.map((item, idx) => {
+            const isSelected = item.isCurrentMonth && item.dateStr === selectedDate;
+            const isTodayCell = item.isCurrentMonth && item.dateStr === todayStr;
 
             return (
               <TouchableOpacity
-                key={index}
+                key={idx}
                 style={[
                   styles.dayCell,
                   isSelected && [
@@ -154,7 +173,12 @@ export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
                   ],
                   isTodayCell && !isSelected && { borderWidth: 1, borderColor: theme.colors.primary },
                 ]}
-                onPress={() => setSelectedDate(item.dateStr)}
+                onPress={() => {
+                  if (item.isCurrentMonth) {
+                    setSelectedDate(item.dateStr);
+                  }
+                }}
+                activeOpacity={item.isCurrentMonth ? 0.7 : 1}
               >
                 <Text
                   style={[
@@ -243,6 +267,7 @@ export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
                 >
                   <Icon name="bell" size={20} color={theme.colors.primary} />
                 </View>
+
                 <View style={styles.reminderMain}>
                   <Text style={[styles.reminderTitle, { color: theme.colors.textPrimary }]}>
                     {rem.title}
@@ -250,6 +275,25 @@ export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
                   <Text style={[styles.reminderTime, { color: theme.colors.primary }]}>
                     ⏰ {rem.time} • Repeat: {rem.repeat || 'None'}
                   </Text>
+                </View>
+
+                {/* Edit & Delete Action Buttons */}
+                <View style={styles.reminderActions}>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, { backgroundColor: theme.colors.surfaceVariant }]}
+                    onPress={() => setEditingReminder(rem)}
+                    activeOpacity={0.7}
+                  >
+                    <Icon name="edit" size={15} color={theme.colors.primary} />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.actionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}
+                    onPress={() => setDeletingReminder(rem)}
+                    activeOpacity={0.7}
+                  >
+                    <Icon name="trash" size={15} color={theme.colors.danger || '#EF4444'} />
+                  </TouchableOpacity>
                 </View>
               </View>
 
@@ -275,6 +319,24 @@ export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Edit Reminder Modal */}
+      <AddReminderModal
+        visible={!!editingReminder}
+        editingReminder={editingReminder}
+        onClose={() => setEditingReminder(null)}
+        onSave={handleSaveEditedReminder}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        visible={!!deletingReminder}
+        title="Delete Reminder?"
+        itemTitle={deletingReminder ? deletingReminder.title : ''}
+        itemType="Reminder"
+        onConfirm={handleConfirmDeleteReminder}
+        onCancel={() => setDeletingReminder(null)}
+      />
     </View>
   );
 };
@@ -284,9 +346,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 10,
@@ -294,16 +353,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 26,
     fontWeight: '800',
-  },
-  todayBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 14,
-  },
-  todayBtnText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: '700',
   },
   scroll: {
     flex: 1,
@@ -315,52 +364,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginVertical: 12,
   },
-  monthText: {
-    fontSize: 18,
+  monthTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  navRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  navBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navArrow: {
+    fontSize: 20,
     fontWeight: '700',
   },
-  arrowsRow: {
+  weekHeader: {
     flexDirection: 'row',
-    gap: 12,
-  },
-  arrowBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  arrowText: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  daysOfWeekRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 10,
+    paddingHorizontal: 16,
     marginBottom: 8,
   },
-  dayOfWeekText: {
-    width: 40,
+  weekDayText: {
+    flex: 1,
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
   },
-  grid: {
+  gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 10,
+    paddingHorizontal: 16,
   },
   dayCell: {
     width: '14.28%',
-    height: 48,
+    aspectRatio: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 12,
     marginVertical: 2,
-    borderRadius: 24,
   },
   selectedDayCell: {
-    borderRadius: 24,
+    borderRadius: 14,
   },
   dayText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
   },
   selectedDayText: {
@@ -368,7 +419,6 @@ const styles = StyleSheet.create({
   },
   dotsRow: {
     flexDirection: 'row',
-    gap: 3,
     marginTop: 2,
   },
   dot: {
@@ -386,16 +436,15 @@ const styles = StyleSheet.create({
   },
   agendaTitleBox: {
     flex: 1,
-    marginRight: 10,
   },
   agendaDateTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
   },
   pastLabel: {
     fontSize: 11,
-    fontWeight: '600',
     marginTop: 2,
+    fontWeight: '600',
   },
   addReminderBtn: {
     paddingHorizontal: 14,
@@ -404,7 +453,7 @@ const styles = StyleSheet.create({
   },
   addReminderBtnText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   noRemindersBox: {
@@ -414,23 +463,23 @@ const styles = StyleSheet.create({
   },
   noRemindersText: {
     fontSize: 14,
-    fontStyle: 'italic',
+    fontWeight: '500',
   },
   reminderCard: {
     marginHorizontal: 20,
+    marginBottom: 12,
     padding: 16,
     borderRadius: 18,
     borderWidth: 1,
-    marginBottom: 12,
   },
   reminderHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconBox: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -443,22 +492,35 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   reminderTime: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
     marginTop: 2,
+    fontWeight: '600',
+  },
+  reminderActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginLeft: 8,
+  },
+  actionBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   noteBox: {
     marginTop: 12,
-    padding: 12,
-    borderRadius: 12,
+    padding: 10,
+    borderRadius: 10,
   },
   noteImportanceTitle: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
     marginBottom: 2,
   },
   noteImportanceText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
   },
   notesText: {
