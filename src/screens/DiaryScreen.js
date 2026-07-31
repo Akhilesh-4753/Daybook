@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,20 +6,32 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from '../components/Icons';
 
-export const DiaryScreen = ({ diaryEntries, onSaveEntry }) => {
+export const DiaryScreen = ({ diaryEntries = [], onSaveEntry }) => {
   const { theme } = useTheme();
 
-  const [date, setDate] = useState('2026-07-29');
-  const [formattedDate, setFormattedDate] = useState('Wednesday, 29 July 2026');
+  const todayDateObj = new Date();
+  const defaultDateStr = todayDateObj.toISOString().split('T')[0];
+  const defaultFormattedDate = todayDateObj.toLocaleDateString('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  const [date] = useState(defaultDateStr);
+  const [formattedDate] = useState(defaultFormattedDate);
   const [title, setTitle] = useState('');
   const [mood, setMood] = useState('happy');
   const [content, setContent] = useState('');
   const [showSavedList, setShowSavedList] = useState(false);
+
+  // Filters for Past Journal
+  const [selectedYear, setSelectedYear] = useState('All');
+  const [selectedMonth, setSelectedMonth] = useState('All');
 
   const moods = [
     { id: 'happy', emoji: '😃', label: 'Happy' },
@@ -28,6 +40,43 @@ export const DiaryScreen = ({ diaryEntries, onSaveEntry }) => {
     { id: 'sad', emoji: '😔', label: 'Sad' },
     { id: 'stressed', emoji: '😫', label: 'Stressed' },
   ];
+
+  const yearsList = useMemo(() => {
+    const yearsSet = new Set(['All']);
+    diaryEntries.forEach((entry) => {
+      if (entry.date) {
+        const y = entry.date.split('-')[0];
+        if (y) yearsSet.add(y);
+      }
+    });
+    return Array.from(yearsSet);
+  }, [diaryEntries]);
+
+  const monthsList = [
+    { label: 'All Months', value: 'All' },
+    { label: 'Jan', value: '01' },
+    { label: 'Feb', value: '02' },
+    { label: 'Mar', value: '03' },
+    { label: 'Apr', value: '04' },
+    { label: 'May', value: '05' },
+    { label: 'Jun', value: '06' },
+    { label: 'Jul', value: '07' },
+    { label: 'Aug', value: '08' },
+    { label: 'Sep', value: '09' },
+    { label: 'Oct', value: '10' },
+    { label: 'Nov', value: '11' },
+    { label: 'Dec', value: '12' },
+  ];
+
+  const filteredEntries = useMemo(() => {
+    return diaryEntries.filter((entry) => {
+      if (!entry.date) return true;
+      const [y, m] = entry.date.split('-');
+      const yearMatch = selectedYear === 'All' || y === selectedYear;
+      const monthMatch = selectedMonth === 'All' || m === selectedMonth;
+      return yearMatch && monthMatch;
+    });
+  }, [diaryEntries, selectedYear, selectedMonth]);
 
   const handleSave = () => {
     if (!content.trim() && !title.trim()) {
@@ -44,6 +93,7 @@ export const DiaryScreen = ({ diaryEntries, onSaveEntry }) => {
     onSaveEntry(newEntry);
     setTitle('');
     setContent('');
+    setShowSavedList(true); // Automatically show past journal list after saving
   };
 
   return (
@@ -66,7 +116,7 @@ export const DiaryScreen = ({ diaryEntries, onSaveEntry }) => {
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
         {!showSavedList ? (
           <View style={styles.editorContainer}>
-            {/* Date Selector Row */}
+            {/* Date Card (Default Current Date, Readonly) */}
             <View
               style={[
                 styles.dateCard,
@@ -78,20 +128,12 @@ export const DiaryScreen = ({ diaryEntries, onSaveEntry }) => {
                   {formattedDate}
                 </Text>
                 <Text style={[styles.dateSubtext, { color: theme.colors.textMuted }]}>
-                  Selected Journal Date
+                  Today's Journal Date
                 </Text>
               </View>
-              <TouchableOpacity
-                style={[styles.editDateBtn, { backgroundColor: theme.colors.surfaceVariant }]}
-                onPress={() => {
-                  setDate('2026-07-30');
-                  setFormattedDate('Thursday, 30 July 2026');
-                }}
-              >
-                <Text style={[styles.editDateBtnText, { color: theme.colors.primary }]}>
-                  Edit Date
-                </Text>
-              </TouchableOpacity>
+              <View style={[styles.todayBadge, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
+                <Text style={[styles.todayBadgeText, { color: theme.colors.primary }]}>Today</Text>
+              </View>
             </View>
 
             {/* Entry Title Input */}
@@ -145,7 +187,7 @@ export const DiaryScreen = ({ diaryEntries, onSaveEntry }) => {
               ))}
             </View>
 
-            {/* Reflection Writing Area */}
+            {/* Reflection Writing Area (Toolbar Removed) */}
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
               Daily Memories & Thoughts
             </Text>
@@ -164,27 +206,6 @@ export const DiaryScreen = ({ diaryEntries, onSaveEntry }) => {
                 value={content}
                 onChangeText={setContent}
               />
-
-              {/* Formatting & Attachments Tool Bar */}
-              <View
-                style={[
-                  styles.toolbarRow,
-                  { borderTopColor: theme.colors.border, backgroundColor: theme.colors.cardSecondary },
-                ]}
-              >
-                <TouchableOpacity style={styles.toolIconBtn}>
-                  <Text style={[styles.toolIconText, { color: theme.colors.textSecondary }]}>📷</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.toolIconBtn}>
-                  <Text style={[styles.toolIconText, { color: theme.colors.textSecondary }]}>🎙️</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.toolIconBtn}>
-                  <Text style={[styles.toolIconText, { color: theme.colors.textSecondary }]}>🏷️</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.toolIconBtn}>
-                  <Text style={[styles.toolIconText, { color: theme.colors.textSecondary }]}><b>B</b></Text>
-                </TouchableOpacity>
-              </View>
             </View>
 
             {/* Save Button */}
@@ -198,36 +219,97 @@ export const DiaryScreen = ({ diaryEntries, onSaveEntry }) => {
           </View>
         ) : (
           <View style={styles.pastEntriesContainer}>
+            {/* Filter Bar: Year > Month */}
+            <Text style={[styles.filterBarTitle, { color: theme.colors.textMuted }]}>
+              FILTER PAST DIARY BY YEAR & MONTH
+            </Text>
+            <View style={styles.filtersRow}>
+              {/* Year Filter */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
+                <Text style={[styles.filterLabel, { color: theme.colors.textSecondary }]}>Year:</Text>
+                {yearsList.map((yr) => (
+                  <TouchableOpacity
+                    key={yr}
+                    style={[
+                      styles.filterChip,
+                      {
+                        backgroundColor: selectedYear === yr ? theme.colors.primary : theme.colors.card,
+                        borderColor: theme.colors.border,
+                      },
+                    ]}
+                    onPress={() => setSelectedYear(yr)}
+                  >
+                    <Text style={{ color: selectedYear === yr ? '#FFFFFF' : theme.colors.textPrimary, fontSize: 12, fontWeight: '700' }}>
+                      {yr}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            <View style={styles.filtersRow}>
+              {/* Month Filter */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
+                <Text style={[styles.filterLabel, { color: theme.colors.textSecondary }]}>Month:</Text>
+                {monthsList.map((m) => (
+                  <TouchableOpacity
+                    key={m.value}
+                    style={[
+                      styles.filterChip,
+                      {
+                        backgroundColor: selectedMonth === m.value ? theme.colors.primary : theme.colors.card,
+                        borderColor: theme.colors.border,
+                      },
+                    ]}
+                    onPress={() => setSelectedMonth(m.value)}
+                  >
+                    <Text style={{ color: selectedMonth === m.value ? '#FFFFFF' : theme.colors.textPrimary, fontSize: 12, fontWeight: '700' }}>
+                      {m.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
             <Text style={[styles.pastHeaderTitle, { color: theme.colors.textPrimary }]}>
-              Your Past Memories ({diaryEntries.length})
+              Past Journal Entries ({filteredEntries.length})
             </Text>
 
-            {diaryEntries.map((entry) => (
-              <View
-                key={entry.id}
-                style={[
-                  styles.entryCard,
-                  { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
-                ]}
-              >
-                <View style={styles.entryHeaderRow}>
-                  <Text style={[styles.entryDate, { color: theme.colors.primary }]}>
-                    {entry.formattedDate || entry.date}
-                  </Text>
-                  <Text style={styles.entryMoodEmoji}>
-                    {moods.find((m) => m.id === entry.mood)?.emoji || '😃'}
-                  </Text>
-                </View>
-
-                <Text style={[styles.entryTitle, { color: theme.colors.textPrimary }]}>
-                  {entry.title}
-                </Text>
-
-                <Text style={[styles.entryContent, { color: theme.colors.textSecondary }]}>
-                  {entry.content}
+            {filteredEntries.length === 0 ? (
+              <View style={[styles.noEntriesBox, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+                <Icon name="book" size={32} color={theme.colors.textMuted} />
+                <Text style={[styles.noEntriesText, { color: theme.colors.textMuted }]}>
+                  No diary entries found for the selected period.
                 </Text>
               </View>
-            ))}
+            ) : (
+              filteredEntries.map((entry) => (
+                <View
+                  key={entry.id}
+                  style={[
+                    styles.entryCard,
+                    { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+                  ]}
+                >
+                  <View style={styles.entryHeaderRow}>
+                    <Text style={[styles.entryDate, { color: theme.colors.primary }]}>
+                      {entry.formattedDate || entry.date}
+                    </Text>
+                    <Text style={styles.entryMoodEmoji}>
+                      {moods.find((m) => m.id === entry.mood)?.emoji || '😃'}
+                    </Text>
+                  </View>
+
+                  <Text style={[styles.entryTitle, { color: theme.colors.textPrimary }]}>
+                    {entry.title}
+                  </Text>
+
+                  <Text style={[styles.entryContent, { color: theme.colors.textSecondary }]}>
+                    {entry.content}
+                  </Text>
+                </View>
+              ))
+            )}
           </View>
         )}
 
@@ -289,14 +371,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
-  editDateBtn: {
+  todayBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
   },
-  editDateBtnText: {
+  todayBadgeText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   label: {
     fontSize: 13,
@@ -342,22 +424,9 @@ const styles = StyleSheet.create({
   editorArea: {
     padding: 16,
     fontSize: 15,
-    height: 160,
+    height: 180,
     textAlignVertical: 'top',
     lineHeight: 22,
-  },
-  toolbarRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    gap: 16,
-  },
-  toolIconBtn: {
-    padding: 4,
-  },
-  toolIconText: {
-    fontSize: 16,
   },
   saveBtn: {
     height: 52,
@@ -375,10 +444,51 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
   },
+  filterBarTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    marginBottom: 8,
+  },
+  filtersRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  filterLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginRight: 8,
+    alignSelf: 'center',
+  },
+  filterScroll: {
+    flexDirection: 'row',
+  },
+  filterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    marginRight: 6,
+  },
   pastHeaderTitle: {
     fontSize: 18,
     fontWeight: '700',
+    marginTop: 12,
     marginBottom: 14,
+  },
+  noEntriesBox: {
+    padding: 24,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  noEntriesText: {
+    marginTop: 10,
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   entryCard: {
     padding: 16,

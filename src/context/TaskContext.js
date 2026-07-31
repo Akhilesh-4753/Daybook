@@ -19,6 +19,39 @@ export const TaskProvider = ({ children }) => {
     loadAllData();
   }, []);
 
+  const syncDailyHabitsToTasks = async (currentTasks, currentHabits) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    let newTasksAdded = false;
+    let updatedTasksList = [...currentTasks];
+
+    for (const habit of currentHabits) {
+      if (habit.autoAddToday !== false || habit.frequency === 'Daily' || habit.frequency === '5 Times a Week') {
+        const existing = updatedTasksList.find((t) => t.title.toLowerCase() === habit.title.toLowerCase() && t.date === todayStr);
+        if (!existing) {
+          const habitTask = {
+            id: 'h_task_' + habit.id + '_' + Date.now(),
+            title: habit.title,
+            category: 'Health',
+            priority: 'Medium',
+            time: '08:00 AM',
+            notes: `Daily Habit Goal (${habit.frequency})`,
+            completed: Boolean(habit.completedToday),
+            date: todayStr,
+            isHabitTask: true,
+            habitId: habit.id,
+          };
+          const savedTask = await TaskRepository.add(habitTask);
+          updatedTasksList = [savedTask, ...updatedTasksList];
+          newTasksAdded = true;
+        }
+      }
+    }
+
+    if (newTasksAdded) {
+      setTasks(updatedTasksList);
+    }
+  };
+
   const loadAllData = useCallback(async () => {
     try {
       setLoading(true);
@@ -35,6 +68,8 @@ export const TaskProvider = ({ children }) => {
       setReminders(loadedReminders);
       setHabits(loadedHabits);
       setDiaryEntries(loadedDiary);
+
+      await syncDailyHabitsToTasks(loadedTasks, loadedHabits);
     } catch (e) {
       console.error('Error loading SQLite data:', e);
     } finally {
@@ -50,9 +85,28 @@ export const TaskProvider = ({ children }) => {
 
   const toggleTaskCompletion = useCallback(async (taskId, confirmed = false) => {
     await TaskRepository.toggleCompletion(taskId, confirmed ? true : null);
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, completed: confirmed ? true : !t.completed } : t))
-    );
+    setTasks((prev) => {
+      const updated = prev.map((t) => (t.id === taskId ? { ...t, completed: confirmed ? true : !t.completed } : t));
+      const targetTask = updated.find((t) => t.id === taskId);
+
+      // Sync habit if task corresponds to a habit
+      if (targetTask) {
+        setHabits((prevHabits) =>
+          prevHabits.map((h) => {
+            if (h.title.toLowerCase() === targetTask.title.toLowerCase()) {
+              HabitRepository.toggle(h.id);
+              return {
+                ...h,
+                completedToday: targetTask.completed,
+                streak: targetTask.completed ? h.streak + 1 : Math.max(0, h.streak - 1),
+              };
+            }
+            return h;
+          })
+        );
+      }
+      return updated;
+    });
   }, []);
 
   const deleteTask = useCallback(async (taskId) => {
@@ -63,8 +117,8 @@ export const TaskProvider = ({ children }) => {
   // Habit actions
   const toggleHabit = useCallback(async (habitId) => {
     await HabitRepository.toggle(habitId);
-    setHabits((prev) =>
-      prev.map((h) => {
+    setHabits((prev) => {
+      const updated = prev.map((h) => {
         if (h.id === habitId) {
           const nextState = !h.completedToday;
           return {
@@ -75,14 +129,33 @@ export const TaskProvider = ({ children }) => {
           };
         }
         return h;
-      })
-    );
+      });
+
+      const targetHabit = updated.find((h) => h.id === habitId);
+      if (targetHabit) {
+        const todayStr = new Date().toISOString().split('T')[0];
+        setTasks((prevTasks) =>
+          prevTasks.map((t) => {
+            if (t.title.toLowerCase() === targetHabit.title.toLowerCase() && t.date === todayStr) {
+              TaskRepository.toggleCompletion(t.id, targetHabit.completedToday);
+              return { ...t, completed: targetHabit.completedToday };
+            }
+            return t;
+          })
+        );
+      }
+      return updated;
+    });
   }, []);
 
   const addHabit = useCallback(async (newHabit) => {
     const created = await HabitRepository.add(newHabit);
-    setHabits((prev) => [created, ...prev]);
-  }, []);
+    setHabits((prev) => {
+      const updated = [created, ...prev];
+      syncDailyHabitsToTasks(tasks, updated);
+      return updated;
+    });
+  }, [tasks]);
 
   // Reminder actions with Expo Local Notifications
   const addReminder = useCallback(async (newReminder) => {

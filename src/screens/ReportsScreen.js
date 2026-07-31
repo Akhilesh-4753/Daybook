@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,18 +8,72 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { TasksDonutChart, WeeklyBarChart } from '../components/Charts';
-import { Icon } from '../components/Icons';
 
-export const ReportsScreen = ({ tasks, habits, user }) => {
+export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user }) => {
   const { theme } = useTheme();
-  const [timeFilter, setTimeFilter] = useState('This Week');
-  const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const filterOptions = ['This Week', 'This Month', 'Today', 'Custom Date'];
+  // Order: Today, This Week, This Month, Custom Date
+  const filterOptions = ['Today', 'This Week', 'This Month', 'Custom Date'];
+  const [timeFilter, setTimeFilter] = useState('Today');
+
   const categories = ['All', 'Work', 'Health', 'Personal', 'Finance'];
 
-  const completedCount = tasks.filter((t) => t.completed).length + 27; // Including historical completed count
-  const pendingCount = tasks.filter((t) => !t.completed).length;
+  // Calculate filtered tasks based on selected time filter
+  const filteredTasks = useMemo(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    if (timeFilter === 'Today') {
+      return tasks.filter((t) => t.date === todayStr || !t.date);
+    } else if (timeFilter === 'This Week') {
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(today.getDate() - 7);
+      return tasks.filter((t) => {
+        if (!t.date) return true;
+        const taskDate = new Date(t.date);
+        return taskDate >= sevenDaysAgo && taskDate <= today;
+      });
+    } else if (timeFilter === 'This Month') {
+      const currentMonthStr = todayStr.substring(0, 7); // 'YYYY-MM'
+      return tasks.filter((t) => !t.date || t.date.startsWith(currentMonthStr));
+    }
+    // Custom Date or overall view
+    return tasks;
+  }, [tasks, timeFilter]);
+
+  const completedCount = useMemo(() => {
+    return filteredTasks.filter((t) => t.completed).length;
+  }, [filteredTasks]);
+
+  const pendingCount = useMemo(() => {
+    return filteredTasks.filter((t) => !t.completed).length;
+  }, [filteredTasks]);
+
+  const totalTasksCount = completedCount + pendingCount;
+
+  const productivityScore = useMemo(() => {
+    if (totalTasksCount === 0) return 100;
+    return Math.round((completedCount / totalTasksCount) * 100);
+  }, [completedCount, totalTasksCount]);
+
+  const habitsRate = useMemo(() => {
+    if (habits.length === 0) return 100;
+    const completedHabits = habits.filter((h) => h.completedToday).length;
+    return Math.round((completedHabits / habits.length) * 100);
+  }, [habits]);
+
+  const categoryBreakdown = useMemo(() => {
+    const counts = { Work: 0, Health: 0, Personal: 0, Finance: 0 };
+    filteredTasks.forEach((t) => {
+      const cat = t.category || 'Personal';
+      if (counts[cat] !== undefined) {
+        counts[cat] += 1;
+      } else {
+        counts.Personal += 1;
+      }
+    });
+    return counts;
+  }, [filteredTasks]);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -45,7 +99,7 @@ export const ReportsScreen = ({ tasks, habits, user }) => {
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Filter Pills Bar */}
+        {/* Filter Pills Bar: Today, This Week, This Month, Custom Date */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -116,7 +170,7 @@ export const ReportsScreen = ({ tasks, habits, user }) => {
             ]}
           >
             <Text style={[styles.statVal, { color: theme.colors.primary }]}>
-              12
+              {reminders.length}
             </Text>
             <Text style={[styles.statLabel, { color: theme.colors.textMuted }]}>
               Reminders
@@ -130,7 +184,7 @@ export const ReportsScreen = ({ tasks, habits, user }) => {
             ]}
           >
             <Text style={[styles.statVal, { color: theme.colors.secondary }]}>
-              85%
+              {habitsRate}%
             </Text>
             <Text style={[styles.statLabel, { color: theme.colors.textMuted }]}>
               Habits Rate
@@ -150,10 +204,12 @@ export const ReportsScreen = ({ tasks, habits, user }) => {
           </View>
           <View style={styles.bannerContent}>
             <Text style={[styles.bannerTitle, { color: theme.colors.textPrimary }]}>
-              Productivity Score: 87%
+              Productivity Score: {productivityScore}%
             </Text>
             <Text style={[styles.bannerSub, { color: theme.colors.textSecondary }]}>
-              You are more productive than 87% of users! (+12% from last week)
+              {productivityScore >= 80
+                ? `Outstanding performance for ${timeFilter.toLowerCase()}!`
+                : `Keep completing your planned activities for ${timeFilter.toLowerCase()}!`}
             </Text>
           </View>
         </View>
@@ -164,10 +220,10 @@ export const ReportsScreen = ({ tasks, habits, user }) => {
         {/* Weekly Progress Bar Chart */}
         <WeeklyBarChart />
 
-        {/* Category Filters */}
+        {/* Category Filters Breakdown */}
         <View style={styles.categoryHeader}>
           <Text style={[styles.categoryTitle, { color: theme.colors.textPrimary }]}>
-            Category Breakdown
+            Category Breakdown ({timeFilter})
           </Text>
         </View>
 
@@ -184,7 +240,7 @@ export const ReportsScreen = ({ tasks, habits, user }) => {
                 {cat}
               </Text>
               <Text style={[styles.catCount, { color: theme.colors.primary }]}>
-                {cat === 'Work' ? '14 Tasks' : cat === 'Health' ? '8 Tasks' : '5 Tasks'}
+                {categoryBreakdown[cat] || 0} Tasks
               </Text>
             </View>
           ))}

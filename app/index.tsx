@@ -129,6 +129,7 @@ function MainApp() {
           <ReportsScreen
             tasks={tasks}
             habits={habits}
+            reminders={reminders}
             user={user}
           />
         );
