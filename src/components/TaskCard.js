@@ -69,7 +69,6 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
         )}
       </TouchableOpacity>
 
-
       {/* Task Details */}
       <TouchableOpacity
         style={styles.contentSection}
@@ -77,15 +76,22 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
         activeOpacity={0.8}
       >
         <View style={styles.titleRow}>
-          <Text
-            style={[
-              styles.title,
-              { color: theme.colors.textPrimary },
-              task.completed && [styles.completedText, { color: theme.colors.textMuted }],
-            ]}
-          >
-            {task.title}
-          </Text>
+          <View style={styles.iconTitleGroup}>
+            {task.icon ? (
+              <View style={[styles.taskIconCircle, { backgroundColor: theme.colors.surfaceVariant }]}>
+                <Icon name={task.icon} size={16} color={theme.colors.primary} />
+              </View>
+            ) : null}
+            <Text
+              style={[
+                styles.title,
+                { color: theme.colors.textPrimary },
+                task.completed && [styles.completedText, { color: theme.colors.textMuted }],
+              ]}
+            >
+              {task.title}
+            </Text>
+          </View>
 
           {/* Priority Pill */}
           <View style={[styles.priorityBadge, { backgroundColor: badgeStyle.bg }]}>
@@ -139,7 +145,6 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
           <Icon name="trash" size={16} color={theme.colors.textMuted} />
         </TouchableOpacity>
       )}
-
     </View>
   );
 };
@@ -174,11 +179,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  iconTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  taskIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
   title: {
     fontSize: 16,
     fontWeight: '600',
     flex: 1,
-    marginRight: 8,
   },
   completedText: {
     textDecorationLine: 'line-through',

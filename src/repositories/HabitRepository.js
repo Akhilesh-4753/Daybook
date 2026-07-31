@@ -35,6 +35,23 @@ export const HabitRepository = {
     return { ...habit, id };
   },
 
+  update: async (habit) => {
+    const db = await getDB();
+    await db.runAsync(
+      `UPDATE habits SET title = ?, frequency = ?, auto_add_today = ?, icon = ? WHERE id = ?;`,
+      [habit.title, habit.frequency, habit.autoAddToday ? 1 : 0, habit.icon, habit.id]
+    );
+    return habit;
+  },
+
+  toggleAutoAdd: async (habitId) => {
+    const db = await getDB();
+    const habit = await db.getFirstAsync('SELECT auto_add_today FROM habits WHERE id = ?;', [habitId]);
+    if (!habit) return;
+    const nextState = habit.auto_add_today === 0 ? 1 : 0;
+    await db.runAsync('UPDATE habits SET auto_add_today = ? WHERE id = ?;', [nextState, habitId]);
+  },
+
   toggle: async (habitId) => {
     const db = await getDB();
     const habit = await db.getFirstAsync('SELECT * FROM habits WHERE id = ?;', [habitId]);

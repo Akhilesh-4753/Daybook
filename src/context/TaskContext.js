@@ -21,13 +21,15 @@ export const TaskProvider = ({ children }) => {
 
   const syncDailyHabitsToTasks = async (currentTasks, currentHabits) => {
     const todayStr = new Date().toISOString().split('T')[0];
-    let newTasksAdded = false;
     let updatedTasksList = [...currentTasks];
+    let changed = false;
 
     for (const habit of currentHabits) {
-      if (habit.autoAddToday !== false || habit.frequency === 'Daily' || habit.frequency === '5 Times a Week') {
-        const existing = updatedTasksList.find((t) => t.title.toLowerCase() === habit.title.toLowerCase() && t.date === todayStr);
-        if (!existing) {
+      const existingIdx = updatedTasksList.findIndex((t) => t.title.toLowerCase() === habit.title.toLowerCase() && t.date === todayStr);
+
+      if (habit.autoAddToday) {
+        // Should be in today's tasks
+        if (existingIdx === -1) {
           const habitTask = {
             id: 'h_task_' + habit.id + '_' + Date.now(),
             title: habit.title,
@@ -42,12 +44,19 @@ export const TaskProvider = ({ children }) => {
           };
           const savedTask = await TaskRepository.add(habitTask);
           updatedTasksList = [savedTask, ...updatedTasksList];
-          newTasksAdded = true;
+          changed = true;
+        }
+      } else {
+        // autoAddToday is false -> remove from today's tasks if present
+        if (existingIdx !== -1 && updatedTasksList[existingIdx].isHabitTask) {
+          await TaskRepository.delete(updatedTasksList[existingIdx].id);
+          updatedTasksList = updatedTasksList.filter((_, idx) => idx !== existingIdx);
+          changed = true;
         }
       }
     }
 
-    if (newTasksAdded) {
+    if (changed) {
       setTasks(updatedTasksList);
     }
   };
@@ -89,7 +98,7 @@ export const TaskProvider = ({ children }) => {
       const updated = prev.map((t) => (t.id === taskId ? { ...t, completed: confirmed ? true : !t.completed } : t));
       const targetTask = updated.find((t) => t.id === taskId);
 
-      // Sync habit if task corresponds to a habit
+      // Sync habit completion status if task belongs to a habit
       if (targetTask) {
         setHabits((prevHabits) =>
           prevHabits.map((h) => {
@@ -148,6 +157,15 @@ export const TaskProvider = ({ children }) => {
     });
   }, []);
 
+  const toggleAutoAddHabit = useCallback(async (habitId) => {
+    await HabitRepository.toggleAutoAdd(habitId);
+    setHabits((prev) => {
+      const updated = prev.map((h) => (h.id === habitId ? { ...h, autoAddToday: !h.autoAddToday } : h));
+      syncDailyHabitsToTasks(tasks, updated);
+      return updated;
+    });
+  }, [tasks]);
+
   const addHabit = useCallback(async (newHabit) => {
     const created = await HabitRepository.add(newHabit);
     setHabits((prev) => {
@@ -156,6 +174,20 @@ export const TaskProvider = ({ children }) => {
       return updated;
     });
   }, [tasks]);
+
+  const updateHabit = useCallback(async (updatedHabit) => {
+    await HabitRepository.update(updatedHabit);
+    setHabits((prev) => {
+      const updated = prev.map((h) => (h.id === updatedHabit.id ? updatedHabit : h));
+      syncDailyHabitsToTasks(tasks, updated);
+      return updated;
+    });
+  }, [tasks]);
+
+  const deleteHabit = useCallback(async (habitId) => {
+    await HabitRepository.delete(habitId);
+    setHabits((prev) => prev.filter((h) => h.id !== habitId));
+  }, []);
 
   // Reminder actions with Expo Local Notifications
   const addReminder = useCallback(async (newReminder) => {
@@ -189,7 +221,10 @@ export const TaskProvider = ({ children }) => {
       toggleTaskCompletion,
       deleteTask,
       toggleHabit,
+      toggleAutoAddHabit,
       addHabit,
+      updateHabit,
+      deleteHabit,
       addReminder,
       deleteReminder,
       addDiaryEntry,
@@ -205,7 +240,10 @@ export const TaskProvider = ({ children }) => {
       toggleTaskCompletion,
       deleteTask,
       toggleHabit,
+      toggleAutoAddHabit,
       addHabit,
+      updateHabit,
+      deleteHabit,
       addReminder,
       deleteReminder,
       addDiaryEntry,

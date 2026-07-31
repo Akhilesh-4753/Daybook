@@ -1,10 +1,32 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, Alert, Platform } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from './Icons';
 
-export const HabitCard = ({ habit, onToggleComplete, onToggleAutoAdd }) => {
+export const HabitCard = ({ habit, onToggleAutoAdd, onEdit, onDelete }) => {
   const { theme } = useTheme();
+
+  const handleDeletePress = () => {
+    const message = `Are you sure you want to delete "${habit.title}"?`;
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(message)) {
+        onDelete && onDelete(habit.id);
+      }
+    } else {
+      Alert.alert(
+        'Delete Habit',
+        message,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => onDelete && onDelete(habit.id),
+          },
+        ]
+      );
+    }
+  };
 
   return (
     <View
@@ -24,7 +46,7 @@ export const HabitCard = ({ habit, onToggleComplete, onToggleAutoAdd }) => {
               { backgroundColor: theme.colors.surfaceVariant },
             ]}
           >
-            <Icon name={habit.icon || 'star'} size={22} color={theme.colors.primary} />
+            <Icon name={habit.icon || 'sparkles'} size={22} color={theme.colors.primary} />
           </View>
           <View>
             <Text style={[styles.title, { color: theme.colors.textPrimary }]}>
@@ -37,29 +59,21 @@ export const HabitCard = ({ habit, onToggleComplete, onToggleAutoAdd }) => {
         </View>
 
         <View style={styles.rightGroup}>
-          <Text style={[styles.progressPercent, { color: theme.colors.primary }]}>
-            {habit.progress}%
-          </Text>
+          {/* Edit & Delete Action Buttons (Checkmark button removed) */}
           <TouchableOpacity
-            style={[
-              styles.checkButton,
-              {
-                backgroundColor: habit.completedToday
-                  ? theme.colors.success
-                  : theme.colors.cardSecondary,
-                borderColor: habit.completedToday
-                  ? theme.colors.success
-                  : theme.colors.border,
-              },
-            ]}
-            onPress={() => onToggleComplete(habit.id)}
+            style={[styles.actionBtn, { backgroundColor: theme.colors.surfaceVariant }]}
+            onPress={() => onEdit && onEdit(habit)}
             activeOpacity={0.7}
           >
-            <Icon
-              name="check"
-              size={16}
-              color={habit.completedToday ? '#FFFFFF' : theme.colors.textMuted}
-            />
+            <Icon name="edit" size={16} color={theme.colors.primary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionBtn, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}
+            onPress={handleDeletePress}
+            activeOpacity={0.7}
+          >
+            <Icon name="trash" size={16} color={theme.colors.danger} />
           </TouchableOpacity>
         </View>
       </View>
@@ -82,7 +96,7 @@ export const HabitCard = ({ habit, onToggleComplete, onToggleAutoAdd }) => {
         />
       </View>
 
-      {/* Footer info: Streak & Auto-Add to Today */}
+      {/* Footer info: Streak & Auto-Add To Task */}
       <View style={styles.footerRow}>
         <View style={styles.streakBadge}>
           <Icon name="fire" size={14} color="#F59E0B" />
@@ -91,11 +105,11 @@ export const HabitCard = ({ habit, onToggleComplete, onToggleAutoAdd }) => {
 
         <View style={styles.autoAddContainer}>
           <Text style={[styles.autoAddText, { color: theme.colors.textMuted }]}>
-            Auto-Add Today
+            Auto-Add To Task
           </Text>
           <Switch
             value={habit.autoAddToday}
-            onValueChange={() => onToggleAutoAdd(habit.id)}
+            onValueChange={() => onToggleAutoAdd && onToggleAutoAdd(habit.id)}
             trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
             thumbColor={habit.autoAddToday ? theme.colors.primary : '#F4F3F4'}
             style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
@@ -123,6 +137,8 @@ const styles = StyleSheet.create({
   leftGroup: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
   },
   iconContainer: {
     width: 44,
@@ -143,17 +159,12 @@ const styles = StyleSheet.create({
   rightGroup: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
-  progressPercent: {
-    fontSize: 16,
-    fontWeight: '800',
-    marginRight: 12,
-  },
-  checkButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1,
+  actionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -176,7 +187,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(245, 158, 11, 0.15)',
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
   },
@@ -192,6 +203,7 @@ const styles = StyleSheet.create({
   },
   autoAddText: {
     fontSize: 11,
+    fontWeight: '600',
     marginRight: 4,
   },
 });

@@ -32,6 +32,11 @@ export const Icon = ({ name, size = 22, color = '#6366F1' }) => {
     refresh: '🔄',
     backspace: '⌫',
     delete: '⌫',
+    walking: '🚶',
+    dog: '🐕',
+    writing: '✍️',
+    watching: '👁️',
+    mirror: '🪞',
   };
 
   const symbol = iconMap[name] || '📌';

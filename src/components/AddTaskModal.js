@@ -19,9 +19,23 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
   const [priority, setPriority] = useState('High');
   const [time, setTime] = useState('10:00 AM');
   const [notes, setNotes] = useState('');
+  const [selectedIcon, setSelectedIcon] = useState('sparkles');
 
   const categories = ['Work', 'Health', 'Personal', 'Finance'];
   const priorities = ['Low', 'Medium', 'High'];
+
+  const availableIcons = [
+    { id: 'sparkles', label: 'Meditation', symbol: '🧘' },
+    { id: 'droplet', label: 'Water', symbol: '💧' },
+    { id: 'dumbbell', label: 'Workout', symbol: '🏋️' },
+    { id: 'book', label: 'Reading', symbol: '📚' },
+    { id: 'ban', label: 'No Sugar', symbol: '🚫' },
+    { id: 'walking', label: 'Walking', symbol: '🚶' },
+    { id: 'dog', label: 'Dog Walk', symbol: '🐕' },
+    { id: 'writing', label: 'Writing', symbol: '✍️' },
+    { id: 'watching', label: 'Mindful', symbol: '👁️' },
+    { id: 'mirror', label: 'Affirmation', symbol: '🪞' },
+  ];
 
   const handleSave = () => {
     if (!title.trim()) return;
@@ -32,6 +46,7 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
       priority,
       time,
       notes,
+      icon: selectedIcon,
       completed: false,
       date: new Date().toISOString().split('T')[0],
     };
@@ -45,6 +60,7 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
     setNotes('');
     setCategory('Work');
     setPriority('High');
+    setSelectedIcon('sparkles');
   };
 
   return (
@@ -86,6 +102,38 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
               value={title}
               onChangeText={setTitle}
             />
+
+            {/* Choose Task Icon */}
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Choose Icon</Text>
+            <View style={styles.iconGrid}>
+              {availableIcons.map((ic) => (
+                <TouchableOpacity
+                  key={ic.id}
+                  style={[
+                    styles.iconBox,
+                    {
+                      backgroundColor:
+                        selectedIcon === ic.id
+                          ? 'rgba(99, 102, 241, 0.2)'
+                          : theme.colors.surfaceVariant,
+                      borderColor:
+                        selectedIcon === ic.id ? theme.colors.primary : theme.colors.border,
+                    },
+                  ]}
+                  onPress={() => setSelectedIcon(ic.id)}
+                >
+                  <Text style={styles.iconSymbolText}>{ic.symbol}</Text>
+                  <Text
+                    style={[
+                      styles.iconLabelText,
+                      { color: selectedIcon === ic.id ? theme.colors.primary : theme.colors.textMuted },
+                    ]}
+                  >
+                    {ic.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
             {/* Category */}
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Category</Text>
@@ -236,6 +284,28 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 14,
     borderWidth: 1,
+  },
+  iconGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginVertical: 6,
+  },
+  iconBox: {
+    width: '18%',
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconSymbolText: {
+    fontSize: 18,
+    marginBottom: 2,
+  },
+  iconLabelText: {
+    fontSize: 9,
+    fontWeight: '700',
   },
   textArea: {
     height: 70,
