@@ -2,48 +2,81 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 export const Icon = ({ name, size = 22, color = '#6366F1', style }) => {
-  // Sleek Vector Spiral Desk Calendar Icon (No July 17 text)
+  // Calendar Icon: Red top header, White body, Black date text
   if (name === 'calendar') {
-    const boxSize = Math.max(16, size);
+    const s = Math.max(22, size);
     return (
-      <View style={[styles.container, { width: boxSize, height: boxSize + 2 }, style]}>
-        {/* Top Spiral Binder Rings */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: boxSize * 0.6, zIndex: 10, marginBottom: -3 }}>
-          <View style={{ width: 2.5, height: 4, backgroundColor: color, borderRadius: 1 }} />
-          <View style={{ width: 2.5, height: 4, backgroundColor: color, borderRadius: 1 }} />
-        </View>
-        
-        {/* Calendar Body */}
+      <View style={[styles.container, { width: s, height: s }, style]}>
         <View
           style={{
-            width: boxSize,
-            height: boxSize,
-            borderRadius: 5,
-            borderWidth: 2,
-            borderColor: color,
+            width: s,
+            height: s,
+            borderRadius: 6,
+            borderWidth: 1,
+            borderColor: 'rgba(0,0,0,0.12)',
+            overflow: 'hidden',
+            backgroundColor: '#FFFFFF',
+            elevation: 2,
+          }}
+        >
+          {/* Top Red Header */}
+          <View style={{ height: '36%', backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '55%' }}>
+              <View style={{ width: 2, height: 3, borderRadius: 1, backgroundColor: '#FFFFFF' }} />
+              <View style={{ width: 2, height: 3, borderRadius: 1, backgroundColor: '#FFFFFF' }} />
+            </View>
+          </View>
+          {/* Bottom White Body with Black Date Text */}
+          <View style={{ flex: 1, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: s * 0.42, fontWeight: '900', color: '#111827', marginTop: -1 }}>
+              31
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  // Premium User Icon: Colorful badge background with crisp white silhouette
+  if (name === 'user') {
+    const s = Math.max(22, size);
+    const headSize = Math.round(s * 0.36);
+    const shoulderW = Math.round(s * 0.76);
+    const shoulderH = Math.round(s * 0.36);
+
+    return (
+      <View style={[styles.container, { width: s, height: s, alignItems: 'center', justifyContent: 'center' }, style]}>
+        <View
+          style={{
+            width: s,
+            height: s,
+            borderRadius: s / 2,
+            backgroundColor: color || '#6366F1',
+            alignItems: 'center',
+            justifyContent: 'center',
             overflow: 'hidden',
           }}
         >
-          {/* Header Bar */}
-          <View style={{ height: '32%', backgroundColor: color }} />
-          
-          {/* Grid Cells */}
+          {/* Head Circle */}
           <View
             style={{
-              flex: 1,
-              flexDirection: 'row',
-              flexWrap: 'wrap',
-              padding: 2,
-              gap: 2,
-              justifyContent: 'center',
-              alignItems: 'center',
+              width: headSize,
+              height: headSize,
+              borderRadius: headSize / 2,
+              backgroundColor: '#FFFFFF',
+              marginBottom: 1.5,
             }}
-          >
-            <View style={{ width: 2.5, height: 2.5, borderRadius: 1, backgroundColor: color }} />
-            <View style={{ width: 2.5, height: 2.5, borderRadius: 1, backgroundColor: color }} />
-            <View style={{ width: 2.5, height: 2.5, borderRadius: 1, backgroundColor: color }} />
-            <View style={{ width: 2.5, height: 2.5, borderRadius: 1, backgroundColor: color }} />
-          </View>
+          />
+          {/* Shoulder Arch */}
+          <View
+            style={{
+              width: shoulderW,
+              height: shoulderH,
+              borderTopLeftRadius: shoulderW / 2,
+              borderTopRightRadius: shoulderW / 2,
+              backgroundColor: '#FFFFFF',
+            }}
+          />
         </View>
       </View>
     );
@@ -72,7 +105,6 @@ export const Icon = ({ name, size = 22, color = '#6366F1', style }) => {
     close: '✕',
     edit: '✏️',
     trash: '🗑️',
-    user: '👤',
     lock: '🔒',
     cloud: '☁️',
     palette: '🎨',
