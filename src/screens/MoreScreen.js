@@ -1,27 +1,27 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Switch,
-  Alert,
-  Modal,
-  TextInput,
-  Image,
-  Platform,
-  Linking,
-} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { useTheme } from '../theme/ThemeContext';
-import { useSecurity } from '../context/SecurityContext';
-import { useTasks } from '../context/TaskContext';
-import { useAuth } from '../context/AuthContext';
+import { useState } from 'react';
+import {
+  Alert,
+  Image,
+  Linking,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Icon } from '../components/Icons';
 import { ImageCropModal } from '../components/ImageCropModal';
+import { useAuth } from '../context/AuthContext';
+import { useSecurity } from '../context/SecurityContext';
+import { useTasks } from '../context/TaskContext';
 import { BackupService } from '../services/BackupService';
 import { SecurityService } from '../services/SecurityService';
+import { useTheme } from '../theme/ThemeContext';
 
 export const MoreScreen = ({ onNavigateTab, onLogout }) => {
   const { theme, isDarkMode, toggleTheme } = useTheme();
@@ -547,46 +547,57 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
                 </Text>
               </View>
 
+
               {/* Story Content */}
               <View style={[styles.storyCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
                 <Text style={[styles.storySectionHeading, { color: theme.colors.textPrimary }]}>
-                  💡 The Journey & Mission
+                  💡 The Story Behind Daybook
                 </Text>
+
                 <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary }]}>
-                  "Like many people, I once struggled deeply with maintaining daily consistency, focus, and personal structure. For a long time, I handwrote my daily routines and plans in physical paper books.
+                  Daybook was born from a simple challenge—staying consistent every day. After relying on notebooks to manage my tasks and routines, I realized there had to be a smarter way.
                 </Text>
+
                 <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary }]}>
-                  As I transitioned into Software Development, I had a realization: <Text style={{ fontWeight: '700', color: theme.colors.primary }}>Why not build a dedicated digital productivity hub that turns daily planning into structured personal growth?</Text>
+                  As I transitioned into software development, I built <Text style={{ fontWeight: '700', color: theme.colors.primary }}>Daybook</Text> to bring tasks, habits, reminders, and journaling together in one simple, focused, and private space.
                 </Text>
+
                 <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary }]}>
-                  I created <Text style={{ fontWeight: '700', color: theme.colors.primary }}>Daybook</Text> to solve my own daily challenges—and now, I am giving this application to society to help everyone build discipline, manage tasks, and achieve their life goals."
+                  Today, Daybook helps you stay organized, build better habits, and make consistent progress—one day at a time.
                 </Text>
               </View>
 
-              {/* What Makes Daybook Unique */}
+              {/* Why Choose Daybook */}
               <View style={styles.uniqueBox}>
                 <Text style={[styles.uniqueTitle, { color: theme.colors.textPrimary }]}>
-                  ✨ What Makes Daybook Different?
+                  ✨ Why Choose Daybook?
                 </Text>
 
                 <View style={styles.bulletRow}>
                   <Text style={styles.bulletEmoji}>🔒</Text>
                   <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
-                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>100% Privacy Guarantee:</Text> All data remains locally on your device with zero cloud tracking.
+                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>Privacy First:</Text> Your data stays on your device, giving you complete control.
+                  </Text>
+                </View>
+
+                <View style={styles.bulletRow}>
+                  <Text style={styles.bulletEmoji}>📋</Text>
+                  <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
+                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>Everything Together:</Text> Tasks, habits, reminders, diary, and insights in one place.
                   </Text>
                 </View>
 
                 <View style={styles.bulletRow}>
                   <Text style={styles.bulletEmoji}>⚡</Text>
                   <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
-                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>All-in-One Growth Suite:</Text> Tasks, Habit Streaks, Reminders, Mood Diary & Analytics in one unified app.
+                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>Built for Consistency:</Text> Stay focused with a clean, distraction-free experience.
                   </Text>
                 </View>
 
                 <View style={styles.bulletRow}>
                   <Text style={styles.bulletEmoji}>🎯</Text>
                   <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
-                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>Built for Real Discipline:</Text> Designed around action and daily execution, without subscription paywalls.
+                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>Purpose-Driven:</Text> Small daily actions that lead to meaningful long-term growth.
                   </Text>
                 </View>
               </View>

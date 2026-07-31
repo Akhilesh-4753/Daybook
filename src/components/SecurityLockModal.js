@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Modal,
-  View,
-  Text,
   StyleSheet,
+  Text,
   TouchableOpacity,
   Vibration,
+  View,
 } from 'react-native';
 import { useSecurity } from '../context/SecurityContext';
 import { useTheme } from '../theme/ThemeContext';
@@ -47,7 +47,7 @@ export const SecurityLockModal = () => {
           if (Vibration && typeof Vibration.vibrate === 'function') {
             Vibration.vibrate(200);
           }
-        } catch (e) {}
+        } catch (e) { }
         setErrorMsg('Incorrect PIN. Please try again.');
         setPin('');
       } else {
@@ -216,6 +216,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    outlineStyle: 'none',
   },
   keyBtnEmpty: {
     width: 70,
