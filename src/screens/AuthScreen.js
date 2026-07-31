@@ -29,7 +29,7 @@ export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
       {/* Branding Header */}
       <View style={styles.brandContainer}>
         <View style={[styles.logoCircle, { backgroundColor: theme.colors.primary }]}>
-          <Icon name="sparkles" size={32} color="#FFFFFF" />
+          <Icon name="sparkles" size={28} color="#FFFFFF" />
         </View>
         <Text style={[styles.brandTitle, { color: theme.colors.textPrimary }]}>
           Daybook
@@ -117,36 +117,36 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 40,
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 16,
     alignItems: 'center',
   },
   brandContainer: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 12,
   },
   logoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
-    elevation: 8,
+    marginBottom: 6,
+    elevation: 6,
     shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   brandTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
   brandSubtitle: {
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: 13,
+    marginTop: 2,
     fontWeight: '500',
   },
   card: {
@@ -154,21 +154,21 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     borderRadius: 24,
     borderWidth: 1,
-    padding: 24,
-    elevation: 6,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
+    padding: 20,
+    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
   },
   toggleContainer: {
     flexDirection: 'row',
     borderRadius: 14,
     padding: 4,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   toggleTab: {
     flex: 1,
-    height: 40,
+    height: 38,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 11,
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: 12,
     maxWidth: 300,
   },
 });

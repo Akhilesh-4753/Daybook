@@ -317,7 +317,7 @@ export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
           ))
         )}
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
 
       {/* Edit Reminder Modal */}

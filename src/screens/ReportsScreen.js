@@ -304,7 +304,7 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
           ))}
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
     </View>
   );

@@ -380,7 +380,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
           </View>
         ))}
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
 
       {/* Edit User Profile Modal */}

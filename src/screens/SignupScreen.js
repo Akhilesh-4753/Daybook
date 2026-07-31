@@ -109,6 +109,10 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin }) => {
               backgroundColor: theme.colors.surfaceVariant,
               borderColor: focusedField === 'name' ? theme.colors.primary : theme.colors.border,
             },
+            focusedField === 'name' && [
+              styles.inputWrapperFocused,
+              { shadowColor: theme.colors.primary },
+            ],
           ]}
         >
           <Icon name="user" size={18} color={focusedField === 'name' ? theme.colors.primary : theme.colors.textMuted} style={styles.fieldIcon} />
@@ -134,6 +138,10 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin }) => {
               backgroundColor: theme.colors.surfaceVariant,
               borderColor: focusedField === 'email' ? theme.colors.primary : theme.colors.border,
             },
+            focusedField === 'email' && [
+              styles.inputWrapperFocused,
+              { shadowColor: theme.colors.primary },
+            ],
           ]}
         >
           <Icon name="email" size={18} color={focusedField === 'email' ? theme.colors.primary : theme.colors.textMuted} style={styles.fieldIcon} />
@@ -161,6 +169,10 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin }) => {
               backgroundColor: theme.colors.surfaceVariant,
               borderColor: focusedField === 'password' ? theme.colors.primary : theme.colors.border,
             },
+            focusedField === 'password' && [
+              styles.inputWrapperFocused,
+              { shadowColor: theme.colors.primary },
+            ],
           ]}
         >
           <Icon name="lock" size={18} color={focusedField === 'password' ? theme.colors.primary : theme.colors.textMuted} style={styles.fieldIcon} />
@@ -190,6 +202,10 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin }) => {
               backgroundColor: theme.colors.surfaceVariant,
               borderColor: focusedField === 'confirm' ? theme.colors.primary : theme.colors.border,
             },
+            focusedField === 'confirm' && [
+              styles.inputWrapperFocused,
+              { shadowColor: theme.colors.primary },
+            ],
           ]}
         >
           <Icon name="lock" size={18} color={focusedField === 'confirm' ? theme.colors.primary : theme.colors.textMuted} style={styles.fieldIcon} />
@@ -208,7 +224,7 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin }) => {
 
       {/* Submit Button */}
       <TouchableOpacity
-        style={[styles.submitBtn, { backgroundColor: theme.colors.primary, marginTop: 10 }]}
+        style={[styles.submitBtn, { backgroundColor: theme.colors.primary, marginTop: 6 }]}
         onPress={handleSignup}
         disabled={loading}
         activeOpacity={0.85}
@@ -238,39 +254,39 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   subtitle: {
-    fontSize: 14,
-    marginBottom: 20,
+    fontSize: 13,
+    marginBottom: 14,
   },
   errorBox: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(239, 68, 68, 0.12)',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   errorIcon: {
-    marginRight: 8,
+    marginRight: 6,
   },
   errorText: {
     color: '#EF4444',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     flex: 1,
   },
   fieldGroup: {
-    marginBottom: 14,
+    marginBottom: 10,
   },
   label: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -278,14 +294,20 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1.5,
     paddingHorizontal: 14,
-    height: 48,
+    height: 44,
+  },
+  inputWrapperFocused: {
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 6,
+    elevation: 3,
   },
   fieldIcon: {
     marginRight: 10,
   },
   input: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     height: '100%',
     outlineStyle: 'none',
   },
@@ -293,15 +315,15 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   submitBtn: {
-    height: 50,
-    borderRadius: 16,
+    height: 46,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 14,
   },
   submitBtnText: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
   },
   switchRow: {
@@ -310,10 +332,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   switchText: {
-    fontSize: 14,
+    fontSize: 13,
   },
   switchLink: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
   },
 });
