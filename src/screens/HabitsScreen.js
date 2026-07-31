@@ -13,6 +13,8 @@ import { useTheme } from '../theme/ThemeContext';
 import { useTasks } from '../context/TaskContext';
 import { HabitCard } from '../components/HabitCard';
 import { Icon } from '../components/Icons';
+import { TimePickerInput } from '../components/TimePickerInput';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 
 export const HabitsScreen = ({ habits = [], onGoBack }) => {
   const { theme } = useTheme();
@@ -21,13 +23,15 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [editingHabit, setEditingHabit] = useState(null);
 
+  // Deletion Modal State
+  const [deletingHabit, setDeletingHabit] = useState(null);
+
   // Habit Inputs
   const [newTitle, setNewTitle] = useState('');
   const [category, setCategory] = useState('Health');
   const [priority, setPriority] = useState('Medium');
   const [time, setTime] = useState('08:00 AM');
   const [notes, setNotes] = useState('');
-  const [newFrequency, setNewFrequency] = useState('Daily');
   const [selectedIcon, setSelectedIcon] = useState('droplet');
   const [autoAddToday, setAutoAddToday] = useState(true);
 
@@ -54,7 +58,6 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
     setPriority('Medium');
     setTime('08:00 AM');
     setNotes('');
-    setNewFrequency('Daily');
     setSelectedIcon('droplet');
     setAutoAddToday(true);
     setModalVisible(true);
@@ -67,7 +70,6 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
     setPriority(habit.priority || 'Medium');
     setTime(habit.time || '08:00 AM');
     setNotes(habit.notes || '');
-    setNewFrequency(habit.frequency || 'Daily');
     setSelectedIcon(habit.icon || 'droplet');
     setAutoAddToday(habit.autoAddToday !== false);
     setModalVisible(true);
@@ -85,13 +87,12 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
         priority,
         time,
         notes,
-        frequency: newFrequency,
         icon: selectedIcon,
         autoAddToday: autoAddToday,
       };
       updateHabit(updated);
     } else {
-      // Add new habit with full attributes
+      // Add new habit
       const newHabit = {
         id: 'h_' + Date.now(),
         title: newTitle,
@@ -99,7 +100,6 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
         priority,
         time,
         notes,
-        frequency: newFrequency,
         progress: 0,
         streak: 1,
         completedToday: false,
@@ -110,6 +110,17 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
     }
 
     setModalVisible(false);
+  };
+
+  const handleRequestDelete = (habit) => {
+    setDeletingHabit(habit);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deletingHabit) {
+      await deleteHabit(deletingHabit.id);
+      setDeletingHabit(null);
+    }
   };
 
   return (
@@ -168,7 +179,7 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
               habit={habit}
               onToggleAutoAdd={() => toggleAutoAddHabit && toggleAutoAddHabit(habit.id)}
               onEdit={handleOpenEditModal}
-              onDelete={(id) => deleteHabit && deleteHabit(id)}
+              onDelete={() => handleRequestDelete(habit)}
             />
           ))}
         </View>
@@ -190,7 +201,7 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
                 {editingHabit ? 'Edit Habit' : 'Add New Habit'}
               </Text>
 
-              {/* Habit Title (Renamed from Task Title) */}
+              {/* Habit Title */}
               <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
                 Habit Title
               </Text>
@@ -305,22 +316,11 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
                 ))}
               </View>
 
-              {/* Reminder Time */}
+              {/* Reminder Time Input */}
               <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
                 Reminder Time
               </Text>
-              <TextInput
-                style={[
-                  styles.modalInput,
-                  {
-                    backgroundColor: theme.colors.surfaceVariant,
-                    color: theme.colors.textPrimary,
-                    borderColor: theme.colors.border,
-                  },
-                ]}
-                value={time}
-                onChangeText={setTime}
-              />
+              <TimePickerInput value={time} onChangeTime={setTime} />
 
               {/* Notes (Optional) */}
               <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
@@ -343,38 +343,6 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
                 value={notes}
                 onChangeText={setNotes}
               />
-
-              {/* Frequency Selector */}
-              <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
-                Frequency
-              </Text>
-              <View style={styles.freqRow}>
-                {['Daily', '5 Times a Week', 'Weekly'].map((freq) => (
-                  <TouchableOpacity
-                    key={freq}
-                    style={[
-                      styles.freqChip,
-                      {
-                        backgroundColor:
-                          newFrequency === freq
-                            ? theme.colors.primary
-                            : theme.colors.surfaceVariant,
-                        borderColor: theme.colors.border,
-                      },
-                    ]}
-                    onPress={() => setNewFrequency(freq)}
-                  >
-                    <Text
-                      style={[
-                        styles.freqChipText,
-                        { color: newFrequency === freq ? '#FFFFFF' : theme.colors.textSecondary },
-                      ]}
-                    >
-                      {freq}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
 
               {/* Auto-Add To Task Toggle */}
               <View style={styles.autoAddSwitchRow}>
@@ -417,6 +385,16 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
           </View>
         </View>
       </Modal>
+
+      {/* Stylish Delete Confirmation Popup */}
+      <DeleteConfirmModal
+        visible={!!deletingHabit}
+        title="Delete Habit?"
+        itemTitle={deletingHabit ? deletingHabit.title : ''}
+        itemType="Habit"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setDeletingHabit(null)}
+      />
     </View>
   );
 };
@@ -563,21 +541,6 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 13,
     fontWeight: '600',
-  },
-  freqRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  freqChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  freqChipText: {
-    fontSize: 12,
-    fontWeight: '700',
   },
   autoAddSwitchRow: {
     flexDirection: 'row',

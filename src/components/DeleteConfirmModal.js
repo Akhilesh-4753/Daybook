@@ -3,10 +3,13 @@ import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from './Icons';
 
-export const DeleteConfirmModal = ({ visible, itemTitle, onConfirm, onCancel }) => {
+export const DeleteConfirmModal = ({ visible, title, itemTitle, itemType = 'Task', onConfirm, onCancel }) => {
   const { theme } = useTheme();
 
   if (!visible) return null;
+
+  const displayTitle = title || `Delete ${itemType}?`;
+  const displayMessage = `Are you sure you want to delete "${itemTitle || 'this item'}"? This action cannot be undone.`;
 
   return (
     <Modal visible={visible} transparent={true} animationType="fade" onRequestClose={onCancel}>
@@ -26,11 +29,11 @@ export const DeleteConfirmModal = ({ visible, itemTitle, onConfirm, onCancel }) 
           </View>
 
           <Text style={[styles.title, { color: theme.colors.textPrimary }]}>
-            Delete Task?
+            {displayTitle}
           </Text>
 
           <Text style={[styles.message, { color: theme.colors.textSecondary }]}>
-            Are you sure you want to delete &quot;{itemTitle || 'this task'}&quot;? This action cannot be undone.
+            {displayMessage}
           </Text>
 
           <View style={styles.buttonRow}>

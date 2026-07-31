@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from './Icons';
+import { TimePickerInput } from './TimePickerInput';
 
 export const AddReminderModal = ({ visible, onClose, onSave, selectedDate }) => {
   const { theme } = useTheme();
@@ -148,40 +149,9 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate }) => 
               onChangeText={setNotes}
             />
 
-            {/* Date & Time Row */}
-            <View style={styles.row}>
-              <View style={styles.halfWidth}>
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Time</Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: theme.colors.surfaceVariant,
-                      color: theme.colors.textPrimary,
-                      borderColor: theme.colors.border,
-                    },
-                  ]}
-                  value={time}
-                  onChangeText={setTime}
-                />
-              </View>
-
-              <View style={styles.halfWidth}>
-                <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Alarm Sound</Text>
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      backgroundColor: theme.colors.surfaceVariant,
-                      color: theme.colors.textPrimary,
-                      borderColor: theme.colors.border,
-                    },
-                  ]}
-                  value={alarmTone}
-                  onChangeText={setAlarmTone}
-                />
-              </View>
-            </View>
+            {/* Time Selector */}
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Reminder Time</Text>
+            <TimePickerInput value={time} onChangeTime={setTime} />
 
             {/* Category Selector */}
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Category</Text>
@@ -357,13 +327,6 @@ const styles = StyleSheet.create({
   textArea: {
     height: 60,
     textAlignVertical: 'top',
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  halfWidth: {
-    width: '48%',
   },
   optionsRow: {
     flexDirection: 'row',

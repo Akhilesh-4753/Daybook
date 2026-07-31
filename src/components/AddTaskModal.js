@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from './Icons';
+import { TimePickerInput } from './TimePickerInput';
 
 export const AddTaskModal = ({ visible, onClose, onSave }) => {
   const { theme } = useTheme();
@@ -61,6 +62,7 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
     setCategory('Work');
     setPriority('High');
     setSelectedIcon('sparkles');
+    setTime('10:00 AM');
   };
 
   return (
@@ -193,20 +195,9 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
               ))}
             </View>
 
-            {/* Time */}
+            {/* Logical Time Picker */}
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Reminder Time</Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  backgroundColor: theme.colors.surfaceVariant,
-                  color: theme.colors.textPrimary,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-              value={time}
-              onChangeText={setTime}
-            />
+            <TimePickerInput value={time} onChangeTime={setTime} />
 
             {/* Notes */}
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Notes (Optional)</Text>
