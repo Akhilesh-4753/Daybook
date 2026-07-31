@@ -294,14 +294,24 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
               ]}
               onPress={() => handleSelectFilter(filter)}
             >
-              <Text
-                style={[
-                  styles.filterPillText,
-                  { color: timeFilter === filter ? '#FFFFFF' : theme.colors.textSecondary },
-                ]}
-              >
-                {filter} {filter === 'Custom Date' ? '📅' : ''}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text
+                  style={[
+                    styles.filterPillText,
+                    { color: timeFilter === filter ? '#FFFFFF' : theme.colors.textSecondary },
+                  ]}
+                >
+                  {filter}
+                </Text>
+                {filter === 'Custom Date' && (
+                  <Icon
+                    name="calendar"
+                    size={14}
+                    color={timeFilter === filter ? '#FFFFFF' : theme.colors.primary}
+                    style={{ marginLeft: 6 }}
+                  />
+                )}
+              </View>
             </TouchableOpacity>
           ))}
         </ScrollView>
