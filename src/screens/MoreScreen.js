@@ -9,24 +9,36 @@ import {
   Alert,
   Modal,
   TextInput,
+  Image,
+  Platform,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../theme/ThemeContext';
 import { useSecurity } from '../context/SecurityContext';
 import { useTasks } from '../context/TaskContext';
+import { useAuth } from '../context/AuthContext';
 import { Icon } from '../components/Icons';
 import { BackupService } from '../services/BackupService';
 import { SecurityService } from '../services/SecurityService';
 
-export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
+export const MoreScreen = ({ onNavigateTab, onLogout }) => {
   const { theme, isDarkMode, toggleTheme } = useTheme();
-  const { isPinSet, isBiometricsEnabled, setupPin, removeSecurity } = useSecurity();
+  const { user, updateUserProfile } = useAuth();
+  const { isPinSet, setupPin, removeSecurity } = useSecurity();
   const { refreshData } = useTasks();
 
+  // Profile Edit Modal State
+  const [isEditProfileVisible, setIsEditProfileVisible] = useState(false);
+  const [editName, setEditName] = useState(user?.name || 'Akhilesh');
+  const [editPhotoUri, setEditPhotoUri] = useState(user?.photoUri || null);
+
+  // Image Source Options Modal State
+  const [isImageOptionsVisible, setIsImageOptionsVisible] = useState(false);
+
   // Security Modal State Flow
-  // Steps: 'select_type' | 'enter_pin' | 'verify_current' | 'manage_security'
   const [isSecurityModalVisible, setIsSecurityModalVisible] = useState(false);
   const [modalStep, setModalStep] = useState('select_type');
-  const [selectedLockType, setSelectedLockType] = useState('pin'); // 'pin' | 'biometric' | 'pattern'
+  const [selectedLockType, setSelectedLockType] = useState('pin');
 
   const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
@@ -64,6 +76,82 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
     );
   };
 
+  // Profile Edit Handlers
+  const handleOpenEditProfile = () => {
+    setEditName(user?.name || 'Akhilesh');
+    setEditPhotoUri(user?.photoUri || null);
+    setIsEditProfileVisible(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!editName.trim()) {
+      Alert.alert('Invalid Name', 'Please enter your name.');
+      return;
+    }
+    await updateUserProfile(editName, editPhotoUri);
+    setIsEditProfileVisible(false);
+    Alert.alert('Profile Updated', 'Your profile details have been saved permanently.');
+  };
+
+  const handleTakePhoto = async () => {
+    setIsImageOptionsVisible(false);
+    try {
+      if (Platform.OS !== 'web') {
+        const permission = await ImagePicker.requestCameraPermissionsAsync();
+        if (!permission.granted) {
+          Alert.alert('Permission Required', 'Camera permission is required to take a photo.');
+          return;
+        }
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+        base64: true,
+      });
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+        const formattedUri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        setEditPhotoUri(formattedUri);
+      }
+    } catch (e) {
+      console.warn('Camera error:', e);
+    }
+  };
+
+  const handleChooseFromGallery = async () => {
+    setIsImageOptionsVisible(false);
+    try {
+      if (Platform.OS !== 'web') {
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+          Alert.alert('Permission Required', 'Gallery access is required to pick an image.');
+          return;
+        }
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+        base64: true,
+      });
+      if (!result.canceled && result.assets && result.assets[0]) {
+        const asset = result.assets[0];
+        const formattedUri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        setEditPhotoUri(formattedUri);
+      }
+    } catch (e) {
+      console.warn('Gallery pick error:', e);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setIsImageOptionsVisible(false);
+    setEditPhotoUri(null);
+  };
+
+  // Security Handlers
   const handleOpenSecurityModal = () => {
     setCurrentPin('');
     setNewPin('');
@@ -71,10 +159,8 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
     setPinError('');
 
     if (isPinSet) {
-      // Must verify current password first!
       setModalStep('verify_current');
     } else {
-      // First time setup: choose lock type
       setModalStep('select_type');
     }
     setIsSecurityModalVisible(true);
@@ -93,7 +179,6 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
       return;
     }
 
-    // Current PIN verified! Proceed to manage security
     setCurrentPin('');
     setModalStep('manage_security');
   };
@@ -113,10 +198,7 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
       const isBio = selectedLockType === 'biometric' || enableBio;
       await setupPin(newPin, isBio);
       setIsSecurityModalVisible(false);
-      Alert.alert(
-        'Security Updated',
-        'App Lock security settings updated successfully.'
-      );
+      Alert.alert('Security Updated', 'App Lock security settings updated successfully.');
     } catch (e) {
       setPinError('Failed to save security PIN.');
     }
@@ -200,22 +282,25 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* User Profile Card */}
-        <View
+        {/* Clean User Profile Card */}
+        <TouchableOpacity
           style={[
             styles.profileCard,
             { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
           ]}
+          onPress={handleOpenEditProfile}
+          activeOpacity={0.8}
         >
-          <View
-            style={[
-              styles.avatarBg,
-              { backgroundColor: theme.colors.primary },
-            ]}
-          >
-            <Text style={styles.avatarText}>
-              {user?.name ? user.name.charAt(0) : 'A'}
-            </Text>
+          <View style={styles.avatarWrapper}>
+            {user?.photoUri ? (
+              <Image source={{ uri: user.photoUri }} style={styles.avatarImg} />
+            ) : (
+              <View style={[styles.avatarBg, { backgroundColor: theme.colors.primary }]}>
+                <Text style={styles.avatarText}>
+                  {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+                </Text>
+              </View>
+            )}
           </View>
 
           <View style={styles.profileInfo}>
@@ -225,13 +310,15 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
             <Text style={[styles.profileEmail, { color: theme.colors.textMuted }]}>
               {user?.email || 'akhilesh@daybook.app'}
             </Text>
+
+            {/* Subscription Badge */}
             <View style={[styles.badgePill, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
               <Text style={[styles.badgeText, { color: theme.colors.primary }]}>
-                ⭐ Pro Member • SQLite Offline Mode Active
+                ⭐ Subscription: Premium Member
               </Text>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
         {/* Menu Sections */}
         {menuSections.map((section) => (
@@ -295,6 +382,188 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Edit User Profile Modal */}
+      <Modal
+        visible={isEditProfileVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsEditProfileVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalCard,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.colors.textPrimary }]}>
+                Edit User Profile
+              </Text>
+              <Text style={[styles.modalSub, { color: theme.colors.textSecondary }]}>
+                Update photo and display name
+              </Text>
+            </View>
+
+            {/* Avatar Edit Section */}
+            <View style={styles.avatarEditContainer}>
+              <TouchableOpacity
+                style={styles.avatarEditWrapper}
+                onPress={() => setIsImageOptionsVisible(true)}
+                activeOpacity={0.8}
+              >
+                {editPhotoUri ? (
+                  <Image source={{ uri: editPhotoUri }} style={styles.editAvatarImg} />
+                ) : (
+                  <View style={[styles.editAvatarBg, { backgroundColor: theme.colors.primary }]}>
+                    <Text style={styles.editAvatarText}>
+                      {editName ? editName.charAt(0).toUpperCase() : 'A'}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+              <Text style={[styles.tapToChangeText, { color: theme.colors.primary }]}>
+                Tap photo to change or remove
+              </Text>
+            </View>
+
+            {/* Editable Name Field */}
+            <View style={styles.fieldGroup}>
+              <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>
+                User Display Name
+              </Text>
+              <TextInput
+                style={[
+                  styles.textInput,
+                  {
+                    backgroundColor: theme.colors.surfaceVariant,
+                    color: theme.colors.textPrimary,
+                    borderColor: theme.colors.border,
+                  },
+                ]}
+                placeholder="Enter your name"
+                placeholderTextColor={theme.colors.textMuted}
+                value={editName}
+                onChangeText={setEditName}
+              />
+            </View>
+
+            {/* Default Subscription Field */}
+            <View style={styles.fieldGroup}>
+              <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>
+                Membership Tier
+              </Text>
+              <View
+                style={[
+                  styles.subscriptionDisplayBox,
+                  { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: theme.colors.border },
+                ]}
+              >
+                <Text style={[styles.subscriptionDisplayText, { color: theme.colors.primary }]}>
+                  ⭐ Subscription: Premium Member
+                </Text>
+              </View>
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.modalBtnRow}>
+              <TouchableOpacity
+                style={[styles.cancelBtn, { borderColor: theme.colors.border }]}
+                onPress={() => setIsEditProfileVisible(false)}
+              >
+                <Text style={[styles.cancelBtnText, { color: theme.colors.textSecondary }]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.savePinBtn, { backgroundColor: theme.colors.primary }]}
+                onPress={handleSaveProfile}
+              >
+                <Text style={styles.savePinBtnText}>Update Profile</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Image Source Selection Modal */}
+      <Modal
+        visible={isImageOptionsVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsImageOptionsVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalCard,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
+            <Text style={[styles.modalTitle, { color: theme.colors.textPrimary, marginBottom: 16 }]}>
+              Profile Photo Options
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.optionCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}
+              onPress={handleTakePhoto}
+            >
+              <Text style={styles.optionEmoji}>📷</Text>
+              <View style={styles.optionTextCol}>
+                <Text style={[styles.optionTitle, { color: theme.colors.textPrimary }]}>
+                  Open Camera
+                </Text>
+                <Text style={[styles.optionSub, { color: theme.colors.textMuted }]}>
+                  Take a new profile picture
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.optionCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}
+              onPress={handleChooseFromGallery}
+            >
+              <Text style={styles.optionEmoji}>🖼️</Text>
+              <View style={styles.optionTextCol}>
+                <Text style={[styles.optionTitle, { color: theme.colors.textPrimary }]}>
+                  Choose from Gallery
+                </Text>
+                <Text style={[styles.optionSub, { color: theme.colors.textMuted }]}>
+                  Select photo from your device
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            {editPhotoUri ? (
+              <TouchableOpacity
+                style={[styles.optionCard, { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)' }]}
+                onPress={handleRemovePhoto}
+              >
+                <Text style={styles.optionEmoji}>🗑️</Text>
+                <View style={styles.optionTextCol}>
+                  <Text style={[styles.optionTitle, { color: theme.colors.danger || '#EF4444' }]}>
+                    Remove Image
+                  </Text>
+                  <Text style={[styles.optionSub, { color: theme.colors.textMuted }]}>
+                    Delete current profile photo
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ) : null}
+
+            <TouchableOpacity
+              style={[styles.cancelBtnFull, { borderColor: theme.colors.border, marginTop: 10 }]}
+              onPress={() => setIsImageOptionsVisible(false)}
+            >
+              <Text style={[styles.cancelBtnText, { color: theme.colors.textSecondary }]}>
+                Close
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Multi-Step App Lock & Security Modal */}
       <Modal
@@ -398,7 +667,7 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
                 >
                   <Text style={styles.optionEmoji}>🔓</Text>
                   <View style={styles.optionTextCol}>
-                    <Text style={[styles.optionTitle, { color: theme.colors.danger }]}>
+                    <Text style={[styles.optionTitle, { color: theme.colors.danger || '#EF4444' }]}>
                       Turn Off App Lock
                     </Text>
                     <Text style={[styles.optionSub, { color: theme.colors.textMuted }]}>
@@ -587,13 +856,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginVertical: 12,
   },
+  avatarWrapper: {
+    marginRight: 16,
+  },
   avatarBg: {
     width: 54,
     height: 54,
     borderRadius: 27,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+  },
+  avatarImg: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
   },
   avatarText: {
     color: '#FFFFFF',
@@ -614,7 +890,7 @@ const styles = StyleSheet.create({
   badgePill: {
     marginTop: 6,
     paddingHorizontal: 10,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 10,
     alignSelf: 'flex-start',
   },
@@ -703,6 +979,35 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 18,
   },
+  avatarEditContainer: {
+    alignItems: 'center',
+    marginVertical: 12,
+  },
+  avatarEditWrapper: {
+    position: 'relative',
+  },
+  editAvatarImg: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+  },
+  editAvatarBg: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editAvatarText: {
+    color: '#FFFFFF',
+    fontSize: 32,
+    fontWeight: '800',
+  },
+  tapToChangeText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 8,
+  },
   modalError: {
     color: '#EF4444',
     fontSize: 12,
@@ -740,6 +1045,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 6,
+  },
+  textInput: {
+    height: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    fontSize: 15,
+  },
+  subscriptionDisplayBox: {
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  subscriptionDisplayText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   pinInput: {
     height: 48,

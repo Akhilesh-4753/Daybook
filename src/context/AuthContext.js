@@ -12,12 +12,14 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     loadInitialSession();
 
-    const unsubscribe = subscribeToAuthChanges((firebaseUser) => {
+    const unsubscribe = subscribeToAuthChanges(async (firebaseUser) => {
       if (firebaseUser) {
+        const savedUser = await PreferencesService.getSession();
         const userData = {
-          name: firebaseUser.displayName || 'Akhilesh',
+          name: (savedUser && savedUser.name) || firebaseUser.displayName || 'Akhilesh',
           email: firebaseUser.email,
           uid: firebaseUser.uid,
+          photoUri: (savedUser && savedUser.photoUri) || firebaseUser.photoURL || null,
           productivityScore: 87,
           streak: 12,
         };
@@ -47,10 +49,12 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password) => {
     const res = await loginUser(email, password);
+    const savedUser = await PreferencesService.getSession();
     const userData = {
-      name: res.user.displayName || email.split('@')[0],
+      name: (savedUser && savedUser.name) || res.user.displayName || email.split('@')[0],
       email: res.user.email || email,
       uid: res.user.uid,
+      photoUri: (savedUser && savedUser.photoUri) || res.user.photoURL || null,
       productivityScore: 87,
       streak: 12,
     };
@@ -66,6 +70,7 @@ export const AuthProvider = ({ children }) => {
       name: res.user.displayName || name,
       email: res.user.email || email,
       uid: res.user.uid,
+      photoUri: null,
       productivityScore: 100,
       streak: 1,
     };
@@ -80,6 +85,23 @@ export const AuthProvider = ({ children }) => {
     await PreferencesService.clearSession();
     setIsAuthenticated(false);
     setUser(null);
+  }, []);
+
+  const updateUserProfile = useCallback(async (name, photoUri) => {
+    let permanentPhoto = photoUri;
+    if (photoUri) {
+      permanentPhoto = await PreferencesService.saveProfilePhoto(photoUri);
+    }
+
+    setUser((prev) => {
+      const updated = {
+        ...(prev || {}),
+        name: name !== undefined ? name : (prev?.name || 'Akhilesh'),
+        photoUri: permanentPhoto !== undefined ? permanentPhoto : prev?.photoUri,
+      };
+      PreferencesService.saveSession(updated);
+      return updated;
+    });
   }, []);
 
   const handleSetUser = useCallback((userData) => {
@@ -102,6 +124,7 @@ export const AuthProvider = ({ children }) => {
         signup,
         logout,
         setUser: handleSetUser,
+        updateUserProfile,
       }}
     >
       {children}

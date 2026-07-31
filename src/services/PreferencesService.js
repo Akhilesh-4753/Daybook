@@ -1,3 +1,6 @@
+import * as FileSystem from 'expo-file-system';
+import { Platform } from 'react-native';
+
 let AsyncStorage;
 try {
   AsyncStorage = require('@react-native-async-storage/async-storage').default;
@@ -56,6 +59,22 @@ export const PreferencesService = {
       await AsyncStorage.removeItem(KEYS.SESSION);
     } catch (e) {
       console.error(e);
+    }
+  },
+
+  // Save profile image permanently (supports Base64 for web & local paths for mobile)
+  saveProfilePhoto: async (sourceUri) => {
+    if (!sourceUri) return null;
+    if (sourceUri.startsWith('data:') || Platform.OS === 'web') return sourceUri;
+
+    try {
+      const filename = `profile_${Date.now()}.jpg`;
+      const destPath = `${FileSystem.documentDirectory}${filename}`;
+      await FileSystem.copyAsync({ from: sourceUri, to: destPath });
+      return destPath;
+    } catch (e) {
+      console.warn('Permanent photo save fallback:', e);
+      return sourceUri;
     }
   },
 
