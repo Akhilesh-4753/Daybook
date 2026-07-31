@@ -424,6 +424,7 @@ const styles = StyleSheet.create({
     height: 180,
     textAlignVertical: 'top',
     lineHeight: 22,
+    outlineStyle: 'none',
   },
   saveBtn: {
     height: 52,

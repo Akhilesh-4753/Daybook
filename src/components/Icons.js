@@ -37,6 +37,10 @@ export const Icon = ({ name, size = 22, color = '#6366F1' }) => {
     writing: '✍️',
     watching: '👁️',
     mirror: '🪞',
+    email: '✉️',
+    mail: '✉️',
+    eye: '👁️',
+    eyeOff: '🙈',
   };
 
   const symbol = iconMap[name] || '📌';

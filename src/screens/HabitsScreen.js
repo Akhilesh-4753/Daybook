@@ -500,6 +500,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 15,
     marginBottom: 10,
+    outlineStyle: 'none',
   },
   textArea: {
     height: 60,

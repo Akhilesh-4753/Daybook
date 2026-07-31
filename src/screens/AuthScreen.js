@@ -8,7 +8,6 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from '../components/Icons';
-import { isFirebaseConfigured } from '../services/firebase';
 import { LoginScreen } from './LoginScreen';
 import { SignupScreen } from './SignupScreen';
 
@@ -19,16 +18,6 @@ export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
   const handleSuccess = (userData) => {
     if (onAuthSuccess) onAuthSuccess(userData);
     if (onLoginSuccess) onLoginSuccess(userData);
-  };
-
-  const handleDemoAccess = () => {
-    handleSuccess({
-      name: 'Akhilesh',
-      email: 'akhilesh@daybook.app',
-      uid: 'demo_user',
-      productivityScore: 87,
-      streak: 12,
-    });
   };
 
   return (
@@ -48,30 +37,6 @@ export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
         <Text style={[styles.brandSubtitle, { color: theme.colors.textSecondary }]}>
           Plan Your Day, Organize Your Life.
         </Text>
-
-        {/* Firebase indicator */}
-        <View
-          style={[
-            styles.firebaseBadge,
-            {
-              backgroundColor: isFirebaseConfigured
-                ? 'rgba(16, 185, 129, 0.15)'
-                : 'rgba(245, 158, 11, 0.15)',
-              borderColor: isFirebaseConfigured ? theme.colors.success : theme.colors.warning,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.firebaseBadgeText,
-              { color: isFirebaseConfigured ? theme.colors.success : '#D97706' },
-            ]}
-          >
-            {isFirebaseConfigured
-              ? '🔥 Connected to Firebase (daybook-cf7c1)'
-              : '⚡ Firebase Sync Ready (Demo & Offline Mode)'}
-          </Text>
-        </View>
       </View>
 
       {/* Main Card */}
@@ -131,13 +96,11 @@ export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
           <LoginScreen
             onLoginSuccess={handleSuccess}
             onSwitchToSignup={() => setIsLoginMode(false)}
-            onDemoAccess={handleDemoAccess}
           />
         ) : (
           <SignupScreen
             onSignupSuccess={handleSuccess}
             onSwitchToLogin={() => setIsLoginMode(true)}
-            onDemoAccess={handleDemoAccess}
           />
         )}
       </View>
@@ -185,17 +148,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
     fontWeight: '500',
-  },
-  firebaseBadge: {
-    marginTop: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  firebaseBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
   },
   card: {
     width: '100%',

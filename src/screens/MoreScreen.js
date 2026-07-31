@@ -1052,6 +1052,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 16,
     fontSize: 15,
+    outlineStyle: 'none',
   },
   subscriptionDisplayBox: {
     height: 46,
@@ -1071,6 +1072,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 16,
     letterSpacing: 2,
+    outlineStyle: 'none',
   },
   bioSwitchRow: {
     flexDirection: 'row',

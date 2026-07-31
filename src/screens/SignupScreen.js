@@ -11,7 +11,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { Icon } from '../components/Icons';
 import { signUpUser } from '../services/firebase';
 
-export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin, onDemoAccess }) => {
+export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin }) => {
   const { theme } = useTheme();
 
   const [name, setName] = useState('');
@@ -21,6 +21,7 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin, onDemoAccess })
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [focusedField, setFocusedField] = useState(null);
 
   const handleSignup = async () => {
     setErrorMessage('');
@@ -93,30 +94,49 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin, onDemoAccess })
       {/* Error Banner */}
       {errorMessage ? (
         <View style={styles.errorBox}>
-          <Icon name="alert-circle" size={18} color="#EF4444" style={styles.errorIcon} />
+          <Icon name="ban" size={18} color="#EF4444" style={styles.errorIcon} />
           <Text style={styles.errorText}>{errorMessage}</Text>
         </View>
       ) : null}
 
-      {/* Form Fields */}
+      {/* Full Name Field */}
       <View style={styles.fieldGroup}>
         <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Full Name</Text>
-        <View style={[styles.inputWrapper, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
-          <Icon name="user" size={18} color={theme.colors.textMuted} style={styles.fieldIcon} />
+        <View
+          style={[
+            styles.inputWrapper,
+            {
+              backgroundColor: theme.colors.surfaceVariant,
+              borderColor: focusedField === 'name' ? theme.colors.primary : theme.colors.border,
+            },
+          ]}
+        >
+          <Icon name="user" size={18} color={focusedField === 'name' ? theme.colors.primary : theme.colors.textMuted} style={styles.fieldIcon} />
           <TextInput
             style={[styles.input, { color: theme.colors.textPrimary }]}
             placeholder="e.g. Akhilesh"
             placeholderTextColor={theme.colors.textMuted}
             value={name}
             onChangeText={setName}
+            onFocus={() => setFocusedField('name')}
+            onBlur={() => setFocusedField(null)}
           />
         </View>
       </View>
 
+      {/* Email Address Field */}
       <View style={styles.fieldGroup}>
         <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Email Address</Text>
-        <View style={[styles.inputWrapper, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
-          <Icon name="mail" size={18} color={theme.colors.textMuted} style={styles.fieldIcon} />
+        <View
+          style={[
+            styles.inputWrapper,
+            {
+              backgroundColor: theme.colors.surfaceVariant,
+              borderColor: focusedField === 'email' ? theme.colors.primary : theme.colors.border,
+            },
+          ]}
+        >
+          <Icon name="email" size={18} color={focusedField === 'email' ? theme.colors.primary : theme.colors.textMuted} style={styles.fieldIcon} />
           <TextInput
             style={[styles.input, { color: theme.colors.textPrimary }]}
             placeholder="you@example.com"
@@ -125,14 +145,25 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin, onDemoAccess })
             autoCapitalize="none"
             value={email}
             onChangeText={setEmail}
+            onFocus={() => setFocusedField('email')}
+            onBlur={() => setFocusedField(null)}
           />
         </View>
       </View>
 
+      {/* Password Field */}
       <View style={styles.fieldGroup}>
         <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Password</Text>
-        <View style={[styles.inputWrapper, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
-          <Icon name="lock" size={18} color={theme.colors.textMuted} style={styles.fieldIcon} />
+        <View
+          style={[
+            styles.inputWrapper,
+            {
+              backgroundColor: theme.colors.surfaceVariant,
+              borderColor: focusedField === 'password' ? theme.colors.primary : theme.colors.border,
+            },
+          ]}
+        >
+          <Icon name="lock" size={18} color={focusedField === 'password' ? theme.colors.primary : theme.colors.textMuted} style={styles.fieldIcon} />
           <TextInput
             style={[styles.input, { color: theme.colors.textPrimary }]}
             placeholder="At least 6 characters"
@@ -140,17 +171,28 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin, onDemoAccess })
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
+            onFocus={() => setFocusedField('password')}
+            onBlur={() => setFocusedField(null)}
           />
-          <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
-            <Icon name={showPassword ? 'eye-off' : 'eye'} size={18} color={theme.colors.textMuted} />
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn} activeOpacity={0.7}>
+            <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} color={theme.colors.textMuted} />
           </TouchableOpacity>
         </View>
       </View>
 
+      {/* Confirm Password Field */}
       <View style={styles.fieldGroup}>
         <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Confirm Password</Text>
-        <View style={[styles.inputWrapper, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
-          <Icon name="lock" size={18} color={theme.colors.textMuted} style={styles.fieldIcon} />
+        <View
+          style={[
+            styles.inputWrapper,
+            {
+              backgroundColor: theme.colors.surfaceVariant,
+              borderColor: focusedField === 'confirm' ? theme.colors.primary : theme.colors.border,
+            },
+          ]}
+        >
+          <Icon name="lock" size={18} color={focusedField === 'confirm' ? theme.colors.primary : theme.colors.textMuted} style={styles.fieldIcon} />
           <TextInput
             style={[styles.input, { color: theme.colors.textPrimary }]}
             placeholder="Re-enter password"
@@ -158,6 +200,8 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin, onDemoAccess })
             secureTextEntry={!showPassword}
             value={confirmPassword}
             onChangeText={setConfirmPassword}
+            onFocus={() => setFocusedField('confirm')}
+            onBlur={() => setFocusedField(null)}
           />
         </View>
       </View>
@@ -176,13 +220,6 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin, onDemoAccess })
         )}
       </TouchableOpacity>
 
-      {/* Divider */}
-      <View style={styles.dividerRow}>
-        <View style={[styles.line, { backgroundColor: theme.colors.border }]} />
-        <Text style={[styles.dividerText, { color: theme.colors.textMuted }]}>OR</Text>
-        <View style={[styles.line, { backgroundColor: theme.colors.border }]} />
-      </View>
-
       {/* Switch to Log In */}
       <View style={styles.switchRow}>
         <Text style={[styles.switchText, { color: theme.colors.textSecondary }]}>
@@ -192,18 +229,6 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin, onDemoAccess })
           <Text style={[styles.switchLink, { color: theme.colors.primary }]}>Log In</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Demo Mode Button */}
-      {onDemoAccess && (
-        <TouchableOpacity
-          style={[styles.demoBtn, { backgroundColor: theme.colors.cardSecondary, borderColor: theme.colors.border }]}
-          onPress={onDemoAccess}
-        >
-          <Text style={[styles.demoBtnText, { color: theme.colors.textPrimary }]}>
-            🚀 Demo Mode (Quick Sign-In)
-          </Text>
-        </TouchableOpacity>
-      )}
     </View>
   );
 };
@@ -251,7 +276,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 14,
-    borderWidth: 1,
+    borderWidth: 1.5,
     paddingHorizontal: 14,
     height: 48,
   },
@@ -262,6 +287,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     height: '100%',
+    outlineStyle: 'none',
   },
   eyeBtn: {
     padding: 6,
@@ -271,31 +297,17 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 20,
   },
   submitBtnText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
   },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 18,
-  },
-  line: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    fontSize: 11,
-    fontWeight: '700',
-    marginHorizontal: 10,
-  },
   switchRow: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
   },
   switchText: {
     fontSize: 14,
@@ -303,16 +315,5 @@ const styles = StyleSheet.create({
   switchLink: {
     fontSize: 14,
     fontWeight: '700',
-  },
-  demoBtn: {
-    height: 44,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  demoBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
   },
 });

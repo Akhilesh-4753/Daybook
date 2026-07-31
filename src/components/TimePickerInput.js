@@ -140,6 +140,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     width: '100%',
     height: '100%',
+    outlineStyle: 'none',
   },
   colonText: {
     fontSize: 22,

@@ -275,6 +275,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 14,
     borderWidth: 1,
+    outlineStyle: 'none',
   },
   iconGrid: {
     flexDirection: 'row',
