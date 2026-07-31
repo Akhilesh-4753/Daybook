@@ -11,6 +11,7 @@ import {
   TextInput,
   Image,
   Platform,
+  Linking,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../theme/ThemeContext';
@@ -50,6 +51,10 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
   const [confirmPin, setConfirmPin] = useState('');
   const [enableBio, setEnableBio] = useState(true);
   const [pinError, setPinError] = useState('');
+
+  // Privacy Policy & About Us Modal States
+  const [isPrivacyModalVisible, setIsPrivacyModalVisible] = useState(false);
+  const [isAboutUsModalVisible, setIsAboutUsModalVisible] = useState(false);
 
   const handleExportBackup = async () => {
     try {
@@ -222,6 +227,19 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
     Alert.alert('Security Disabled', 'App Lock & Biometric protection removed.');
   };
 
+  const handleOpenSocialLink = async (url) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      } else {
+        Alert.alert('Cannot Open Link', `Opening URL: ${url}`);
+      }
+    } catch (e) {
+      Alert.alert('Link Error', url);
+    }
+  };
+
   const menuSections = [
     {
       title: 'Preferences & Security',
@@ -267,6 +285,25 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
           subtitle: 'Import offline daybook_backup.json',
           icon: 'sparkles',
           onPress: handleImportBackup,
+        },
+      ],
+    },
+    {
+      title: 'About & Legal',
+      items: [
+        {
+          id: 'about_us',
+          title: 'About Us & Developer',
+          subtitle: 'Created by Akhilesh — Story, Vision & Socials',
+          icon: 'user',
+          onPress: () => setIsAboutUsModalVisible(true),
+        },
+        {
+          id: 'privacy_policy',
+          title: 'Privacy Policy & Security',
+          subtitle: '100% Local Storage & Offline Privacy Promise',
+          icon: 'shield',
+          onPress: () => setIsPrivacyModalVisible(true),
         },
       ],
     },
@@ -402,6 +439,206 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
         onClose={() => setIsCropModalVisible(false)}
         onCropDone={handleCropDone}
       />
+
+      {/* Privacy Policy Modal */}
+      <Modal
+        visible={isPrivacyModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsPrivacyModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.aboutModalCard,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <View style={[styles.modalHeaderIconBg, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
+                <Icon name="shield" size={28} color={theme.colors.primary} />
+              </View>
+              <Text style={[styles.modalTitle, { color: theme.colors.textPrimary }]}>
+                Privacy Policy & Data Security
+              </Text>
+              <Text style={[styles.modalSub, { color: theme.colors.textSecondary }]}>
+                100% Offline • Zero Cloud Tracking • Your Data Belongs Only to You
+              </Text>
+            </View>
+
+            <ScrollView style={{ maxHeight: 380 }} showsVerticalScrollIndicator={true}>
+              <View style={[styles.privacyBadgeBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)', borderColor: '#10B981' }]}>
+                <Text style={styles.privacyBadgeTitle}>🛡️ Our Absolute Privacy Promise</Text>
+                <Text style={[styles.privacyBadgeDesc, { color: theme.colors.textPrimary }]}>
+                  Daybook is engineered from the ground up to respect your privacy. We NEVER store, upload, transmit, or harvest your personal tasks, habits, diary entries, or profile photos on any external cloud server or remote database.
+                </Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
+                  1. Local SQLite Storage Architecture
+                </Text>
+                <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
+                  All your data—including daily tasks, reminder schedules, mood diaries, and habit streaks—is saved directly inside an encrypted SQLite database stored locally on your device hardware.
+                </Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
+                  2. Zero Data Sales & Zero Telemetry
+                </Text>
+                <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
+                  We do not sell, share, or monetize your personal information. Daybook operates completely offline without background ad trackers, behavioral profiling, or analytical telemetry.
+                </Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
+                  3. Full User Data Ownership & Local Backups
+                </Text>
+                <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
+                  You own 100% of your data. You can export a full local JSON backup (`daybook_backup.json`) at any time and transfer it freely to any device without cloud lock-in.
+                </Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[styles.closeModalBtn, { backgroundColor: theme.colors.primary }]}
+              onPress={() => setIsPrivacyModalVisible(false)}
+            >
+              <Text style={styles.closeModalBtnText}>I Understand & Agree</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* About Us & Developer Story Modal */}
+      <Modal
+        visible={isAboutUsModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsAboutUsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.aboutModalCard,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
+            <ScrollView style={{ maxHeight: 460 }} showsVerticalScrollIndicator={false}>
+              {/* Builder Profile Header */}
+              <View style={styles.builderHeader}>
+                <View style={[styles.builderAvatarBorder, { borderColor: theme.colors.primary }]}>
+                  <Image
+                    source={require('../../assets/images/builder.png')}
+                    style={styles.builderImg}
+                    resizeMode="cover"
+                  />
+                </View>
+                <Text style={[styles.builderName, { color: theme.colors.textPrimary }]}>
+                  Akhilesh
+                </Text>
+                <Text style={[styles.builderTitlePill, { color: theme.colors.primary, backgroundColor: 'rgba(99, 102, 241, 0.12)' }]}>
+                  🚀 Creator & Lead Developer of Daybook
+                </Text>
+                <Text style={[styles.builderDegree, { color: theme.colors.textMuted }]}>
+                  Accountant ➔ Software Developer
+                </Text>
+              </View>
+
+              {/* Story Content */}
+              <View style={[styles.storyCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
+                <Text style={[styles.storySectionHeading, { color: theme.colors.textPrimary }]}>
+                  💡 The Journey & Mission
+                </Text>
+                <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary }]}>
+                  "Like many people, I once struggled deeply with maintaining daily consistency, focus, and personal structure. For a long time, I handwrote my daily routines and plans in physical paper books.
+                </Text>
+                <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary }]}>
+                  As I transitioned into Software Development, I had a realization: <Text style={{ fontWeight: '700', color: theme.colors.primary }}>Why not build a dedicated digital productivity hub that turns daily planning into structured personal growth?</Text>
+                </Text>
+                <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary }]}>
+                  I created <Text style={{ fontWeight: '700', color: theme.colors.primary }}>Daybook</Text> to solve my own daily challenges—and now, I am giving this application to society to help everyone build discipline, manage tasks, and achieve their life goals."
+                </Text>
+              </View>
+
+              {/* What Makes Daybook Unique */}
+              <View style={styles.uniqueBox}>
+                <Text style={[styles.uniqueTitle, { color: theme.colors.textPrimary }]}>
+                  ✨ What Makes Daybook Different?
+                </Text>
+
+                <View style={styles.bulletRow}>
+                  <Text style={styles.bulletEmoji}>🔒</Text>
+                  <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
+                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>100% Privacy Guarantee:</Text> All data remains locally on your device with zero cloud tracking.
+                  </Text>
+                </View>
+
+                <View style={styles.bulletRow}>
+                  <Text style={styles.bulletEmoji}>⚡</Text>
+                  <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
+                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>All-in-One Growth Suite:</Text> Tasks, Habit Streaks, Reminders, Mood Diary & Analytics in one unified app.
+                  </Text>
+                </View>
+
+                <View style={styles.bulletRow}>
+                  <Text style={styles.bulletEmoji}>🎯</Text>
+                  <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
+                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>Built for Real Discipline:</Text> Designed around action and daily execution, without subscription paywalls.
+                  </Text>
+                </View>
+              </View>
+
+              {/* Social Media Connect Links */}
+              <Text style={[styles.socialSectionTitle, { color: theme.colors.textPrimary }]}>
+                🌐 Connect with Akhilesh:
+              </Text>
+              <View style={styles.socialGrid}>
+                <TouchableOpacity
+                  style={[styles.socialBtn, { backgroundColor: '#25D366' }]}
+                  onPress={() => handleOpenSocialLink('https://wa.me/+919526008613')}
+                >
+                  <Icon name="whatsapp" size={18} color="#FFFFFF" />
+                  <Text style={styles.socialBtnText}>WhatsApp</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.socialBtn, { backgroundColor: '#E1306C' }]}
+                  onPress={() => handleOpenSocialLink('https://www.instagram.com/_akhiles___h__')}
+                >
+                  <Icon name="instagram" size={18} color="#FFFFFF" />
+                  <Text style={styles.socialBtnText}>Instagram</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.socialBtn, { backgroundColor: '#0A66C2' }]}
+                  onPress={() => handleOpenSocialLink('https://www.linkedin.com/in/akhilesh4753')}
+                >
+                  <Icon name="linkedin" size={18} color="#FFFFFF" />
+                  <Text style={styles.socialBtnText}>LinkedIn</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.socialBtn, { backgroundColor: '#24292E' }]}
+                  onPress={() => handleOpenSocialLink('https://github.com/Akhilesh-4753')}
+                >
+                  <Icon name="github" size={18} color="#FFFFFF" />
+                  <Text style={styles.socialBtnText}>GitHub</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[styles.closeModalBtn, { backgroundColor: theme.colors.primary, marginTop: 14 }]}
+              onPress={() => setIsAboutUsModalVisible(false)}
+            >
+              <Text style={styles.closeModalBtnText}>Close Profile</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Edit User Profile Modal */}
       <Modal
@@ -804,7 +1041,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
                         borderColor: theme.colors.border,
                       },
                     ]}
-                    placeholder="Re-enter 4-digit PIN"
+                    placeholder="Re-enter PIN"
                     placeholderTextColor={theme.colors.textMuted}
                     keyboardType="number-pad"
                     maxLength={4}
@@ -814,32 +1051,21 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
                   />
                 </View>
 
-                <View style={styles.bioSwitchRow}>
-                  <Text style={[styles.bioSwitchText, { color: theme.colors.textPrimary }]}>
-                    Enable Fingerprint / Face ID
-                  </Text>
-                  <Switch
-                    value={enableBio}
-                    onValueChange={setEnableBio}
-                    trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
-                    thumbColor={enableBio ? theme.colors.primary : '#F4F3F4'}
-                  />
-                </View>
-
                 <View style={styles.modalBtnRow}>
                   <TouchableOpacity
                     style={[styles.cancelBtn, { borderColor: theme.colors.border }]}
                     onPress={() => setModalStep('select_type')}
                   >
                     <Text style={[styles.cancelBtnText, { color: theme.colors.textSecondary }]}>
-                      ← Back
+                      Back
                     </Text>
                   </TouchableOpacity>
+
                   <TouchableOpacity
                     style={[styles.savePinBtn, { backgroundColor: theme.colors.primary }]}
                     onPress={handleSaveNewPin}
                   >
-                    <Text style={styles.savePinBtnText}>Save Security</Text>
+                    <Text style={styles.savePinBtnText}>Save Security PIN</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -870,68 +1096,67 @@ const styles = StyleSheet.create({
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
     padding: 18,
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1,
-    marginVertical: 12,
+    marginHorizontal: 20,
+    marginBottom: 20,
   },
   avatarWrapper: {
     marginRight: 16,
   },
+  avatarImg: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+  },
   avatarBg: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarImg: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-  },
   avatarText: {
     color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '800',
+    fontSize: 26,
+    fontWeight: '700',
   },
   profileInfo: {
     flex: 1,
   },
   profileName: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   profileEmail: {
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 2,
   },
   badgePill: {
-    marginTop: 6,
+    alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
-    alignSelf: 'flex-start',
+    marginTop: 8,
   },
   badgeText: {
     fontSize: 11,
     fontWeight: '700',
   },
   section: {
-    marginTop: 16,
+    marginBottom: 20,
     paddingHorizontal: 20,
   },
   sectionTitle: {
     fontSize: 12,
     fontWeight: '700',
-    textTransform: 'uppercase',
     letterSpacing: 0.8,
     marginBottom: 8,
     marginLeft: 4,
   },
   menuCard: {
-    borderRadius: 20,
+    borderRadius: 18,
     borderWidth: 1,
     overflow: 'hidden',
   },
@@ -944,8 +1169,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   menuIconBg: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
@@ -956,7 +1181,7 @@ const styles = StyleSheet.create({
   },
   menuTitle: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   menuSub: {
     fontSize: 12,
@@ -964,14 +1189,21 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
   modalCard: {
     width: '100%',
-    maxWidth: 380,
+    maxWidth: 400,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 24,
+  },
+  aboutModalCard: {
+    width: '100%',
+    maxWidth: 440,
     borderRadius: 24,
     borderWidth: 1,
     padding: 24,
@@ -980,60 +1212,247 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  lockIconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  modalHeaderIconBg: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     textAlign: 'center',
   },
   modalSub: {
-    fontSize: 13,
-    marginBottom: 16,
+    fontSize: 12,
+    marginTop: 4,
     textAlign: 'center',
+    lineHeight: 16,
+  },
+  privacyBadgeBox: {
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  privacyBadgeTitle: {
+    color: '#10B981',
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  privacyBadgeDesc: {
+    fontSize: 12,
     lineHeight: 18,
+  },
+  privacySection: {
+    marginBottom: 14,
+  },
+  privacyHeading: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  privacyText: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  builderHeader: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  builderAvatarBorder: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    borderWidth: 3,
+    padding: 3,
+    marginBottom: 10,
+  },
+  builderImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 44,
+  },
+  builderName: {
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  builderTitlePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  builderDegree: {
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  storyCard: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  storySectionHeading: {
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  storyParagraph: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  uniqueBox: {
+    marginBottom: 16,
+  },
+  uniqueTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 10,
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  bulletEmoji: {
+    fontSize: 16,
+    marginRight: 8,
+    marginTop: 1,
+  },
+  bulletText: {
+    fontSize: 12,
+    flex: 1,
+    lineHeight: 17,
+  },
+  socialSectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  socialGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 10,
+  },
+  socialBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    gap: 6,
+  },
+  socialBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  closeModalBtn: {
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeModalBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
   avatarEditContainer: {
     alignItems: 'center',
-    marginVertical: 12,
+    marginVertical: 14,
   },
   avatarEditWrapper: {
-    position: 'relative',
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    overflow: 'hidden',
   },
   editAvatarImg: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: '100%',
+    height: '100%',
   },
   editAvatarBg: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   editAvatarText: {
     color: '#FFFFFF',
     fontSize: 32,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   tapToChangeText: {
     fontSize: 12,
     fontWeight: '600',
     marginTop: 8,
   },
-  modalError: {
-    color: '#EF4444',
+  fieldGroup: {
+    marginBottom: 14,
+  },
+  fieldLabel: {
     fontSize: 12,
     fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 14,
+    marginBottom: 6,
+  },
+  textInput: {
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    fontSize: 14,
+    outlineStyle: 'none',
+  },
+  subscriptionDisplayBox: {
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+  },
+  subscriptionDisplayText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  modalBtnRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 14,
+  },
+  cancelBtn: {
+    flex: 1,
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  savePinBtn: {
+    flex: 1.5,
+    height: 46,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  savePinBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
   },
   optionCard: {
     flexDirection: 'row',
@@ -1058,87 +1477,37 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
-  fieldGroup: {
-    marginBottom: 14,
+  cancelBtnFull: {
+    height: 44,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
   },
-  fieldLabel: {
+  lockIconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  modalError: {
+    color: '#EF4444',
     fontSize: 12,
     fontWeight: '600',
-    marginBottom: 6,
-  },
-  textInput: {
-    height: 48,
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    fontSize: 15,
-    outlineStyle: 'none',
-  },
-  subscriptionDisplayBox: {
-    height: 46,
-    borderRadius: 14,
-    borderWidth: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 16,
-  },
-  subscriptionDisplayText: {
-    fontSize: 13,
-    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 10,
   },
   pinInput: {
     height: 48,
     borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 16,
-    fontSize: 16,
-    letterSpacing: 2,
+    fontSize: 18,
+    textAlign: 'center',
+    letterSpacing: 8,
     outlineStyle: 'none',
-  },
-  bioSwitchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginVertical: 14,
-  },
-  bioSwitchText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  modalBtnRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 14,
-  },
-  cancelBtn: {
-    flex: 1,
-    height: 46,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelBtnFull: {
-    height: 46,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-  },
-  cancelBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  savePinBtn: {
-    flex: 1.5,
-    height: 46,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  savePinBtnText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

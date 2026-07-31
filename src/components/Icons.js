@@ -88,6 +88,11 @@ export const Icon = ({ name, size = 22, color = '#6366F1', style }) => {
     mail: '✉️',
     eye: '👁️',
     eyeOff: '🙈',
+    whatsapp: '💬',
+    instagram: '📸',
+    linkedin: '💼',
+    github: '💻',
+    shield: '🛡️',
   };
 
   const symbol = iconMap[name] || '📌';
