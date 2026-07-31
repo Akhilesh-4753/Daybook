@@ -117,10 +117,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 16,
+    flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
   brandContainer: {
     alignItems: 'center',
