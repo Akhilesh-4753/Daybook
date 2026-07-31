@@ -31,6 +31,7 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
   };
 
   const badgeStyle = getPriorityBadge(task.priority);
+  const hasIcon = task.icon && task.icon !== 'none';
 
   return (
     <View
@@ -77,7 +78,7 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
       >
         <View style={styles.titleRow}>
           <View style={styles.iconTitleGroup}>
-            {task.icon ? (
+            {hasIcon ? (
               <View style={[styles.taskIconCircle, { backgroundColor: theme.colors.surfaceVariant }]}>
                 <Icon name={task.icon} size={16} color={theme.colors.primary} />
               </View>

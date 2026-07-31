@@ -20,21 +20,21 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
   const [priority, setPriority] = useState('High');
   const [time, setTime] = useState('10:00 AM');
   const [notes, setNotes] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState('sparkles');
+  const [selectedIcon, setSelectedIcon] = useState('none');
 
   const categories = ['Work', 'Health', 'Personal', 'Finance'];
   const priorities = ['Low', 'Medium', 'High'];
 
   const availableIcons = [
-    { id: 'sparkles', label: 'Meditation', symbol: '🧘' },
+    { id: 'none', label: 'None', symbol: '⭕' },
     { id: 'droplet', label: 'Water', symbol: '💧' },
+    { id: 'walking', label: 'Walking', symbol: '🚶' },
     { id: 'dumbbell', label: 'Workout', symbol: '🏋️' },
     { id: 'book', label: 'Reading', symbol: '📚' },
+    { id: 'sparkles', label: 'Meditation', symbol: '🧘' },
     { id: 'ban', label: 'No Sugar', symbol: '🚫' },
-    { id: 'walking', label: 'Walking', symbol: '🚶' },
     { id: 'dog', label: 'Dog Walk', symbol: '🐕' },
     { id: 'writing', label: 'Writing', symbol: '✍️' },
-    { id: 'watching', label: 'Mindful', symbol: '👁️' },
     { id: 'mirror', label: 'Affirmation', symbol: '🪞' },
   ];
 
@@ -61,7 +61,7 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
     setNotes('');
     setCategory('Work');
     setPriority('High');
-    setSelectedIcon('sparkles');
+    setSelectedIcon('none');
     setTime('10:00 AM');
   };
 

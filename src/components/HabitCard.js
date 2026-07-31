@@ -28,6 +28,8 @@ export const HabitCard = ({ habit, onToggleAutoAdd, onEdit, onDelete }) => {
     }
   };
 
+  const hasIcon = habit.icon && habit.icon !== 'none';
+
   return (
     <View
       style={[
@@ -40,26 +42,25 @@ export const HabitCard = ({ habit, onToggleAutoAdd, onEdit, onDelete }) => {
     >
       <View style={styles.topRow}>
         <View style={styles.leftGroup}>
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: theme.colors.surfaceVariant },
-            ]}
-          >
-            <Icon name={habit.icon || 'sparkles'} size={22} color={theme.colors.primary} />
-          </View>
+          {hasIcon ? (
+            <View
+              style={[
+                styles.iconContainer,
+                { backgroundColor: theme.colors.surfaceVariant },
+              ]}
+            >
+              <Icon name={habit.icon} size={22} color={theme.colors.primary} />
+            </View>
+          ) : null}
           <View>
             <Text style={[styles.title, { color: theme.colors.textPrimary }]}>
               {habit.title}
-            </Text>
-            <Text style={[styles.frequency, { color: theme.colors.textSecondary }]}>
-              {habit.frequency}
             </Text>
           </View>
         </View>
 
         <View style={styles.rightGroup}>
-          {/* Edit & Delete Action Buttons (Checkmark button removed) */}
+          {/* Edit & Delete Action Buttons */}
           <TouchableOpacity
             style={[styles.actionBtn, { backgroundColor: theme.colors.surfaceVariant }]}
             onPress={() => onEdit && onEdit(habit)}
@@ -151,10 +152,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-  },
-  frequency: {
-    fontSize: 12,
-    marginTop: 2,
   },
   rightGroup: {
     flexDirection: 'row',

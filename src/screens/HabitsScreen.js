@@ -32,13 +32,14 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
   const [priority, setPriority] = useState('Medium');
   const [time, setTime] = useState('08:00 AM');
   const [notes, setNotes] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState('droplet');
+  const [selectedIcon, setSelectedIcon] = useState('none');
   const [autoAddToday, setAutoAddToday] = useState(true);
 
   const categories = ['Health', 'Work', 'Personal', 'Finance'];
   const priorities = ['Low', 'Medium', 'High'];
 
   const availableIcons = [
+    { id: 'none', label: 'None', symbol: '⭕' },
     { id: 'droplet', label: 'Water', symbol: '💧' },
     { id: 'walking', label: 'Walking', symbol: '🚶' },
     { id: 'dumbbell', label: 'Workout', symbol: '🏋️' },
@@ -47,7 +48,6 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
     { id: 'ban', label: 'No Sugar', symbol: '🚫' },
     { id: 'dog', label: 'Dog Walk', symbol: '🐕' },
     { id: 'writing', label: 'Writing', symbol: '✍️' },
-    { id: 'watching', label: 'Mindful', symbol: '👁️' },
     { id: 'mirror', label: 'Affirmation', symbol: '🪞' },
   ];
 
@@ -58,7 +58,7 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
     setPriority('Medium');
     setTime('08:00 AM');
     setNotes('');
-    setSelectedIcon('droplet');
+    setSelectedIcon('none');
     setAutoAddToday(true);
     setModalVisible(true);
   };
@@ -70,7 +70,7 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
     setPriority(habit.priority || 'Medium');
     setTime(habit.time || '08:00 AM');
     setNotes(habit.notes || '');
-    setSelectedIcon(habit.icon || 'droplet');
+    setSelectedIcon(habit.icon || 'none');
     setAutoAddToday(habit.autoAddToday !== false);
     setModalVisible(true);
   };
