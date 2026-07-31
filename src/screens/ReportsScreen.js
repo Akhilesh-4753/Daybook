@@ -24,14 +24,27 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
     const todayStr = today.toISOString().split('T')[0];
 
     if (timeFilter === 'Today') {
-      return tasks;
+      return tasks.filter((t) => !t.date || t.date === todayStr);
     } else if (timeFilter === 'This Week') {
-      return tasks;
+      // Find current week Monday to Sunday
+      const dayOfWeek = today.getDay();
+      const distanceToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + distanceToMon);
+      const monStr = monday.toISOString().split('T')[0];
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const sunStr = sunday.toISOString().split('T')[0];
+
+      return tasks.filter((t) => {
+        if (!t.date) return true;
+        return t.date >= monStr && t.date <= sunStr;
+      });
     } else if (timeFilter === 'This Month') {
       const currentMonthStr = todayStr.substring(0, 7); // 'YYYY-MM'
-      return tasks.filter((t) => !t.date || t.date.startsWith(currentMonthStr) || t.date === '2026-07-29');
+      return tasks.filter((t) => !t.date || t.date.startsWith(currentMonthStr));
     }
-    // Custom Date or overall view
     return tasks;
   }, [tasks, timeFilter]);
 
@@ -55,6 +68,57 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
     const completedHabits = habits.filter((h) => h.completedToday).length;
     return Math.round((completedHabits / habits.length) * 100);
   }, [habits]);
+
+  // Calculate real daily progress data for current week (Mon - Sun)
+  const weeklyProgressData = useMemo(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    const dayOfWeek = today.getDay();
+    const distanceToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + distanceToMon);
+
+    const daysList = [
+      { name: 'Mon', offset: 0 },
+      { name: 'Tue', offset: 1 },
+      { name: 'Wed', offset: 2 },
+      { name: 'Thu', offset: 3 },
+      { name: 'Fri', offset: 4 },
+      { name: 'Sat', offset: 5 },
+      { name: 'Sun', offset: 6 },
+    ];
+
+    return daysList.map((item) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + item.offset);
+      const dateStr = d.toISOString().split('T')[0];
+
+      const dayTasks = tasks.filter((t) => {
+        if (t.date) {
+          return t.date === dateStr;
+        }
+        return dateStr === todayStr;
+      });
+
+      const completed = dayTasks.filter((t) => t.completed).length;
+      const total = dayTasks.length;
+
+      let percent = 0;
+      if (total > 0) {
+        percent = Math.round((completed / total) * 100);
+      }
+
+      return {
+        day: item.name,
+        date: dateStr,
+        val: percent,
+        completed,
+        total,
+        isToday: dateStr === todayStr,
+      };
+    });
+  }, [tasks]);
 
   const categoryBreakdown = useMemo(() => {
     const counts = { Work: 0, Health: 0, Personal: 0, Finance: 0 };
@@ -211,8 +275,8 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
         {/* Tasks Overview Donut Chart */}
         <TasksDonutChart completedCount={completedCount} pendingCount={pendingCount} />
 
-        {/* Weekly Progress Bar Chart */}
-        <WeeklyBarChart />
+        {/* Weekly Progress Bar Chart (Dynamic real data) */}
+        <WeeklyBarChart data={weeklyProgressData} />
 
         {/* Category Filters Breakdown */}
         <View style={styles.categoryHeader}>
@@ -300,30 +364,29 @@ const styles = StyleSheet.create({
   statBox: {
     width: '48%',
     padding: 16,
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
-    alignItems: 'center',
   },
   statVal: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
   },
   statLabel: {
     fontSize: 12,
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: 4,
   },
   productivityBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 20,
+    marginBottom: 16,
     padding: 16,
     borderRadius: 18,
     borderWidth: 1,
-    marginVertical: 12,
   },
   bannerIconBox: {
-    marginRight: 12,
+    marginRight: 14,
   },
   bannerEmoji: {
     fontSize: 28,
@@ -333,17 +396,16 @@ const styles = StyleSheet.create({
   },
   bannerTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   bannerSub: {
     fontSize: 12,
     marginTop: 2,
-    lineHeight: 16,
   },
   categoryHeader: {
     paddingHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 10,
+    marginTop: 8,
+    marginBottom: 12,
   },
   categoryTitle: {
     fontSize: 16,
@@ -352,12 +414,13 @@ const styles = StyleSheet.create({
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
+    gap: 10,
   },
   categoryCard: {
     width: '48%',
-    padding: 14,
+    padding: 16,
     borderRadius: 16,
     borderWidth: 1,
   },
@@ -368,6 +431,6 @@ const styles = StyleSheet.create({
   catCount: {
     fontSize: 12,
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: 4,
   },
 });

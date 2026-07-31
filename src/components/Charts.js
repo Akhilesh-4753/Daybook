@@ -2,11 +2,11 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 
-export const TasksDonutChart = ({ completedCount = 32, pendingCount = 8 }) => {
+export const TasksDonutChart = ({ completedCount = 0, pendingCount = 0 }) => {
   const { theme } = useTheme();
   const total = completedCount + pendingCount;
   const completedPercent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
-  const pendingPercent = 100 - completedPercent;
+  const pendingPercent = total > 0 ? 100 - completedPercent : 0;
 
   return (
     <View
@@ -77,9 +77,8 @@ export const TasksDonutChart = ({ completedCount = 32, pendingCount = 8 }) => {
   );
 };
 
-export const WeeklyBarChart = ({ data = [80, 60, 90, 75, 85, 95, 70] }) => {
+export const WeeklyBarChart = ({ data = [] }) => {
   const { theme } = useTheme();
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   return (
     <View
@@ -101,24 +100,51 @@ export const WeeklyBarChart = ({ data = [80, 60, 90, 75, 85, 95, 70] }) => {
       </View>
 
       <View style={styles.barChartContainer}>
-        {data.map((val, index) => (
-          <View key={days[index]} style={styles.barColumn}>
-            <View style={[styles.barTrack, { backgroundColor: theme.colors.progressBg }]}>
+        {data.map((item) => {
+          const val = item.val || 0;
+          return (
+            <View key={item.day} style={styles.barColumn}>
+              <Text
+                style={[
+                  styles.countBadgeText,
+                  { color: item.isToday ? theme.colors.primary : theme.colors.textMuted },
+                ]}
+              >
+                {item.total > 0 ? `${item.completed}/${item.total}` : '0'}
+              </Text>
+
               <View
                 style={[
-                  styles.barFill,
+                  styles.barTrack,
+                  { backgroundColor: theme.colors.surfaceVariant },
+                  item.isToday && { borderWidth: 1, borderColor: theme.colors.primary },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.barFill,
+                    {
+                      height: `${val}%`,
+                      backgroundColor: val === 100 ? theme.colors.success : theme.colors.primary,
+                    },
+                  ]}
+                />
+              </View>
+
+              <Text
+                style={[
+                  styles.dayLabel,
                   {
-                    height: `${val}%`,
-                    backgroundColor: index === 2 || index === 5 ? theme.colors.success : theme.colors.primary,
+                    color: item.isToday ? theme.colors.primary : theme.colors.textMuted,
+                    fontWeight: item.isToday ? '800' : '600',
                   },
                 ]}
-              />
+              >
+                {item.day}
+              </Text>
             </View>
-            <Text style={[styles.dayLabel, { color: theme.colors.textMuted }]}>
-              {days[index]}
-            </Text>
-          </View>
-        ))}
+          );
+        })}
       </View>
     </View>
   );
@@ -141,7 +167,6 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 12,
   },
   timeLabel: {
     fontSize: 12,
@@ -210,20 +235,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  countBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
   barTrack: {
-    width: 16,
-    height: 100,
-    borderRadius: 8,
+    width: 18,
+    height: 90,
+    borderRadius: 9,
     overflow: 'hidden',
     justifyContent: 'flex-end',
   },
   barFill: {
     width: '100%',
-    borderRadius: 8,
+    borderRadius: 9,
   },
   dayLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    marginTop: 8,
+    marginTop: 6,
   },
 });
