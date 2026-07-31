@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { AppState } from 'react-native';
 import { SecurityService } from '../services/SecurityService';
 import { PreferencesService } from '../services/PreferencesService';
 
@@ -15,19 +14,6 @@ export const SecurityProvider = ({ children }) => {
   useEffect(() => {
     initSecurity();
   }, []);
-
-  // Screen Off / App Background Listener: Locks app when phone screen is turned off
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (nextAppState) => {
-      if (nextAppState === 'background' && isPinSet) {
-        setIsLocked(true);
-      }
-    });
-
-    return () => {
-      subscription.remove();
-    };
-  }, [isPinSet]);
 
   const initSecurity = async () => {
     try {

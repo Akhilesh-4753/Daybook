@@ -15,15 +15,20 @@ import { useSecurity } from '../context/SecurityContext';
 import { useTasks } from '../context/TaskContext';
 import { Icon } from '../components/Icons';
 import { BackupService } from '../services/BackupService';
+import { SecurityService } from '../services/SecurityService';
 
 export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
   const { theme, isDarkMode, toggleTheme } = useTheme();
   const { isPinSet, isBiometricsEnabled, setupPin, removeSecurity } = useSecurity();
   const { refreshData } = useTasks();
 
-  // Cross-Platform PIN Setup / Change Modal State
-  const [isPinModalVisible, setIsPinModalVisible] = useState(false);
-  const [isChangeMode, setIsChangeMode] = useState(false);
+  // Security Modal State Flow
+  // Steps: 'select_type' | 'enter_pin' | 'verify_current' | 'manage_security'
+  const [isSecurityModalVisible, setIsSecurityModalVisible] = useState(false);
+  const [modalStep, setModalStep] = useState('select_type');
+  const [selectedLockType, setSelectedLockType] = useState('pin'); // 'pin' | 'biometric' | 'pattern'
+
+  const [currentPin, setCurrentPin] = useState('');
   const [newPin, setNewPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [enableBio, setEnableBio] = useState(true);
@@ -59,34 +64,41 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
     );
   };
 
-  const handleOpenSetupPin = () => {
-    setIsChangeMode(false);
+  const handleOpenSecurityModal = () => {
+    setCurrentPin('');
     setNewPin('');
     setConfirmPin('');
     setPinError('');
-    setIsPinModalVisible(true);
-  };
 
-  const handleOpenChangePin = () => {
-    setIsChangeMode(true);
-    setNewPin('');
-    setConfirmPin('');
-    setPinError('');
-    setIsPinModalVisible(true);
-  };
-
-  const handleToggleSecurity = () => {
     if (isPinSet) {
-      Alert.alert('Disable App Lock', 'Are you sure you want to remove PIN & Biometric security?', [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Remove Security', style: 'destructive', onPress: removeSecurity },
-      ]);
+      // Must verify current password first!
+      setModalStep('verify_current');
     } else {
-      handleOpenSetupPin();
+      // First time setup: choose lock type
+      setModalStep('select_type');
     }
+    setIsSecurityModalVisible(true);
   };
 
-  const handleSavePin = async () => {
+  const handleVerifyCurrentPin = async () => {
+    setPinError('');
+    if (!currentPin || currentPin.length !== 4) {
+      setPinError('Please enter your 4-digit current PIN.');
+      return;
+    }
+
+    const isValid = await SecurityService.verifyPin(currentPin);
+    if (!isValid) {
+      setPinError('Incorrect current PIN. Please try again.');
+      return;
+    }
+
+    // Current PIN verified! Proceed to manage security
+    setCurrentPin('');
+    setModalStep('manage_security');
+  };
+
+  const handleSaveNewPin = async () => {
     setPinError('');
     if (!newPin || newPin.length !== 4 || !/^\d+$/.test(newPin)) {
       setPinError('Please enter a valid 4-digit numeric PIN.');
@@ -98,17 +110,22 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
     }
 
     try {
-      await setupPin(newPin, enableBio);
-      setIsPinModalVisible(false);
+      const isBio = selectedLockType === 'biometric' || enableBio;
+      await setupPin(newPin, isBio);
+      setIsSecurityModalVisible(false);
       Alert.alert(
-        isChangeMode ? 'PIN Updated' : 'Security Activated',
-        isChangeMode
-          ? 'Your 4-digit security PIN has been updated successfully.'
-          : 'App Lock activated with 4-digit PIN & Biometrics.'
+        'Security Updated',
+        'App Lock security settings updated successfully.'
       );
     } catch (e) {
       setPinError('Failed to save security PIN.');
     }
+  };
+
+  const handleDisableSecurity = async () => {
+    await removeSecurity();
+    setIsSecurityModalVisible(false);
+    Alert.alert('Security Disabled', 'App Lock & Biometric protection removed.');
   };
 
   const menuSections = [
@@ -127,21 +144,10 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
         {
           id: 'security',
           title: 'App Lock & Biometrics',
-          subtitle: isPinSet ? '🔒 Security Active (Tap to remove security)' : '🔓 Off (Tap to setup 4-digit PIN)',
+          subtitle: isPinSet ? '🔒 Security Active (Tap to change or remove)' : '🔓 Off (Tap to setup lock)',
           icon: 'lock',
-          onPress: handleToggleSecurity,
+          onPress: handleOpenSecurityModal,
         },
-        ...(isPinSet
-          ? [
-              {
-                id: 'change_pin',
-                title: 'Change Security PIN',
-                subtitle: 'Update your 4-digit security PIN & biometrics',
-                icon: 'edit',
-                onPress: handleOpenChangePin,
-              },
-            ]
-          : []),
       ],
     },
     {
@@ -290,82 +296,265 @@ export const MoreScreen = ({ user, onNavigateTab, onLogout, onGoBack }) => {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      {/* Setup / Change PIN Modal */}
-      <Modal visible={isPinModalVisible} transparent={true} animationType="fade" onRequestClose={() => setIsPinModalVisible(false)}>
+      {/* Multi-Step App Lock & Security Modal */}
+      <Modal
+        visible={isSecurityModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsSecurityModalVisible(false)}
+      >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+          <View
+            style={[
+              styles.modalCard,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
             <View style={styles.modalHeader}>
               <View style={[styles.lockIconCircle, { backgroundColor: theme.colors.primary }]}>
                 <Icon name="lock" size={24} color="#FFFFFF" />
               </View>
               <Text style={[styles.modalTitle, { color: theme.colors.textPrimary }]}>
-                {isChangeMode ? 'Change 4-Digit PIN' : 'Setup 4-Digit PIN'}
-              </Text>
-              <Text style={[styles.modalSub, { color: theme.colors.textSecondary }]}>
-                {isChangeMode ? 'Enter a new 4-digit security PIN below' : 'Secure your diary and application data'}
+                App Lock & Security
               </Text>
             </View>
 
             {pinError ? <Text style={styles.modalError}>{pinError}</Text> : null}
 
-            <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>
-                {isChangeMode ? 'New 4-Digit PIN' : '4-Digit PIN'}
-              </Text>
-              <TextInput
-                style={[styles.pinInput, { backgroundColor: theme.colors.surfaceVariant, color: theme.colors.textPrimary, borderColor: theme.colors.border }]}
-                placeholder="e.g. 1234"
-                placeholderTextColor={theme.colors.textMuted}
-                keyboardType="number-pad"
-                maxLength={4}
-                secureTextEntry={true}
-                value={newPin}
-                onChangeText={setNewPin}
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>Confirm PIN</Text>
-              <TextInput
-                style={[styles.pinInput, { backgroundColor: theme.colors.surfaceVariant, color: theme.colors.textPrimary, borderColor: theme.colors.border }]}
-                placeholder="Re-enter 4-digit PIN"
-                placeholderTextColor={theme.colors.textMuted}
-                keyboardType="number-pad"
-                maxLength={4}
-                secureTextEntry={true}
-                value={confirmPin}
-                onChangeText={setConfirmPin}
-              />
-            </View>
-
-            <View style={styles.bioSwitchRow}>
-              <Text style={[styles.bioSwitchText, { color: theme.colors.textPrimary }]}>
-                Enable Fingerprint / Face ID
-              </Text>
-              <Switch
-                value={enableBio}
-                onValueChange={setEnableBio}
-                trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
-                thumbColor={enableBio ? theme.colors.primary : '#F4F3F4'}
-              />
-            </View>
-
-            <View style={styles.modalBtnRow}>
-              <TouchableOpacity
-                style={[styles.cancelBtn, { borderColor: theme.colors.border }]}
-                onPress={() => setIsPinModalVisible(false)}
-              >
-                <Text style={[styles.cancelBtnText, { color: theme.colors.textSecondary }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.savePinBtn, { backgroundColor: theme.colors.primary }]}
-                onPress={handleSavePin}
-              >
-                <Text style={styles.savePinBtnText}>
-                  {isChangeMode ? 'Update PIN' : 'Save Security PIN'}
+            {/* STEP 1 (Existing User): Verify Current Password */}
+            {modalStep === 'verify_current' && (
+              <View>
+                <Text style={[styles.modalSub, { color: theme.colors.textSecondary }]}>
+                  Enter your current 4-digit security PIN to unlock security settings:
                 </Text>
-              </TouchableOpacity>
-            </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>
+                    Current 4-Digit PIN
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.pinInput,
+                      {
+                        backgroundColor: theme.colors.surfaceVariant,
+                        color: theme.colors.textPrimary,
+                        borderColor: theme.colors.border,
+                      },
+                    ]}
+                    placeholder="Enter current PIN"
+                    placeholderTextColor={theme.colors.textMuted}
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    secureTextEntry={true}
+                    value={currentPin}
+                    onChangeText={setCurrentPin}
+                  />
+                </View>
+
+                <View style={styles.modalBtnRow}>
+                  <TouchableOpacity
+                    style={[styles.cancelBtn, { borderColor: theme.colors.border }]}
+                    onPress={() => setIsSecurityModalVisible(false)}
+                  >
+                    <Text style={[styles.cancelBtnText, { color: theme.colors.textSecondary }]}>
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.savePinBtn, { backgroundColor: theme.colors.primary }]}
+                    onPress={handleVerifyCurrentPin}
+                  >
+                    <Text style={styles.savePinBtnText}>Verify Password</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* STEP 2 (Existing User Verified): Manage Security Choices */}
+            {modalStep === 'manage_security' && (
+              <View>
+                <Text style={[styles.modalSub, { color: theme.colors.textSecondary }]}>
+                  Current password verified! Choose an action below:
+                </Text>
+
+                <TouchableOpacity
+                  style={[styles.optionCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}
+                  onPress={() => setModalStep('select_type')}
+                >
+                  <Text style={styles.optionEmoji}>🔑</Text>
+                  <View style={styles.optionTextCol}>
+                    <Text style={[styles.optionTitle, { color: theme.colors.textPrimary }]}>
+                      Change Security PIN / Lock Method
+                    </Text>
+                    <Text style={[styles.optionSub, { color: theme.colors.textMuted }]}>
+                      Set a new 4-digit PIN or biometrics
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.optionCard, { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)' }]}
+                  onPress={handleDisableSecurity}
+                >
+                  <Text style={styles.optionEmoji}>🔓</Text>
+                  <View style={styles.optionTextCol}>
+                    <Text style={[styles.optionTitle, { color: theme.colors.danger }]}>
+                      Turn Off App Lock
+                    </Text>
+                    <Text style={[styles.optionSub, { color: theme.colors.textMuted }]}>
+                      Remove PIN and Biometric security
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.cancelBtnFull, { borderColor: theme.colors.border }]}
+                  onPress={() => setIsSecurityModalVisible(false)}
+                >
+                  <Text style={[styles.cancelBtnText, { color: theme.colors.textSecondary }]}>
+                    Done
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* STEP 1 (New User): Select Lock Type */}
+            {modalStep === 'select_type' && (
+              <View>
+                <Text style={[styles.modalSub, { color: theme.colors.textSecondary }]}>
+                  Choose your preferred security lock method:
+                </Text>
+
+                {[
+                  { id: 'pin', title: 'PIN Lock (4-Digit PIN)', sub: 'Secure with a 4-digit numeric passcode', icon: '🔢' },
+                  { id: 'biometric', title: 'Fingerprint / Face ID', sub: 'Unlock with device biometrics & PIN backup', icon: '👆' },
+                  { id: 'pattern', title: 'Pattern / Passcode Lock', sub: 'Set up pattern passcode security', icon: '🔒' },
+                ].map((item) => (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.optionCard,
+                      {
+                        backgroundColor: selectedLockType === item.id ? 'rgba(99, 102, 241, 0.12)' : theme.colors.surfaceVariant,
+                        borderColor: selectedLockType === item.id ? theme.colors.primary : theme.colors.border,
+                      },
+                    ]}
+                    onPress={() => setSelectedLockType(item.id)}
+                  >
+                    <Text style={styles.optionEmoji}>{item.icon}</Text>
+                    <View style={styles.optionTextCol}>
+                      <Text style={[styles.optionTitle, { color: theme.colors.textPrimary }]}>
+                        {item.title}
+                      </Text>
+                      <Text style={[styles.optionSub, { color: theme.colors.textMuted }]}>
+                        {item.sub}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+
+                <View style={styles.modalBtnRow}>
+                  <TouchableOpacity
+                    style={[styles.cancelBtn, { borderColor: theme.colors.border }]}
+                    onPress={() => setIsSecurityModalVisible(false)}
+                  >
+                    <Text style={[styles.cancelBtnText, { color: theme.colors.textSecondary }]}>
+                      Cancel
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.savePinBtn, { backgroundColor: theme.colors.primary }]}
+                    onPress={() => setModalStep('enter_pin')}
+                  >
+                    <Text style={styles.savePinBtnText}>Next Step →</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* STEP 2: Enter & Confirm New PIN */}
+            {modalStep === 'enter_pin' && (
+              <View>
+                <Text style={[styles.modalSub, { color: theme.colors.textSecondary }]}>
+                  Enter a 4-digit security PIN:
+                </Text>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>
+                    New 4-Digit PIN
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.pinInput,
+                      {
+                        backgroundColor: theme.colors.surfaceVariant,
+                        color: theme.colors.textPrimary,
+                        borderColor: theme.colors.border,
+                      },
+                    ]}
+                    placeholder="e.g. 1234"
+                    placeholderTextColor={theme.colors.textMuted}
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    secureTextEntry={true}
+                    value={newPin}
+                    onChangeText={setNewPin}
+                  />
+                </View>
+
+                <View style={styles.fieldGroup}>
+                  <Text style={[styles.fieldLabel, { color: theme.colors.textSecondary }]}>
+                    Confirm PIN
+                  </Text>
+                  <TextInput
+                    style={[
+                      styles.pinInput,
+                      {
+                        backgroundColor: theme.colors.surfaceVariant,
+                        color: theme.colors.textPrimary,
+                        borderColor: theme.colors.border,
+                      },
+                    ]}
+                    placeholder="Re-enter 4-digit PIN"
+                    placeholderTextColor={theme.colors.textMuted}
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    secureTextEntry={true}
+                    value={confirmPin}
+                    onChangeText={setConfirmPin}
+                  />
+                </View>
+
+                <View style={styles.bioSwitchRow}>
+                  <Text style={[styles.bioSwitchText, { color: theme.colors.textPrimary }]}>
+                    Enable Fingerprint / Face ID
+                  </Text>
+                  <Switch
+                    value={enableBio}
+                    onValueChange={setEnableBio}
+                    trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
+                    thumbColor={enableBio ? theme.colors.primary : '#F4F3F4'}
+                  />
+                </View>
+
+                <View style={styles.modalBtnRow}>
+                  <TouchableOpacity
+                    style={[styles.cancelBtn, { borderColor: theme.colors.border }]}
+                    onPress={() => setModalStep('select_type')}
+                  >
+                    <Text style={[styles.cancelBtnText, { color: theme.colors.textSecondary }]}>
+                      ← Back
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.savePinBtn, { backgroundColor: theme.colors.primary }]}
+                    onPress={handleSaveNewPin}
+                  >
+                    <Text style={styles.savePinBtnText}>Save Security</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -493,7 +682,7 @@ const styles = StyleSheet.create({
   },
   modalHeader: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   lockIconCircle: {
     width: 52,
@@ -510,8 +699,9 @@ const styles = StyleSheet.create({
   },
   modalSub: {
     fontSize: 13,
-    marginTop: 4,
+    marginBottom: 16,
     textAlign: 'center',
+    lineHeight: 18,
   },
   modalError: {
     color: '#EF4444',
@@ -519,6 +709,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 14,
+  },
+  optionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    marginBottom: 10,
+  },
+  optionEmoji: {
+    fontSize: 22,
+    marginRight: 12,
+  },
+  optionTextCol: {
+    flex: 1,
+  },
+  optionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  optionSub: {
+    fontSize: 11,
+    marginTop: 2,
   },
   fieldGroup: {
     marginBottom: 14,
@@ -549,7 +762,7 @@ const styles = StyleSheet.create({
   modalBtnRow: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 10,
+    marginTop: 14,
   },
   cancelBtn: {
     flex: 1,
@@ -558,6 +771,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  cancelBtnFull: {
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 10,
   },
   cancelBtnText: {
     fontSize: 14,
