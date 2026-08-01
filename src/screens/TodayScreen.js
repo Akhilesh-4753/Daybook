@@ -23,7 +23,7 @@ export const TodayScreen = ({
   onOpenMore,
   onDeleteTask,
 }) => {
-  const { theme } = useTheme();
+  const { theme, isDarkMode } = useTheme();
 
   const [showCompleted, setShowCompleted] = useState(false);
 
@@ -81,7 +81,11 @@ export const TodayScreen = ({
         {activeTasks.length === 0 ? (
           <View style={styles.emptyContainer}>
             <Image
-              source={require('../../assets/images/empty_state_illustration.png')}
+              source={
+                isDarkMode
+                  ? require('../../assets/images/empty_state_illustration_dark.png')
+                  : require('../../assets/images/empty_state_illustration.png')
+              }
               style={styles.emptyIllustration}
               resizeMode="contain"
             />
