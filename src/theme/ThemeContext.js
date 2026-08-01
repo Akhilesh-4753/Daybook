@@ -33,7 +33,7 @@ export const ThemeProvider = ({ children }) => {
         setIsDarkMode(systemColorScheme === 'dark' || true);
       }
     } catch (e) {
-      console.log('Error loading theme preference', e);
+      console.warn('Error loading theme preference:', e);
     }
   };
 
@@ -43,7 +43,7 @@ export const ThemeProvider = ({ children }) => {
       setIsDarkMode(newMode);
       await AsyncStorage.setItem('@daybook_theme', newMode ? 'dark' : 'light');
     } catch (e) {
-      console.log('Error saving theme preference', e);
+      console.warn('Error saving theme preference:', e);
     }
   };
 

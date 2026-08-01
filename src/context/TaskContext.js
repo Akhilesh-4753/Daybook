@@ -73,21 +73,6 @@ export const TaskProvider = ({ children }) => {
       ]);
 
       let finalTasks = loadedTasks;
-      const todayStr = new Date().toISOString().split('T')[0];
-      const hasOverdue = finalTasks.some((t) => !t.completed && t.date && t.date < todayStr);
-      if (!hasOverdue) {
-        const dummyOverdue = {
-          id: 't_overdue_demo',
-          title: 'Review Quarterly Budget Report',
-          category: 'Finance',
-          priority: 'High',
-          time: '04:00 PM',
-          notes: 'Uncompleted task carried over from yesterday.',
-          completed: false,
-          date: '2026-07-29',
-        };
-        finalTasks = [dummyOverdue, ...finalTasks];
-      }
 
       setTasks(finalTasks);
       setReminders(loadedReminders);
