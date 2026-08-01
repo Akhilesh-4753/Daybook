@@ -181,21 +181,23 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     alignItems: 'center',
-    paddingVertical: 30,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
   },
   emptyIllustration: {
-    width: 80,
-    height: 80,
-    marginBottom: 12,
-    opacity: 0.6,
+    width: 260,
+    height: 260,
+    marginBottom: 16,
   },
   emptyText: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '800',
+    textAlign: 'center',
   },
   emptySubtext: {
     fontSize: 13,
-    marginTop: 4,
+    marginTop: 6,
+    textAlign: 'center',
   },
   completedSection: {
     marginTop: 12,
