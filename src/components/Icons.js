@@ -118,7 +118,7 @@ export const Icon = ({ name, size = 22, color = '#6366F1', style }) => {
     email: '✉️',
     mail: '✉️',
     eye: '👁️',
-    eyeOff: '🙈',
+    eyeOff: '👁️‍🗨️',
     whatsapp: '💬',
     instagram: '📸',
     linkedin: '💼',
@@ -127,6 +127,71 @@ export const Icon = ({ name, size = 22, color = '#6366F1', style }) => {
     sun: '☀️',
     moon: '🌙',
   };
+
+  if (name === 'eye') {
+    return (
+      <View style={[{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }, style]}>
+        <View
+          style={{
+            width: size,
+            height: size * 0.58,
+            borderRadius: size * 0.29,
+            borderWidth: 1.8,
+            borderColor: color,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <View
+            style={{
+              width: size * 0.32,
+              height: size * 0.32,
+              borderRadius: size * 0.16,
+              backgroundColor: color,
+            }}
+          />
+        </View>
+      </View>
+    );
+  }
+
+  if (name === 'eyeOff') {
+    return (
+      <View style={[{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }, style]}>
+        <View
+          style={{
+            width: size,
+            height: size * 0.58,
+            borderRadius: size * 0.29,
+            borderWidth: 1.8,
+            borderColor: color,
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          }}
+        >
+          <View
+            style={{
+              width: size * 0.24,
+              height: size * 0.24,
+              borderRadius: size * 0.12,
+              backgroundColor: color,
+              opacity: 0.4,
+            }}
+          />
+          <View
+            style={{
+              position: 'absolute',
+              width: size * 1.35,
+              height: 2,
+              backgroundColor: color,
+              transform: [{ rotate: '-45deg' }],
+            }}
+          />
+        </View>
+      </View>
+    );
+  }
 
   const symbol = iconMap[name] || '📌';
 

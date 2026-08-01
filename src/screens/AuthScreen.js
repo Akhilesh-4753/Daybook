@@ -7,12 +7,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Icon } from '../components/Icons';
 import { useTheme } from '../theme/ThemeContext';
 import { LoginScreen } from './LoginScreen';
 import { SignupScreen } from './SignupScreen';
 
 export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
-  const { theme } = useTheme();
+  const { theme, isDarkMode, toggleTheme } = useTheme();
   const [isLoginMode, setIsLoginMode] = useState(true);
 
   const handleSuccess = (userData) => {
@@ -21,14 +22,30 @@ export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
   };
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      keyboardShouldPersistTaps="handled"
-    >
-      {/* Branding Header */}
-      <View style={styles.brandContainer}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      {/* Absolute Top Right Header Theme Toggle */}
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.themeToggleBtn}
+          onPress={toggleTheme}
+          activeOpacity={0.7}
+        >
+          <Icon
+            name={isDarkMode ? 'sun' : 'moon'}
+            size={24}
+            color={isDarkMode ? '#F59E0B' : theme.colors.primary}
+          />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Branding Header */}
+        <View style={styles.brandContainer}>
         <Image
           source={require('../../assets/images/daybook-logo.png')}
           style={styles.logoImage}
@@ -108,7 +125,8 @@ export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
       <Text style={[styles.footerText, { color: theme.colors.textMuted }]}>
         By logging in, you agree to Daybook's Terms of Service & Privacy Policy.
       </Text>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -116,12 +134,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scroll: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 30,
+  },
+  topBar: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    zIndex: 10,
+  },
+  themeToggleBtn: {
+    padding: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   brandContainer: {
     alignItems: 'center',

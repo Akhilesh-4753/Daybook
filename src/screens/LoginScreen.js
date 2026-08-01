@@ -158,11 +158,6 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
         </View>
       </View>
 
-      {/* Forgot Password */}
-      <TouchableOpacity style={styles.forgotBtn} onPress={handleForgotPassword}>
-        <Text style={[styles.forgotText, { color: theme.colors.primary }]}>Forgot Password?</Text>
-      </TouchableOpacity>
-
       {/* Submit Button */}
       <TouchableOpacity
         style={[styles.submitBtn, { backgroundColor: theme.colors.primary }]}
