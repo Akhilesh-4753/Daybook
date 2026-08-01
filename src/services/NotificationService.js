@@ -13,6 +13,40 @@ try {
   console.warn('Expo Notifications handler warning:', e);
 }
 
+const parseReminderDateTime = (dateStr, timeStr) => {
+  try {
+    if (!dateStr) return new Date(Date.now() + 60000);
+    const dateParts = dateStr.split('-').map((p) => parseInt(p, 10));
+    if (dateParts.length !== 3 || dateParts.some(isNaN)) return new Date(Date.now() + 60000);
+
+    const year = dateParts[0];
+    const month = dateParts[1] - 1;
+    const day = dateParts[2];
+
+    let hours = 9;
+    let minutes = 0;
+
+    if (timeStr) {
+      const isPM = timeStr.toUpperCase().includes('PM');
+      const isAM = timeStr.toUpperCase().includes('AM');
+      const cleanTime = timeStr.replace(/(AM|PM|\s)/gi, '');
+      const timeParts = cleanTime.split(':').map((p) => parseInt(p, 10));
+
+      if (timeParts.length >= 2 && !isNaN(timeParts[0]) && !isNaN(timeParts[1])) {
+        hours = timeParts[0];
+        minutes = timeParts[1];
+
+        if (isPM && hours < 12) hours += 12;
+        if (isAM && hours === 12) hours = 0;
+      }
+    }
+
+    return new Date(year, month, day, hours, minutes, 0, 0);
+  } catch (e) {
+    return new Date(Date.now() + 60000);
+  }
+};
+
 export const NotificationService = {
   setupAndroidChannel: async () => {
     if (Platform.OS === 'android') {
@@ -22,7 +56,7 @@ export const NotificationService = {
           importance: Notifications.AndroidImportance.MAX,
           vibrationPattern: [0, 500, 250, 500],
           lightColor: '#6366F1',
-          sound: 'default',
+          sound: true,
           enableVibrate: true,
           lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
         });
@@ -54,19 +88,52 @@ export const NotificationService = {
       if (!hasPermission) return null;
 
       let trigger = null;
-      const targetDate = new Date(`${reminder.date} ${reminder.time || '09:00 AM'}`);
+      const targetDate = parseReminderDateTime(reminder.date, reminder.time);
+      const now = new Date();
 
-      if (isNaN(targetDate.getTime()) || targetDate <= new Date()) {
+      if (isNaN(targetDate.getTime()) || targetDate <= now) {
         // Fallback: 5 seconds test delay if time has passed
-        trigger = { seconds: 5 };
-      } else {
-        const secondsUntil = Math.max(2, Math.floor((targetDate.getTime() - Date.now()) / 1000));
-        if (reminder.repeat === 'Daily') {
-          trigger = { hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
-        } else if (reminder.repeat === 'Weekly') {
-          trigger = { weekday: targetDate.getDay() + 1, hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
+        if (Notifications.SchedulableTriggerInputTypes?.TIME_INTERVAL) {
+          trigger = {
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: 5,
+            repeats: false,
+          };
         } else {
-          trigger = { seconds: secondsUntil };
+          trigger = { seconds: 5 };
+        }
+      } else {
+        if (reminder.repeat === 'Daily') {
+          if (Notifications.SchedulableTriggerInputTypes?.DAILY) {
+            trigger = {
+              type: Notifications.SchedulableTriggerInputTypes.DAILY,
+              hour: targetDate.getHours(),
+              minute: targetDate.getMinutes(),
+            };
+          } else {
+            trigger = { hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
+          }
+        } else if (reminder.repeat === 'Weekly') {
+          if (Notifications.SchedulableTriggerInputTypes?.WEEKLY) {
+            trigger = {
+              type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+              weekday: targetDate.getDay() + 1,
+              hour: targetDate.getHours(),
+              minute: targetDate.getMinutes(),
+            };
+          } else {
+            trigger = { weekday: targetDate.getDay() + 1, hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
+          }
+        } else {
+          // Standard One-Time Alarm at Exact Target Date & Time (e.g., tomorrow at 09:00 AM)
+          if (Notifications.SchedulableTriggerInputTypes?.DATE) {
+            trigger = {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: targetDate,
+            };
+          } else {
+            trigger = targetDate;
+          }
         }
       }
 
@@ -76,7 +143,7 @@ export const NotificationService = {
         content: {
           title: `⏰ Daybook Alarm: ${reminder.title}`,
           body: `${reminder.importance || reminder.notes || 'Time for your scheduled activity.'} (Tone: ${toneLabel})`,
-          sound: 'default',
+          sound: true,
           priority: Notifications.AndroidNotificationPriority.MAX,
           channelId: 'daybook_alarms',
           data: { reminderId: reminder.id, alarmTone: toneLabel },

@@ -139,7 +139,7 @@ export const TaskProvider = ({ children }) => {
       if (targetTask) {
         setHabits((prevHabits) =>
           prevHabits.map((h) => {
-            if (h.title.toLowerCase() === targetTask.title.toLowerCase()) {
+            if ((targetTask.habitId && targetTask.habitId === h.id) || h.title.trim().toLowerCase() === targetTask.title.trim().toLowerCase()) {
               const isComp = targetTask.completed;
               const newStreak = isComp ? Math.min(totalDays, h.streak + 1) : Math.max(0, h.streak - 1);
               const newProgress = Math.min(100, Math.round((newStreak / totalDays) * 100));

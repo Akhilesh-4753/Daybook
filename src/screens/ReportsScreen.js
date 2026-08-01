@@ -193,10 +193,21 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
   }, [completedCount, totalTasksCount]);
 
   const habitsRate = useMemo(() => {
-    if (habits.length === 0) return 100;
-    const completedHabits = habits.filter((h) => h.completedToday).length;
-    return Math.round((completedHabits / habits.length) * 100);
-  }, [habits]);
+    if (!habits || habits.length === 0) return 0;
+
+    const completedHabitsCount = habits.filter((h) => {
+      if (h.completedToday) return true;
+      const matchingTask = filteredTasks.find(
+        (t) =>
+          (t.habitId && t.habitId === h.id && t.completed) ||
+          (t.title && t.title.trim().toLowerCase() === h.title.trim().toLowerCase() && t.completed)
+      );
+      return Boolean(matchingTask);
+    }).length;
+
+    if (completedHabitsCount === 0) return 0;
+    return Math.round((completedHabitsCount / habits.length) * 100);
+  }, [habits, filteredTasks]);
 
   // Calculate real daily progress data for current week or custom filter
   const weeklyProgressData = useMemo(() => {
