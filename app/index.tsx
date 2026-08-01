@@ -1,24 +1,25 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView, StatusBar, Modal, Text, TouchableOpacity } from 'react-native';
-import { AuthProvider, useAuth } from '../src/context/AuthContext';
-import { TaskProvider, useTasks } from '../src/context/TaskContext';
-import { ThemeProvider, useTheme } from '../src/theme/ThemeContext';
-import { BottomNavigation } from '../src/components/BottomNavigation';
-import { TodayScreen } from '../src/screens/TodayScreen';
-import { CalendarScreen } from '../src/screens/CalendarScreen';
-import { DiaryScreen } from '../src/screens/DiaryScreen';
-import { ReportsScreen } from '../src/screens/ReportsScreen';
-import { MoreScreen } from '../src/screens/MoreScreen';
-import { HabitsScreen } from '../src/screens/HabitsScreen';
-import { AuthScreen } from '../src/screens/AuthScreen';
-import { AddTaskModal } from '../src/components/AddTaskModal';
+import { useState } from 'react';
+import { Modal, Platform, StatusBar as RNStatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AddReminderModal } from '../src/components/AddReminderModal';
+import { AddTaskModal } from '../src/components/AddTaskModal';
+import { BottomNavigation } from '../src/components/BottomNavigation';
 import { CompletionModal } from '../src/components/CompletionModal';
 import { DeleteConfirmModal } from '../src/components/DeleteConfirmModal';
 import { Icon } from '../src/components/Icons';
+import { AuthProvider, useAuth } from '../src/context/AuthContext';
+import { TaskProvider, useTasks } from '../src/context/TaskContext';
+import { AuthScreen } from '../src/screens/AuthScreen';
+import { CalendarScreen } from '../src/screens/CalendarScreen';
+import { DiaryScreen } from '../src/screens/DiaryScreen';
+import { HabitsScreen } from '../src/screens/HabitsScreen';
+import { MoreScreen } from '../src/screens/MoreScreen';
+import { ReportsScreen } from '../src/screens/ReportsScreen';
+import { TodayScreen } from '../src/screens/TodayScreen';
+import { ThemeProvider, useTheme } from '../src/theme/ThemeContext';
 
-import { SecurityProvider } from '../src/context/SecurityContext';
 import { SecurityLockModal } from '../src/components/SecurityLockModal';
+import { SecurityProvider } from '../src/context/SecurityContext';
 
 function MainApp() {
   const { user, isAuthenticated, logout, setUser } = useAuth();
@@ -47,13 +48,21 @@ function MainApp() {
   const [showNoTaskAlert, setShowNoTaskAlert] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
 
+  const insets = useSafeAreaInsets();
+  const topPadding = Platform.OS === 'android'
+    ? Math.max(insets.top, RNStatusBar.currentHeight || 28)
+    : Math.max(insets.top, 12);
+
   // If user is not authenticated, show AuthScreen
   if (!isAuthenticated) {
     return (
-      <AuthScreen
-        onAuthSuccess={(userData) => setUser(userData)}
-        onLoginSuccess={(userData) => setUser(userData)}
-      />
+      <View style={[styles.safeArea, { backgroundColor: theme.colors.background, paddingTop: topPadding }]}>
+        <RNStatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={theme.colors.background} translucent={true} />
+        <AuthScreen
+          onAuthSuccess={(userData) => setUser(userData)}
+          onLoginSuccess={(userData) => setUser(userData)}
+        />
+      </View>
     );
   }
 
@@ -167,8 +176,8 @@ function MainApp() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.colors.background }]}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={theme.colors.background} />
+    <View style={[styles.safeArea, { backgroundColor: theme.colors.background, paddingTop: topPadding }]}>
+      <RNStatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={theme.colors.background} translucent={true} />
       <View style={styles.container}>
         {renderCurrentScreen()}
 
@@ -245,21 +254,23 @@ function MainApp() {
         {/* Security App Lock Modal Overlay */}
         <SecurityLockModal />
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 export default function App() {
   return (
-    <SecurityProvider>
-      <AuthProvider>
-        <TaskProvider>
-          <ThemeProvider>
-            <MainApp />
-          </ThemeProvider>
-        </TaskProvider>
-      </AuthProvider>
-    </SecurityProvider>
+    <SafeAreaProvider>
+      <SecurityProvider>
+        <AuthProvider>
+          <TaskProvider>
+            <ThemeProvider>
+              <MainApp />
+            </ThemeProvider>
+          </TaskProvider>
+        </AuthProvider>
+      </SecurityProvider>
+    </SafeAreaProvider>
   );
 }
 

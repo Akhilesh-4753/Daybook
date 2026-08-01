@@ -1,4 +1,3 @@
-import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 export const Icon = ({ name, size = 22, color = '#6366F1', style }) => {
@@ -125,6 +124,8 @@ export const Icon = ({ name, size = 22, color = '#6366F1', style }) => {
     linkedin: '💼',
     github: '💻',
     shield: '🛡️',
+    sun: '☀️',
+    moon: '🌙',
   };
 
   const symbol = iconMap[name] || '📌';

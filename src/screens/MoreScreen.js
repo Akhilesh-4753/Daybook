@@ -15,7 +15,6 @@ import {
   View,
 } from 'react-native';
 import { Icon } from '../components/Icons';
-import { ImageCropModal } from '../components/ImageCropModal';
 import { useAuth } from '../context/AuthContext';
 import { useSecurity } from '../context/SecurityContext';
 import { useTasks } from '../context/TaskContext';
@@ -34,9 +33,8 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
   const [editName, setEditName] = useState(user?.name || 'Akhilesh');
   const [editPhotoUri, setEditPhotoUri] = useState(user?.photoUri || null);
 
-  // WhatsApp-Style Image Crop Modal State
-  const [tempRawPhotoUri, setTempRawPhotoUri] = useState(null);
-  const [isCropModalVisible, setIsCropModalVisible] = useState(false);
+  // Stylish Alert Modal State
+  const [isProfileSavedAlertVisible, setIsProfileSavedAlertVisible] = useState(false);
 
   // Image Source Options Modal State
   const [isImageOptionsVisible, setIsImageOptionsVisible] = useState(false);
@@ -93,14 +91,20 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
     setIsEditProfileVisible(true);
   };
 
+  // Check if profile details have changed
+  const hasProfileChanges =
+    editName.trim() !== (user?.name || 'Akhilesh') ||
+    editPhotoUri !== (user?.photoUri || null);
+
   const handleSaveProfile = async () => {
+    if (!hasProfileChanges) return;
     if (!editName.trim()) {
       Alert.alert('Invalid Name', 'Please enter your name.');
       return;
     }
-    await updateUserProfile(editName, editPhotoUri);
+    await updateUserProfile(editName.trim(), editPhotoUri);
     setIsEditProfileVisible(false);
-    Alert.alert('Profile Updated', 'Your profile details have been saved permanently.');
+    setIsProfileSavedAlertVisible(true);
   };
 
   const handleTakePhoto = async () => {
@@ -122,8 +126,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
       if (!result.canceled && result.assets && result.assets[0]) {
         const asset = result.assets[0];
         const formattedUri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
-        setTempRawPhotoUri(formattedUri);
-        setIsCropModalVisible(true);
+        setEditPhotoUri(formattedUri);
       }
     } catch (e) {
       console.warn('Camera error:', e);
@@ -150,17 +153,11 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
       if (!result.canceled && result.assets && result.assets[0]) {
         const asset = result.assets[0];
         const formattedUri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
-        setTempRawPhotoUri(formattedUri);
-        setIsCropModalVisible(true);
+        setEditPhotoUri(formattedUri);
       }
     } catch (e) {
       console.warn('Gallery pick error:', e);
     }
-  };
-
-  const handleCropDone = (finalCroppedUri) => {
-    setEditPhotoUri(finalCroppedUri);
-    setIsCropModalVisible(false);
   };
 
   const handleRemovePhoto = () => {
@@ -363,7 +360,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
             {/* Subscription Badge */}
             <View style={[styles.badgePill, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
               <Text style={[styles.badgeText, { color: theme.colors.primary }]}>
-                ⭐ Subscription: Premium Member
+                ⭐ Premium Member
               </Text>
             </View>
           </View>
@@ -431,14 +428,6 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
 
         <View style={{ height: 20 }} />
       </ScrollView>
-
-      {/* WhatsApp-Style Interactive Crop Modal */}
-      <ImageCropModal
-        visible={isCropModalVisible}
-        imageUri={tempRawPhotoUri}
-        onClose={() => setIsCropModalVisible(false)}
-        onCropDone={handleCropDone}
-      />
 
       {/* Privacy Policy Modal */}
       <Modal
@@ -729,7 +718,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
                 ]}
               >
                 <Text style={[styles.subscriptionDisplayText, { color: theme.colors.primary }]}>
-                  ⭐ Subscription: Premium Member
+                  ⭐ Premium Member
                 </Text>
               </View>
             </View>
@@ -746,12 +735,65 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.savePinBtn, { backgroundColor: theme.colors.primary }]}
+                style={[
+                  styles.savePinBtn,
+                  {
+                    backgroundColor: hasProfileChanges
+                      ? theme.colors.primary
+                      : theme.colors.border,
+                    opacity: hasProfileChanges ? 1 : 0.5,
+                  },
+                ]}
+                disabled={!hasProfileChanges}
                 onPress={handleSaveProfile}
+                activeOpacity={hasProfileChanges ? 0.8 : 1}
               >
-                <Text style={styles.savePinBtnText}>Update Profile</Text>
+                <Text
+                  style={[
+                    styles.savePinBtnText,
+                    { color: hasProfileChanges ? '#FFFFFF' : theme.colors.textMuted },
+                  ]}
+                >
+                  Update Profile
+                </Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Stylish Profile Saved Success Modal Alert */}
+      <Modal
+        visible={isProfileSavedAlertVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsProfileSavedAlertVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.stylishAlertContainer,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
+            <View style={[styles.successIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
+              <Icon name="check" size={32} color="#10B981" />
+            </View>
+
+            <Text style={[styles.stylishAlertTitle, { color: theme.colors.textPrimary }]}>
+              Profile Updated
+            </Text>
+            <Text style={[styles.stylishAlertMessage, { color: theme.colors.textSecondary }]}>
+              Your profile details have been saved.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.stylishAlertButton, { backgroundColor: theme.colors.primary }]}
+              onPress={() => setIsProfileSavedAlertVisible(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.stylishAlertButtonText}>Got It</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -1524,5 +1566,45 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 8,
     outlineStyle: 'none',
+  },
+  stylishAlertContainer: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: 'center',
+  },
+  successIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  stylishAlertTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  stylishAlertMessage: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  stylishAlertButton: {
+    width: '100%',
+    height: 46,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stylishAlertButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

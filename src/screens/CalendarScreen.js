@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
   ScrollView,
+  StyleSheet,
+  Text,
   TouchableOpacity,
+  View,
 } from 'react-native';
-import { useTheme } from '../theme/ThemeContext';
-import { useTasks } from '../context/TaskContext';
-import { Icon } from '../components/Icons';
 import { AddReminderModal } from '../components/AddReminderModal';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
+import { Icon } from '../components/Icons';
+import { useTasks } from '../context/TaskContext';
+import { useTheme } from '../theme/ThemeContext';
 
 export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
   const { theme } = useTheme();
@@ -187,8 +187,8 @@ export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
                       color: !item.isCurrentMonth
                         ? theme.colors.textMuted
                         : isSelected
-                        ? '#FFFFFF'
-                        : theme.colors.textPrimary,
+                          ? '#FFFFFF'
+                          : theme.colors.textPrimary,
                     },
                     isSelected && styles.selectedDayText,
                   ]}
@@ -398,14 +398,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     paddingHorizontal: 16,
+    marginBottom: 4,
   },
   dayCell: {
     width: '14.28%',
-    aspectRatio: 1,
+    height: 42,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 12,
-    marginVertical: 2,
+    marginVertical: 1,
   },
   selectedDayCell: {
     borderRadius: 14,
@@ -431,8 +432,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    marginTop: 24,
-    marginBottom: 14,
+    marginTop: 12,
+    marginBottom: 12,
   },
   agendaTitleBox: {
     flex: 1,

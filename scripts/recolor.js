@@ -28,12 +28,12 @@ function processExactLoginButtonColor(inputPath, outputPath) {
       };
       const newIhdrData = Buffer.from(chunkData);
       newIhdrData[9] = 6; // Force RGBA
-      
+
       const lenBuf = Buffer.alloc(4);
       lenBuf.writeUInt32BE(13, 0);
       const typeBuf = Buffer.from('IHDR', 'ascii');
       const typeAndData = Buffer.concat([typeBuf, newIhdrData]);
-      
+
       const crcTable = [];
       for (let n = 0; n < 256; n++) {
         let c = n;
@@ -44,7 +44,7 @@ function processExactLoginButtonColor(inputPath, outputPath) {
       for (let i = 0; i < typeAndData.length; i++) crc = crcTable[(crc ^ typeAndData[i]) & 0xff] ^ (crc >>> 8);
       const crcBuf = Buffer.alloc(4);
       crcBuf.writeUInt32BE((crc ^ 0xffffffff) >>> 0, 0);
-      
+
       otherChunksBefore.push(Buffer.concat([lenBuf, typeAndData, crcBuf]));
     } else if (type === 'IDAT') {
       foundIdat = true;
@@ -68,7 +68,7 @@ function processExactLoginButtonColor(inputPath, outputPath) {
   const inScanlineLen = 1 + ihdr.width * inBpp;
   const outScanlineLen = 1 + ihdr.width * outBpp;
   const height = ihdr.height;
-  
+
   const rawIn = Buffer.alloc(height * ihdr.width * inBpp);
 
   for (let y = 0; y < height; y++) {

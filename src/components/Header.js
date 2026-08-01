@@ -1,10 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import { useTheme } from '../theme/ThemeContext';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../theme/ThemeContext';
+
+import { Icon } from './Icons';
 
 export const Header = ({ userName = 'Akhilesh', user: propUser, onProfilePress }) => {
-  const { theme } = useTheme();
+  const { theme, isDarkMode, toggleTheme } = useTheme();
   const { user: authUser } = useAuth();
 
   const user = propUser || authUser;
@@ -58,6 +59,15 @@ export const Header = ({ userName = 'Akhilesh', user: propUser, onProfilePress }
           </Text>
         </View>
       </View>
+
+      {/* Right Header Action Icon: Dark/Light Mode Toggle */}
+      <TouchableOpacity
+        style={styles.themeToggleBtn}
+        onPress={toggleTheme}
+        activeOpacity={0.7}
+      >
+        <Icon name={isDarkMode ? 'sun' : 'moon'} size={24} color={isDarkMode ? '#F59E0B' : theme.colors.primary} />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -121,5 +131,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
     fontWeight: '400',
+  },
+  themeToggleBtn: {
+    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
