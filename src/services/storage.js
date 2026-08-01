@@ -26,7 +26,73 @@ const USER_KEY = '@daybook_user';
 
 export const initialTasks = [];
 export const initialReminders = [];
-export const initialHabits = [];
+export const initialHabits = [
+  {
+    id: 'h1',
+    title: 'Gym Workout',
+    frequency: 'Daily',
+    progress: 0,
+    streak: 0,
+    completedToday: false,
+    autoAddToday: true,
+    icon: 'dumbbell',
+    category: 'Health',
+    priority: 'Medium',
+    time: '07:00 AM',
+  },
+  {
+    id: 'h2',
+    title: 'Drink Water',
+    frequency: 'Daily',
+    progress: 0,
+    streak: 0,
+    completedToday: false,
+    autoAddToday: true,
+    icon: 'droplet',
+    category: 'Health',
+    priority: 'Low',
+    time: '08:00 AM',
+  },
+  {
+    id: 'h3',
+    title: 'Walking',
+    frequency: 'Daily',
+    progress: 0,
+    streak: 0,
+    completedToday: false,
+    autoAddToday: true,
+    icon: 'walking',
+    category: 'Health',
+    priority: 'Low',
+    time: '06:00 PM',
+  },
+  {
+    id: 'h4',
+    title: 'Meditation',
+    frequency: 'Daily',
+    progress: 0,
+    streak: 0,
+    completedToday: false,
+    autoAddToday: true,
+    icon: 'sparkles',
+    category: 'Health',
+    priority: 'Low',
+    time: '08:00 PM',
+  },
+  {
+    id: 'h5',
+    title: 'No Sugar',
+    frequency: 'Daily',
+    progress: 0,
+    streak: 0,
+    completedToday: false,
+    autoAddToday: true,
+    icon: 'ban',
+    category: 'Health',
+    priority: 'Medium',
+    time: '09:00 PM',
+  },
+];
 export const initialDiaryEntries = [];
 
 export const initialUser = {

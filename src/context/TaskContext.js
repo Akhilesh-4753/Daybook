@@ -19,13 +19,20 @@ export const TaskProvider = ({ children }) => {
     loadAllData();
   }, []);
 
+  const getDaysInCurrentMonth = () => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  };
+
   const syncDailyHabitsToTasks = async (currentTasks, currentHabits) => {
     const todayStr = new Date().toISOString().split('T')[0];
     let updatedTasksList = [...currentTasks];
     let changed = false;
 
     for (const habit of currentHabits) {
-      const existingIdx = updatedTasksList.findIndex((t) => t.title.toLowerCase() === habit.title.toLowerCase() && t.date === todayStr);
+      const existingIdx = updatedTasksList.findIndex(
+        (t) => t.title.toLowerCase() === habit.title.toLowerCase() && (t.date === todayStr || t.habitId === habit.id)
+      );
 
       if (habit.autoAddToday) {
         if (existingIdx === -1) {
@@ -36,7 +43,7 @@ export const TaskProvider = ({ children }) => {
             priority: habit.priority || 'Medium',
             time: habit.time || '08:00 AM',
             notes: habit.notes || `Daily Habit Goal`,
-            completed: Boolean(habit.completedToday),
+            completed: false,
             date: todayStr,
             isHabitTask: true,
             habitId: habit.id,
@@ -72,14 +79,42 @@ export const TaskProvider = ({ children }) => {
         DiaryRepository.getAll(),
       ]);
 
-      let finalTasks = loadedTasks;
+      const todayStr = new Date().toISOString().split('T')[0];
+      const currentMonthKey = todayStr.slice(0, 7); // e.g. "2026-08"
+
+      // Process monthly habit reset if new month started
+      const processedHabits = loadedHabits.map((h) => {
+        if (h.lastMonthKey && h.lastMonthKey !== currentMonthKey) {
+          // New month started: reset monthly streak and line fill
+          return { ...h, streak: 0, progress: 0, completedToday: false, lastMonthKey: currentMonthKey };
+        }
+        return { ...h, lastMonthKey: currentMonthKey };
+      });
+
+      // Daily Reset & Carryover Logic (at 12:00 AM / next day)
+      // 1. Past completed tasks stay in DB for reports, but filter out of Today screen.
+      // 2. Past incomplete/pending tasks carry over to Today marked as Overdue (red).
+      const finalTasks = [];
+      for (const task of loadedTasks) {
+        if (task.date < todayStr) {
+          if (!task.completed) {
+            // Carry over incomplete task to Today marked as Overdue
+            const overdueTask = { ...task, date: todayStr, isOverdue: true };
+            await TaskRepository.update(overdueTask);
+            finalTasks.push(overdueTask);
+          }
+          // Completed past tasks are left in DB for Reports but omitted from Today's list
+        } else {
+          finalTasks.push(task);
+        }
+      }
 
       setTasks(finalTasks);
       setReminders(loadedReminders);
-      setHabits(loadedHabits);
+      setHabits(processedHabits);
       setDiaryEntries(loadedDiary);
 
-      await syncDailyHabitsToTasks(finalTasks, loadedHabits);
+      await syncDailyHabitsToTasks(finalTasks, processedHabits);
     } catch (e) {
       console.error('Error loading SQLite data:', e);
     } finally {
@@ -95,6 +130,8 @@ export const TaskProvider = ({ children }) => {
 
   const toggleTaskCompletion = useCallback(async (taskId, confirmed = false) => {
     await TaskRepository.toggleCompletion(taskId, confirmed ? true : null);
+    const totalDays = getDaysInCurrentMonth();
+
     setTasks((prev) => {
       const updated = prev.map((t) => (t.id === taskId ? { ...t, completed: confirmed ? true : !t.completed } : t));
       const targetTask = updated.find((t) => t.id === taskId);
@@ -103,11 +140,16 @@ export const TaskProvider = ({ children }) => {
         setHabits((prevHabits) =>
           prevHabits.map((h) => {
             if (h.title.toLowerCase() === targetTask.title.toLowerCase()) {
+              const isComp = targetTask.completed;
+              const newStreak = isComp ? Math.min(totalDays, h.streak + 1) : Math.max(0, h.streak - 1);
+              const newProgress = Math.min(100, Math.round((newStreak / totalDays) * 100));
+              
               HabitRepository.toggle(h.id);
               return {
                 ...h,
-                completedToday: targetTask.completed,
-                streak: targetTask.completed ? h.streak + 1 : Math.max(0, h.streak - 1),
+                completedToday: isComp,
+                streak: newStreak,
+                progress: newProgress,
               };
             }
             return h;
@@ -126,15 +168,20 @@ export const TaskProvider = ({ children }) => {
   // Habit actions
   const toggleHabit = useCallback(async (habitId) => {
     await HabitRepository.toggle(habitId);
+    const totalDays = getDaysInCurrentMonth();
+
     setHabits((prev) => {
       const updated = prev.map((h) => {
         if (h.id === habitId) {
           const nextState = !h.completedToday;
+          const newStreak = nextState ? Math.min(totalDays, h.streak + 1) : Math.max(0, h.streak - 1);
+          const newProgress = Math.min(100, Math.round((newStreak / totalDays) * 100));
+
           return {
             ...h,
             completedToday: nextState,
-            streak: nextState ? h.streak + 1 : Math.max(0, h.streak - 1),
-            progress: nextState ? Math.min(100, h.progress + 15) : Math.max(0, h.progress - 15),
+            streak: newStreak,
+            progress: newProgress,
           };
         }
         return h;

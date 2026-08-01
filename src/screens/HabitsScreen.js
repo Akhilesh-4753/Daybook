@@ -59,7 +59,7 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
     setTime('08:00 AM');
     setNotes('');
     setSelectedIcon('none');
-    setAutoAddToday(true);
+    setAutoAddToday(false);
     setModalVisible(true);
   };
 
@@ -101,7 +101,7 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
         time,
         notes,
         progress: 0,
-        streak: 1,
+        streak: 0,
         completedToday: false,
         autoAddToday: autoAddToday,
         icon: selectedIcon,

@@ -50,9 +50,10 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
   const [enableBio, setEnableBio] = useState(true);
   const [pinError, setPinError] = useState('');
 
-  // Privacy Policy & About Us Modal States
+  // Privacy Policy, About Us, and Privacy FAQ Modal States
   const [isPrivacyModalVisible, setIsPrivacyModalVisible] = useState(false);
   const [isAboutUsModalVisible, setIsAboutUsModalVisible] = useState(false);
+  const [isPrivacyFaqModalVisible, setIsPrivacyFaqModalVisible] = useState(false);
 
   const handleExportBackup = async () => {
     try {
@@ -289,6 +290,13 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
       title: 'About & Legal',
       items: [
         {
+          id: 'privacy_faq',
+          title: 'Privacy & Authentication FAQ',
+          subtitle: 'Why Firebase is used & how your data stays local',
+          icon: 'lock',
+          onPress: () => setIsPrivacyFaqModalVisible(true),
+        },
+        {
           id: 'about_us',
           title: 'About Us & Developer',
           subtitle: 'Created by Akhilesh — Story, Vision & Socials',
@@ -496,6 +504,243 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
               onPress={() => setIsPrivacyModalVisible(false)}
             >
               <Text style={styles.closeModalBtnText}>I Understand & Agree</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Privacy & Authentication FAQ Modal */}
+      <Modal
+        visible={isPrivacyFaqModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsPrivacyFaqModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.aboutModalCard,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <View style={[styles.modalHeaderIconBg, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
+                <Icon name="lock" size={26} color={theme.colors.primary} />
+              </View>
+              <Text style={[styles.modalTitle, { color: theme.colors.textPrimary }]}>
+                Privacy & Authentication FAQ
+              </Text>
+            </View>
+
+            <ScrollView style={{ maxHeight: 480 }} showsVerticalScrollIndicator={false}>
+              {/* Privacy Callout Banner */}
+              <View
+                style={[
+                  styles.storyCard,
+                  { backgroundColor: 'rgba(99, 102, 241, 0.08)', borderColor: theme.colors.primary, borderWidth: 1 },
+                ]}
+              >
+                <Text style={[styles.storySectionHeading, { color: theme.colors.primary }]}>
+                  🔐 Your Privacy Comes First.
+                </Text>
+                <Text style={[styles.storyParagraph, { color: theme.colors.textPrimary, lineHeight: 20 }]}>
+                  Daybook is designed with a <Text style={{ fontWeight: '800' }}>privacy-first, offline-first</Text> approach. We use <Text style={{ fontWeight: '800', color: theme.colors.primary }}>Firebase Authentication</Text> only to verify your identity during Sign Up and Log In. Once authenticated, your personal data remains on <Text style={{ fontWeight: '800' }}>your device</Text> and is <Text style={{ fontWeight: '800', color: '#EF4444' }}>never stored in Firebase</Text>.
+                </Text>
+              </View>
+
+              {/* FAQ Questions & Answers */}
+              <View style={{ marginTop: 14 }}>
+                {/* Q1 */}
+                <View style={[styles.faqCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
+                  <Text style={[styles.optionTitle, { color: theme.colors.textPrimary, fontSize: 16, marginBottom: 8 }]}>
+                    🔥 Why do I need to log in?
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, lineHeight: 21 }]}>
+                    Logging in allows Daybook to securely verify your identity and protect access to your account.
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, marginTop: 8, lineHeight: 21 }]}>
+                    Firebase Authentication is used <Text style={{ fontWeight: '700' }}>only</Text> for:
+                    {'\n'}• Secure Sign Up
+                    {'\n'}• Secure Log In
+                    {'\n'}• Identity Verification
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textMuted, marginTop: 8, fontSize: 12 }]}>
+                    Once authentication is complete, all your personal productivity data is stored locally on your device.
+                  </Text>
+                </View>
+
+                {/* Q2 */}
+                <View style={[styles.faqCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
+                  <Text style={[styles.optionTitle, { color: theme.colors.textPrimary, fontSize: 16, marginBottom: 8 }]}>
+                    💾 What data is stored locally?
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, lineHeight: 22 }]}>
+                    The following information is stored <Text style={{ fontWeight: '700' }}>only on your device</Text> using SQLite and AsyncStorage:
+                    {'\n\n'}✅ Tasks
+                    {'\n'}✅ Diary Entries
+                    {'\n'}✅ Habits & Goals
+                    {'\n'}✅ Calendar Reminders
+                    {'\n'}✅ Reports & Analytics
+                    {'\n'}✅ Theme Preferences
+                    {'\n'}✅ App Settings
+                    {'\n'}✅ Profile Information
+                  </Text>
+                </View>
+
+                {/* Q3 */}
+                <View style={[styles.faqCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
+                  <Text style={[styles.optionTitle, { color: theme.colors.textPrimary, fontSize: 16, marginBottom: 8 }]}>
+                    ☁️ Does Firebase store my personal data?
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: '#EF4444', fontWeight: '800', fontSize: 16, marginBottom: 4 }]}>
+                    No.
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, lineHeight: 21 }]}>
+                    Firebase is used <Text style={{ fontWeight: '700' }}>only</Text> for authentication. Your personal productivity data—including diary entries, tasks, reminders, habits, reports, and settings—is <Text style={{ fontWeight: '700' }}>never uploaded</Text> to Firebase.
+                  </Text>
+                </View>
+
+                {/* Q4 */}
+                <View style={[styles.faqCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
+                  <Text style={[styles.optionTitle, { color: theme.colors.textPrimary, fontSize: 16, marginBottom: 8 }]}>
+                    👨‍💻 Can the developer view my data?
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: '#EF4444', fontWeight: '800', fontSize: 16, marginBottom: 4 }]}>
+                    No.
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, lineHeight: 21 }]}>
+                    Daybook does not upload your personal productivity data to any cloud database. Because your data stays on your device, the developer cannot access your:
+                    {'\n\n'}• Diary Entries
+                    {'\n'}• Tasks
+                    {'\n'}• Habits
+                    {'\n'}• Reminders
+                    {'\n'}• Reports
+                    {'\n'}• Personal Notes
+                  </Text>
+                </View>
+
+                {/* Q5 */}
+                <View style={[styles.faqCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
+                  <Text style={[styles.optionTitle, { color: theme.colors.textPrimary, fontSize: 16, marginBottom: 8 }]}>
+                    🤝 Why can I trust Daybook?
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, lineHeight: 21 }]}>
+                    Daybook follows a <Text style={{ fontWeight: '700', color: theme.colors.primary }}>Privacy-First</Text> philosophy. Your information belongs to <Text style={{ fontWeight: '700' }}>you</Text>, not to us. We intentionally designed Daybook so your personal productivity data remains under your complete control.
+                  </Text>
+                </View>
+
+                {/* Q6 */}
+                <View style={[styles.faqCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
+                  <Text style={[styles.optionTitle, { color: theme.colors.textPrimary, fontSize: 16, marginBottom: 8 }]}>
+                    🌐 Do I need an internet connection?
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, lineHeight: 21 }]}>
+                    An internet connection is required only for:
+                    {'\n'}• Creating a new account
+                    {'\n'}• Logging in to your account
+                    {'\n\n'}Once you're signed in, Daybook works completely offline for all core features.
+                  </Text>
+                </View>
+
+                {/* Q7 */}
+                <View style={[styles.faqCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
+                  <Text style={[styles.optionTitle, { color: theme.colors.textPrimary, fontSize: 16, marginBottom: 8 }]}>
+                    📱 Can I use the same account on multiple devices?
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, lineHeight: 21 }]}>
+                    <Text style={{ fontWeight: '700' }}>Yes.</Text> You can sign in using the same account on multiple devices. However, each device maintains its own independent local database. This means data created on one device is <Text style={{ fontWeight: '700' }}>not automatically synchronized</Text> with another device.
+                  </Text>
+                </View>
+
+                {/* Q8 */}
+                <View style={[styles.faqCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
+                  <Text style={[styles.optionTitle, { color: theme.colors.textPrimary, fontSize: 16, marginBottom: 8 }]}>
+                    🔒 If someone gains access to my account, can they read my diary?
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, lineHeight: 21 }]}>
+                    <Text style={{ fontWeight: '800', color: '#10B981' }}>No.</Text> Your diary entries, tasks, reminders, habits, and reports are stored locally on your device. Even if someone signs in with your account on another device, they <Text style={{ fontWeight: '700' }}>cannot access</Text> the local data stored on your device.
+                    {'\n\n'}For additional protection, you can enable:
+                    {'\n'}🔑 App Lock PIN
+                    {'\n'}👆 Fingerprint Authentication
+                    {'\n'}😊 Face Authentication (Supported Devices)
+                  </Text>
+                </View>
+
+                {/* Q9 */}
+                <View style={[styles.faqCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border }]}>
+                  <Text style={[styles.optionTitle, { color: theme.colors.textPrimary, fontSize: 16, marginBottom: 8 }]}>
+                    ☁️ Can Google or Firebase view my diary?
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, lineHeight: 21 }]}>
+                    <Text style={{ fontWeight: '800', color: '#10B981' }}>No.</Text> Google Firebase only verifies your account during authentication. Your personal productivity data is <Text style={{ fontWeight: '700' }}>never uploaded</Text> to Firebase.
+                  </Text>
+                </View>
+
+                {/* Architecture Flow Box (Fixed Static Layout) */}
+                <View style={[styles.faqCard, { backgroundColor: 'rgba(99, 102, 241, 0.06)', borderColor: theme.colors.primary }]}>
+                  <Text style={[styles.optionTitle, { color: theme.colors.primary, fontSize: 16, marginBottom: 8 }]}>
+                    Architecture & Data Flow
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, fontSize: 13, lineHeight: 19, marginBottom: 10 }]}>
+                    Authentication and data storage serve different purposes. Firebase securely verifies your identity. After login, Daybook stores all productivity data locally using SQLite and AsyncStorage.
+                  </Text>
+                  <View style={{ backgroundColor: theme.colors.card, paddingVertical: 12, paddingHorizontal: 8, borderRadius: 14, borderWidth: 1, borderColor: theme.colors.border, width: '100%' }}>
+                    <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 10, color: theme.colors.primary, textAlign: 'center', lineHeight: 16 }}>
+                      Internet (Only During Login){'\n'}
+                      │{'\n'}
+                      ▼{'\n'}
+                      Firebase Authentication{'\n'}
+                      │{'\n'}
+                      Identity Verification{'\n'}
+                      │{'\n'}
+                      ▼{'\n'}
+                      Login Successful ➔ Daybook App{'\n'}
+                      │{'\n'}
+                      ┌──────────┴──────────┐{'\n'}
+                      ▼                     ▼{'\n'}
+                      SQLite DB         AsyncStorage{'\n'}
+                      (Tasks, Diary)    (Settings)
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Privacy Promise Box */}
+                <View style={[styles.uniqueBox, { marginTop: 12 }]}>
+                  <Text style={[styles.uniqueTitle, { color: theme.colors.textPrimary }]}>
+                    🛡️ Your Privacy Promise
+                  </Text>
+                  <Text style={[styles.bulletText, { color: theme.colors.textSecondary, lineHeight: 22, marginTop: 6 }]}>
+                    🔒 100% Local Data Storage{'\n'}
+                    📴 Offline-First Experience{'\n'}
+                    🔑 Optional PIN & Biometric Protection{'\n'}
+                    📦 User-Controlled Backup & Restore{'\n'}
+                    🚫 No Cloud Storage for Personal Data{'\n'}
+                    🔐 Secure Firebase Authentication
+                  </Text>
+                </View>
+
+                {/* Commitment Box */}
+                <View style={[styles.storyCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border, marginTop: 12 }]}>
+                  <Text style={[styles.storySectionHeading, { color: theme.colors.primary }]}>
+                    ❤️ Our Commitment
+                  </Text>
+                  <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, lineHeight: 20 }]}>
+                    Your personal thoughts, goals, habits, and memories are private. Daybook was built to help you stay organized while ensuring your data remains under <Text style={{ fontWeight: '800', color: theme.colors.textPrimary }}>your control</Text>, <Text style={{ fontWeight: '800', color: theme.colors.textPrimary }}>on your device</Text>, and <Text style={{ fontWeight: '800', color: theme.colors.textPrimary }}>protected by modern security practices</Text>.
+                  </Text>
+                  <Text style={{ textAlign: 'center', fontWeight: '800', color: theme.colors.primary, marginTop: 12, fontSize: 14 }}>
+                    Your data. Your privacy. Your Daybook.
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+
+            {/* Styled Primary Action Close Button */}
+            <TouchableOpacity
+              style={[styles.closeFaqBtn, { backgroundColor: theme.colors.primary }]}
+              onPress={() => setIsPrivacyFaqModalVisible(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.closeFaqBtnText}>Close FAQ</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1518,6 +1763,32 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     marginBottom: 10,
+  },
+  faqCard: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    padding: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  closeFaqBtn: {
+    width: '100%',
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 14,
+    elevation: 2,
+    shadowColor: 'rgba(99, 102, 241, 0.3)',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  closeFaqBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
   optionEmoji: {
     fontSize: 22,
