@@ -1,11 +1,12 @@
 import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 
 try {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,
       shouldPlaySound: true,
-      shouldSetBadge: false,
+      shouldSetBadge: true,
     }),
   });
 } catch (e) {
@@ -13,8 +14,27 @@ try {
 }
 
 export const NotificationService = {
+  setupAndroidChannel: async () => {
+    if (Platform.OS === 'android') {
+      try {
+        await Notifications.setNotificationChannelAsync('daybook_alarms', {
+          name: 'Daybook Reminders & Alarms',
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 500, 250, 500],
+          lightColor: '#6366F1',
+          sound: 'default',
+          enableVibrate: true,
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        });
+      } catch (e) {
+        console.warn('Android channel setup warning:', e);
+      }
+    }
+  },
+
   requestPermissions: async () => {
     try {
+      await NotificationService.setupAndroidChannel();
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
       if (existingStatus !== 'granted') {
@@ -37,7 +57,7 @@ export const NotificationService = {
       const targetDate = new Date(`${reminder.date} ${reminder.time || '09:00 AM'}`);
 
       if (isNaN(targetDate.getTime()) || targetDate <= new Date()) {
-        // Fallback: 5 seconds test delay if past time
+        // Fallback: 5 seconds test delay if time has passed
         trigger = { seconds: 5 };
       } else {
         const secondsUntil = Math.max(2, Math.floor((targetDate.getTime() - Date.now()) / 1000));
@@ -50,11 +70,16 @@ export const NotificationService = {
         }
       }
 
+      const toneLabel = reminder.alarmTone || 'Default Ringtone';
+
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
-          title: `🔔 Daybook Reminder: ${reminder.title}`,
-          body: reminder.importance || reminder.notes || 'Time to complete your scheduled activity.',
-          data: { reminderId: reminder.id },
+          title: `⏰ Daybook Alarm: ${reminder.title}`,
+          body: `${reminder.importance || reminder.notes || 'Time for your scheduled activity.'} (Tone: ${toneLabel})`,
+          sound: 'default',
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          channelId: 'daybook_alarms',
+          data: { reminderId: reminder.id, alarmTone: toneLabel },
         },
         trigger,
       });

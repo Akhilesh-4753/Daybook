@@ -22,13 +22,20 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
   const [time, setTime] = useState('10:00 AM');
   const [repeat, setRepeat] = useState('Does not repeat');
   const [priority, setPriority] = useState('High');
-  const [alarmTone, setAlarmTone] = useState('Default');
+  const [alarmTone, setAlarmTone] = useState('Default Ringtone');
   const [notification, setNotification] = useState(true);
   const [category, setCategory] = useState('Work');
 
   const repeatOptions = ['Does not repeat', 'Daily', 'Weekly', 'Monthly', 'Yearly'];
   const priorityOptions = ['Normal', 'High', 'Critical'];
   const categoryOptions = ['Work', 'Health', 'Personal', 'Finance'];
+  const toneOptions = [
+    '🔔 Default Ringtone',
+    '🎵 Gentle Chime',
+    '⏰ Brisk Bell',
+    '📱 Digital Beep',
+    '🚨 Loud Siren',
+  ];
 
   useEffect(() => {
     if (editingReminder) {
@@ -38,7 +45,7 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
       setTime(editingReminder.time || '10:00 AM');
       setRepeat(editingReminder.repeat || 'Does not repeat');
       setPriority(editingReminder.priority || 'High');
-      setAlarmTone(editingReminder.alarmTone || 'Default');
+      setAlarmTone(editingReminder.alarmTone || 'Default Ringtone');
       setNotification(editingReminder.notification !== false);
       setCategory(editingReminder.category || 'Work');
     } else {
@@ -78,6 +85,7 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
     setTime('10:00 AM');
     setRepeat('Does not repeat');
     setPriority('High');
+    setAlarmTone('Default Ringtone');
     setNotification(true);
   };
 
@@ -174,6 +182,38 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Reminder Time</Text>
             <TimePickerInput value={time} onChangeTime={setTime} />
 
+            {/* Alarm Ringtone Selector */}
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+              Ringtone / Alarm Sound Suggestion
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollOptions}>
+              {toneOptions.map((tone) => (
+                <TouchableOpacity
+                  key={tone}
+                  style={[
+                    styles.optionPill,
+                    {
+                      backgroundColor:
+                        alarmTone === tone
+                          ? theme.colors.primary
+                          : theme.colors.surfaceVariant,
+                      marginRight: 8,
+                    },
+                  ]}
+                  onPress={() => setAlarmTone(tone)}
+                >
+                  <Text
+                    style={[
+                      styles.optionText,
+                      { color: alarmTone === tone ? '#FFFFFF' : theme.colors.textSecondary },
+                    ]}
+                  >
+                    {tone}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
             {/* Category Selector */}
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Category</Text>
             <View style={styles.optionsRow}>
@@ -265,7 +305,7 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
             {/* Notification Toggle */}
             <View style={styles.toggleRow}>
               <Text style={[styles.label, { color: theme.colors.textPrimary, marginBottom: 0 }]}>
-                Enable Trigger Notification
+                Enable Trigger Notification & Alarm
               </Text>
               <Switch
                 value={notification}
