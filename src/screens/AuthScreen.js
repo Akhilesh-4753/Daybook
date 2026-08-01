@@ -25,6 +25,7 @@ export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
     >
       {/* Branding Header */}
       <View style={styles.brandContainer}>

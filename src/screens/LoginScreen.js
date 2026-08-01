@@ -114,15 +114,11 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
             styles.inputWrapper,
             {
               backgroundColor: theme.colors.surfaceVariant,
-              borderColor: focusedField === 'email' ? theme.colors.primary : theme.colors.border,
+              borderColor: theme.colors.border,
             },
-            focusedField === 'email' && [
-              styles.inputWrapperFocused,
-              { shadowColor: theme.colors.primary },
-            ],
           ]}
         >
-          <Icon name="email" size={18} color={focusedField === 'email' ? theme.colors.primary : theme.colors.textMuted} style={styles.fieldIcon} />
+          <Icon name="email" size={18} color={theme.colors.primary} style={styles.fieldIcon} />
           <TextInput
             style={[styles.input, { color: theme.colors.textPrimary }]}
             placeholder="you@example.com"
@@ -131,8 +127,6 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
             autoCapitalize="none"
             value={email}
             onChangeText={setEmail}
-            onFocus={() => setFocusedField('email')}
-            onBlur={() => setFocusedField(null)}
           />
         </View>
       </View>
@@ -145,15 +139,11 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
             styles.inputWrapper,
             {
               backgroundColor: theme.colors.surfaceVariant,
-              borderColor: focusedField === 'password' ? theme.colors.primary : theme.colors.border,
+              borderColor: theme.colors.border,
             },
-            focusedField === 'password' && [
-              styles.inputWrapperFocused,
-              { shadowColor: theme.colors.primary },
-            ],
           ]}
         >
-          <Icon name="lock" size={18} color={focusedField === 'password' ? theme.colors.primary : theme.colors.textMuted} style={styles.fieldIcon} />
+          <Icon name="lock" size={18} color={theme.colors.primary} style={styles.fieldIcon} />
           <TextInput
             style={[styles.input, { color: theme.colors.textPrimary }]}
             placeholder="••••••••"
@@ -161,8 +151,6 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
             secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
-            onFocus={() => setFocusedField('password')}
-            onBlur={() => setFocusedField(null)}
           />
           <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn} activeOpacity={0.7}>
             <Icon name={showPassword ? 'eyeOff' : 'eye'} size={18} color={theme.colors.textMuted} />
