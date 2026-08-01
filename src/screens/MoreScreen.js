@@ -246,7 +246,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
       items: [
         {
           id: 'theme',
-          title: 'Dark / Night Mode',
+          title: 'Dark / Light Mode',
           subtitle: isDarkMode ? 'Currently Enabled (Dark)' : 'Currently Enabled (Light)',
           icon: 'palette',
           isSwitch: true,

@@ -124,8 +124,8 @@ export const WeeklyBarChart = ({ data = [] }) => {
                   style={[
                     styles.barFill,
                     {
-                      height: `${val}%`,
-                      backgroundColor: val === 100 ? theme.colors.success : theme.colors.primary,
+                      height: val > 0 ? `${val}%` : item.total > 0 ? '10%' : '0%',
+                      backgroundColor: val === 100 ? theme.colors.success : item.total > 0 && val === 0 ? '#EF4444' : theme.colors.primary,
                     },
                   ]}
                 />
