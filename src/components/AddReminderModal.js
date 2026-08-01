@@ -13,6 +13,19 @@ import { useTheme } from '../theme/ThemeContext';
 import { Icon } from './Icons';
 import { TimePickerInput } from './TimePickerInput';
 
+let Audio = null;
+let Asset = null;
+try {
+  Audio = require('expo-av').Audio;
+} catch (e) {
+  console.warn('expo-av load warning:', e);
+}
+try {
+  Asset = require('expo-asset').Asset;
+} catch (e) {
+  console.warn('expo-asset load warning:', e);
+}
+
 export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editingReminder }) => {
   const { theme } = useTheme();
 
@@ -22,20 +35,111 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
   const [time, setTime] = useState('10:00 AM');
   const [repeat, setRepeat] = useState('Does not repeat');
   const [priority, setPriority] = useState('High');
-  const [alarmTone, setAlarmTone] = useState('Default Ringtone');
+  const [alarmTone, setAlarmTone] = useState('Brisk Bell');
   const [notification, setNotification] = useState(true);
   const [category, setCategory] = useState('Work');
+
+  const [soundObject, setSoundObject] = useState(null);
+  const [playingTone, setPlayingTone] = useState(null);
 
   const repeatOptions = ['Does not repeat', 'Daily', 'Weekly', 'Monthly', 'Yearly'];
   const priorityOptions = ['Normal', 'High', 'Critical'];
   const categoryOptions = ['Work', 'Health', 'Personal', 'Finance'];
   const toneOptions = [
-    '🔔 Default Ringtone',
-    '🎵 Gentle Chime',
-    '⏰ Brisk Bell',
-    '📱 Digital Beep',
-    '🚨 Loud Siren',
+    { id: 'No Ringtone', label: 'No Ringtone', icon: 'volumeOff', sound: null },
+    { id: 'Cartoon Bell', label: 'Cartoon Bell', icon: 'bell', sound: require('../../assets/sounds/cartoon.wav') },
+    { id: 'Brisk Bell', label: 'Brisk Bell', icon: 'bell', sound: require('../../assets/sounds/brisk bell.wav') },
+    { id: 'Gentle Chime', label: 'Gentle Chime', icon: 'music', sound: require('../../assets/sounds/gentle chime.wav') },
+    { id: 'Soft Bell', label: 'Soft Bell', icon: 'bell', sound: require('../../assets/sounds/soft bell.mp3') },
   ];
+
+  const stopAudioIfPlaying = async () => {
+    if (soundObject) {
+      try {
+        await soundObject.stopAsync();
+        await soundObject.unloadAsync();
+      } catch (e) {}
+      setSoundObject(null);
+    }
+    setPlayingTone(null);
+  };
+
+  useEffect(() => {
+    return () => {
+      stopAudioIfPlaying();
+    };
+  }, []);
+
+  const handleSelectTone = async (toneObj) => {
+    setAlarmTone(toneObj.label);
+
+    await stopAudioIfPlaying();
+
+    if (!toneObj.sound) {
+      return;
+    }
+
+    try {
+      setPlayingTone(toneObj.id);
+
+      if (Audio && Audio.Sound) {
+        try {
+          await Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: false,
+            shouldDuckAndroid: true,
+          });
+        } catch (modeErr) {}
+
+        let soundSource = toneObj.sound;
+        if (Asset && typeof toneObj.sound === 'number') {
+          try {
+            const asset = Asset.fromModule(toneObj.sound);
+            await asset.downloadAsync();
+            if (asset.localUri || asset.uri) {
+              soundSource = { uri: asset.localUri || asset.uri };
+            }
+          } catch (assetErr) {
+            console.warn('Asset download fallback:', assetErr);
+          }
+        }
+
+        const { sound } = await Audio.Sound.createAsync(
+          soundSource,
+          { shouldPlay: true, volume: 1.0 }
+        );
+
+        setSoundObject(sound);
+        await sound.setPositionAsync(0);
+        await sound.playAsync();
+
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.didJustFinish) {
+            setPlayingTone(null);
+            sound.unloadAsync();
+          }
+        });
+      } else if (typeof window !== 'undefined' && window.Audio) {
+        const htmlAudio = new window.Audio(toneObj.sound);
+        htmlAudio.volume = 1.0;
+        htmlAudio.play().catch(() => {});
+        setSoundObject({
+          stopAsync: async () => htmlAudio.pause(),
+          unloadAsync: async () => {
+            htmlAudio.pause();
+            htmlAudio.currentTime = 0;
+          },
+        });
+        htmlAudio.onended = () => {
+          setPlayingTone(null);
+        };
+      }
+    } catch (e) {
+      console.error('Audio playback error:', e);
+      setPlayingTone(null);
+    }
+  };
 
   useEffect(() => {
     if (editingReminder) {
@@ -45,7 +149,7 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
       setTime(editingReminder.time || '10:00 AM');
       setRepeat(editingReminder.repeat || 'Does not repeat');
       setPriority(editingReminder.priority || 'High');
-      setAlarmTone(editingReminder.alarmTone || 'Default Ringtone');
+      setAlarmTone(editingReminder.alarmTone || 'Brisk Bell');
       setNotification(editingReminder.notification !== false);
       setCategory(editingReminder.category || 'Work');
     } else {
@@ -53,8 +157,14 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
     }
   }, [editingReminder, visible]);
 
-  const handleSave = () => {
+  const handleClose = async () => {
+    await stopAudioIfPlaying();
+    onClose();
+  };
+
+  const handleSave = async () => {
     if (!title.trim()) return;
+    await stopAudioIfPlaying();
     const reminderData = {
       id: editingReminder ? editingReminder.id : 'r_' + Date.now(),
       title,
@@ -85,7 +195,7 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
     setTime('10:00 AM');
     setRepeat('Does not repeat');
     setPriority('High');
-    setAlarmTone('Default Ringtone');
+    setAlarmTone('Brisk Bell');
     setNotification(true);
   };
 
@@ -111,7 +221,7 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
                 {editingReminder ? editingReminder.date : selectedDate || 'Today'}
               </Text>
             </View>
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+            <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
               <Icon name="close" size={20} color={theme.colors.textMuted} />
             </TouchableOpacity>
           </View>
@@ -183,35 +293,48 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
             <TimePickerInput value={time} onChangeTime={setTime} />
 
             {/* Alarm Ringtone Selector */}
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-              Ringtone / Alarm Sound Suggestion
-            </Text>
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Ringtone</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollOptions}>
-              {toneOptions.map((tone) => (
-                <TouchableOpacity
-                  key={tone}
-                  style={[
-                    styles.optionPill,
-                    {
-                      backgroundColor:
-                        alarmTone === tone
+              {toneOptions.map((toneObj) => {
+                const isSelected = alarmTone === toneObj.label || alarmTone === toneObj.id;
+                const isPlaying = playingTone === toneObj.id;
+
+                return (
+                  <TouchableOpacity
+                    key={toneObj.id}
+                    style={[
+                      styles.tonePill,
+                      {
+                        backgroundColor: isSelected
                           ? theme.colors.primary
                           : theme.colors.surfaceVariant,
-                      marginRight: 8,
-                    },
-                  ]}
-                  onPress={() => setAlarmTone(tone)}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      { color: alarmTone === tone ? '#FFFFFF' : theme.colors.textSecondary },
+                        borderColor: isPlaying ? '#10B981' : isSelected ? theme.colors.primary : theme.colors.border,
+                      },
                     ]}
+                    onPress={() => handleSelectTone(toneObj)}
+                    activeOpacity={0.8}
                   >
-                    {tone}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Icon
+                      name={isPlaying ? 'sparkles' : toneObj.icon}
+                      size={15}
+                      color={isSelected ? '#FFFFFF' : theme.colors.primary}
+                      style={{ marginRight: 6 }}
+                    />
+                    <Text
+                      style={[
+                        styles.optionText,
+                        {
+                          color: isSelected ? '#FFFFFF' : theme.colors.textSecondary,
+                          fontWeight: isSelected ? '700' : '600',
+                        },
+                      ]}
+                    >
+                      {toneObj.label}
+                    </Text>
+                    {isPlaying && <View style={styles.playingDot} />}
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
 
             {/* Category Selector */}
@@ -397,13 +520,26 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
-  scrollOptions: {
-    flexDirection: 'row',
-  },
   optionPill: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
+  },
+  tonePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    marginRight: 8,
+  },
+  playingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#10B981',
+    marginLeft: 6,
   },
   optionText: {
     fontSize: 13,
