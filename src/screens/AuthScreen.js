@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  Image,
   ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
-import { Icon } from '../components/Icons';
 import { LoginScreen } from './LoginScreen';
 import { SignupScreen } from './SignupScreen';
 
@@ -29,12 +29,11 @@ export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
     >
       {/* Branding Header */}
       <View style={styles.brandContainer}>
-        <View style={[styles.logoCircle, { backgroundColor: theme.colors.primary }]}>
-          <Icon name="sparkles" size={28} color="#FFFFFF" />
-        </View>
-        <Text style={[styles.brandTitle, { color: theme.colors.textPrimary }]}>
-          Daybook
-        </Text>
+        <Image
+          source={require('../../assets/images/daybook-logo.png')}
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
         <Text style={[styles.brandSubtitle, { color: theme.colors.textSecondary }]}>
           Plan Your Day, Organize Your Life.
         </Text>
@@ -128,21 +127,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  logoCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
-    elevation: 6,
-    shadowColor: '#6366F1',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+  logoImage: {
+    width: 220,
+    height: 125,
+    marginBottom: 4,
   },
   brandTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
     letterSpacing: -0.5,
   },
