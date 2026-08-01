@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
-function recolorGreenToViolet(inputPath, outputPath) {
+function processExactLoginButtonColor(inputPath, outputPath) {
   if (!fs.existsSync(inputPath)) return;
   const fileBuf = fs.readFileSync(inputPath);
 
@@ -26,7 +26,26 @@ function recolorGreenToViolet(inputPath, outputPath) {
         bitDepth: chunkData[8],
         colorType: chunkData[9],
       };
-      otherChunksBefore.push(fullChunk);
+      const newIhdrData = Buffer.from(chunkData);
+      newIhdrData[9] = 6; // Force RGBA
+      
+      const lenBuf = Buffer.alloc(4);
+      lenBuf.writeUInt32BE(13, 0);
+      const typeBuf = Buffer.from('IHDR', 'ascii');
+      const typeAndData = Buffer.concat([typeBuf, newIhdrData]);
+      
+      const crcTable = [];
+      for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+        crcTable[n] = c;
+      }
+      let crc = 0xffffffff;
+      for (let i = 0; i < typeAndData.length; i++) crc = crcTable[(crc ^ typeAndData[i]) & 0xff] ^ (crc >>> 8);
+      const crcBuf = Buffer.alloc(4);
+      crcBuf.writeUInt32BE((crc ^ 0xffffffff) >>> 0, 0);
+      
+      otherChunksBefore.push(Buffer.concat([lenBuf, typeAndData, crcBuf]));
     } else if (type === 'IDAT') {
       foundIdat = true;
       idatChunks.push(chunkData);
@@ -42,23 +61,26 @@ function recolorGreenToViolet(inputPath, outputPath) {
   const combinedIdat = Buffer.concat(idatChunks);
   const decompressed = zlib.inflateSync(combinedIdat);
 
-  const bpp = ihdr.colorType === 6 ? 4 : (ihdr.colorType === 2 ? 3 : 0);
-  if (!bpp) return;
+  const inBpp = ihdr.colorType === 6 ? 4 : (ihdr.colorType === 2 ? 3 : 0);
+  if (!inBpp) return;
 
-  const scanlineLength = 1 + ihdr.width * bpp;
+  const outBpp = 4;
+  const inScanlineLen = 1 + ihdr.width * inBpp;
+  const outScanlineLen = 1 + ihdr.width * outBpp;
   const height = ihdr.height;
-  const rawPixels = Buffer.alloc(height * ihdr.width * bpp);
+  
+  const rawIn = Buffer.alloc(height * ihdr.width * inBpp);
 
   for (let y = 0; y < height; y++) {
-    const filterType = decompressed[y * scanlineLength];
-    const lineStart = y * scanlineLength + 1;
-    const outLineStart = y * ihdr.width * bpp;
+    const filterType = decompressed[y * inScanlineLen];
+    const lineStart = y * inScanlineLen + 1;
+    const outLineStart = y * ihdr.width * inBpp;
 
-    for (let x = 0; x < ihdr.width * bpp; x++) {
+    for (let x = 0; x < ihdr.width * inBpp; x++) {
       let val = decompressed[lineStart + x];
-      let left = x >= bpp ? rawPixels[outLineStart + x - bpp] : 0;
-      let up = y > 0 ? rawPixels[(y - 1) * ihdr.width * bpp + x] : 0;
-      let upLeft = (y > 0 && x >= bpp) ? rawPixels[(y - 1) * ihdr.width * bpp + x - bpp] : 0;
+      let left = x >= inBpp ? rawIn[outLineStart + x - inBpp] : 0;
+      let up = y > 0 ? rawIn[(y - 1) * ihdr.width * inBpp + x] : 0;
+      let upLeft = (y > 0 && x >= inBpp) ? rawIn[(y - 1) * ihdr.width * inBpp + x - inBpp] : 0;
 
       if (filterType === 1) val = (val + left) & 0xff;
       else if (filterType === 2) val = (val + up) & 0xff;
@@ -71,41 +93,60 @@ function recolorGreenToViolet(inputPath, outputPath) {
         let pr = (pa <= pb && pa <= pc) ? left : ((pb <= pc) ? up : upLeft);
         val = (val + pr) & 0xff;
       }
-      rawPixels[outLineStart + x] = val;
+      rawIn[outLineStart + x] = val;
     }
   }
 
-  let count = 0;
-  for (let i = 0; i < rawPixels.length; i += bpp) {
-    const r = rawPixels[i];
-    const g = rawPixels[i + 1];
-    const b = rawPixels[i + 2];
+  const rawOut = Buffer.alloc(height * ihdr.width * outBpp);
+  let transparentCount = 0;
+  let recoloredCount = 0;
 
-    // Detect ONLY the green/teal square background pixels:
-    // Green (g) is dominant over Red (r), and g >= 25, b >= 30, r <= 75
-    // Avoid yellow bookmark (r > 160, g > 130)
-    // Avoid white pages (r > 200, g > 200, b > 200)
-    const isGreenSquare = (g > r + 15 && b > r + 10 && g >= 25 && g <= 140 && r <= 75 && b <= 150);
-
-    if (isGreenSquare) {
-      // Calculate relative shade factor to preserve original shadows & highlights
-      const brightness = (r + g + b) / 3;
-      const shade = brightness / 75;
-
-      // Replace green with matched theme violet (#6366F1 -> R:99, G:102, B:241)
-      rawPixels[i] = Math.min(255, Math.max(0, Math.round(99 * Math.max(0.65, Math.min(1.35, shade)))));
-      rawPixels[i + 1] = Math.min(255, Math.max(0, Math.round(102 * Math.max(0.65, Math.min(1.35, shade)))));
-      rawPixels[i + 2] = Math.min(255, Math.max(0, Math.round(241 * Math.max(0.65, Math.min(1.35, shade)))));
-      count++;
-    }
-  }
-
-  console.log(`Recolored ${count} green square pixels to violet for ${path.basename(outputPath)}.`);
-
-  const filteredBuf = Buffer.alloc(height * scanlineLength);
   for (let y = 0; y < height; y++) {
-    filteredBuf[y * scanlineLength] = 0;
-    rawPixels.copy(filteredBuf, y * scanlineLength + 1, y * ihdr.width * bpp, (y + 1) * ihdr.width * bpp);
+    for (let x = 0; x < ihdr.width; x++) {
+      const inIdx = (y * ihdr.width + x) * inBpp;
+      const outIdx = (y * ihdr.width + x) * outBpp;
+
+      const r = rawIn[inIdx];
+      const g = rawIn[inIdx + 1];
+      const b = rawIn[inIdx + 2];
+
+      // Outer white/light background -> transparent
+      const isWhiteBg = (r >= 230 && g >= 230 && b >= 230);
+
+      // Violet/purple icon square background & text
+      const isVioletLogoPixel = (b > r + 12 && b > g + 12 && b >= 120 && r <= 180 && g <= 180);
+
+      if (isWhiteBg) {
+        rawOut[outIdx] = 0;
+        rawOut[outIdx + 1] = 0;
+        rawOut[outIdx + 2] = 0;
+        rawOut[outIdx + 3] = 0; // Transparent
+        transparentCount++;
+      } else if (isVioletLogoPixel) {
+        // Set to exact solid login button swatch color: R=99, G=102, B=241 (#6366F1)
+        const origBright = (r + g + b) / 3;
+        const darkFactor = origBright < 110 ? 0.78 : (origBright > 190 ? 1.02 : 0.92);
+
+        rawOut[outIdx] = Math.min(255, Math.max(0, Math.round(99 * darkFactor)));
+        rawOut[outIdx + 1] = Math.min(255, Math.max(0, Math.round(102 * darkFactor)));
+        rawOut[outIdx + 2] = Math.min(255, Math.max(0, Math.round(241 * darkFactor)));
+        rawOut[outIdx + 3] = inBpp === 4 ? rawIn[inIdx + 3] : 255;
+        recoloredCount++;
+      } else {
+        rawOut[outIdx] = r;
+        rawOut[outIdx + 1] = g;
+        rawOut[outIdx + 2] = b;
+        rawOut[outIdx + 3] = inBpp === 4 ? rawIn[inIdx + 3] : 255;
+      }
+    }
+  }
+
+  console.log(`Updated ${recoloredCount} pixels to exact rich login button color #6366F1 for ${path.basename(outputPath)}.`);
+
+  const filteredBuf = Buffer.alloc(height * outScanlineLen);
+  for (let y = 0; y < height; y++) {
+    filteredBuf[y * outScanlineLen] = 0;
+    rawOut.copy(filteredBuf, y * outScanlineLen + 1, y * ihdr.width * outBpp, (y + 1) * ihdr.width * outBpp);
   }
 
   const newIdatData = zlib.deflateSync(filteredBuf);
@@ -144,8 +185,7 @@ function recolorGreenToViolet(inputPath, outputPath) {
   fs.writeFileSync(outputPath, outPNG);
 }
 
-// Copy original uploaded media file to assets first
-const sourceMedia = "C:\\Users\\AKHILESH\\.gemini\\antigravity-ide\\brain\\be7ff1ff-5bd1-4b1e-979c-a8f94fbb72bc\\media__1785569506398.png";
+const sourceMedia = "C:\\Users\\AKHILESH\\.gemini\\antigravity-ide\\brain\\be7ff1ff-5bd1-4b1e-979c-a8f94fbb72bc\\media__1785571257349.png";
 const logoPath = path.join(__dirname, '../assets/images/daybook-logo.png');
 const iconPath = path.join(__dirname, '../assets/images/icon.png');
 const fgPath = path.join(__dirname, '../assets/images/android-icon-foreground.png');
@@ -156,6 +196,6 @@ if (fs.existsSync(sourceMedia)) {
   fs.copyFileSync(sourceMedia, fgPath);
 }
 
-recolorGreenToViolet(logoPath, logoPath);
-recolorGreenToViolet(iconPath, iconPath);
-recolorGreenToViolet(fgPath, fgPath);
+processExactLoginButtonColor(logoPath, logoPath);
+processExactLoginButtonColor(iconPath, iconPath);
+processExactLoginButtonColor(fgPath, fgPath);
