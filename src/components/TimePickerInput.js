@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 
-export const TimePickerInput = ({ value = '08:00 AM', onChangeTime }) => {
+export const TimePickerInput = ({ value = '10:10 AM', onChangeTime }) => {
   const { theme } = useTheme();
 
   // Parse initial value e.g. "08:00 AM" or "10:30 PM"
   const parseTime = (timeStr) => {
-    if (!timeStr) return { hh: '08', mm: '00', period: 'AM' };
+    if (!timeStr) return { hh: '10', mm: '10', period: 'AM' };
     const parts = timeStr.trim().split(' ');
     const period = parts[1] && (parts[1].toUpperCase() === 'PM' || parts[1].toUpperCase() === 'AM') ? parts[1].toUpperCase() : 'AM';
-    const timeParts = parts[0] ? parts[0].split(':') : ['08', '00'];
-    let hh = timeParts[0] || '08';
-    let mm = timeParts[1] || '00';
+    const timeParts = parts[0] ? parts[0].split(':') : ['10', '10'];
+    let hh = timeParts[0] || '10';
+    let mm = timeParts[1] || '10';
 
-    hh = String(Math.min(12, Math.max(1, parseInt(hh, 10) || 8))).padStart(2, '0');
+    hh = String(Math.min(12, Math.max(1, parseInt(hh, 10) || 10))).padStart(2, '0');
     mm = String(Math.min(59, Math.max(0, parseInt(mm, 10) || 0))).padStart(2, '0');
 
     return { hh, mm, period };
@@ -25,54 +25,77 @@ export const TimePickerInput = ({ value = '08:00 AM', onChangeTime }) => {
   const [minutes, setMinutes] = useState(initial.mm);
   const [period, setPeriod] = useState(initial.period);
 
+  const prevValueRef = useRef(value);
+
   useEffect(() => {
-    const formatted = `${hours}:${minutes} ${period}`;
-    if (onChangeTime) {
-      onChangeTime(formatted);
+    // Only update internal state if value changed externally from outside parent
+    if (value && value !== prevValueRef.current) {
+      prevValueRef.current = value;
+      const parsed = parseTime(value);
+      setHours(parsed.hh);
+      setMinutes(parsed.mm);
+      setPeriod(parsed.period);
     }
-  }, [hours, minutes, period]);
+  }, [value]);
+
+  const notifyChange = (h, m, p) => {
+    if (onChangeTime) {
+      const formattedH = h !== '' ? String(Math.min(12, Math.max(1, parseInt(h, 10) || 10))).padStart(2, '0') : '10';
+      const formattedM = m !== '' ? String(Math.min(59, Math.max(0, parseInt(m, 10) || 0))).padStart(2, '0') : '00';
+      const newFormattedTime = `${formattedH}:${formattedM} ${p}`;
+      prevValueRef.current = newFormattedTime;
+      onChangeTime(newFormattedTime);
+    }
+  };
 
   const handleHoursChange = (text) => {
     const cleaned = text.replace(/[^0-9]/g, '');
-    if (!cleaned) {
+    if (cleaned === '') {
       setHours('');
       return;
     }
     let num = parseInt(cleaned, 10);
     if (num > 12) num = 12;
-    if (num < 1 && cleaned.length >= 2) num = 1;
-    const hhStr = cleaned.length >= 2 ? String(num).padStart(2, '0') : cleaned;
-    setHours(hhStr);
+    const str = String(num);
+    setHours(str);
+    notifyChange(str, minutes, period);
   };
 
   const handleHoursBlur = () => {
     let num = parseInt(hours, 10);
-    if (isNaN(num) || num < 1) num = 12;
+    if (isNaN(num) || num < 1) num = 10;
     if (num > 12) num = 12;
-    setHours(String(num).padStart(2, '0'));
+    const formatted = String(num).padStart(2, '0');
+    setHours(formatted);
+    notifyChange(formatted, minutes, period);
   };
 
   const handleMinutesChange = (text) => {
     const cleaned = text.replace(/[^0-9]/g, '');
-    if (!cleaned) {
+    if (cleaned === '') {
       setMinutes('');
       return;
     }
     let num = parseInt(cleaned, 10);
     if (num > 59) num = 59;
-    const mmStr = cleaned.length >= 2 ? String(num).padStart(2, '0') : cleaned;
-    setMinutes(mmStr);
+    const str = String(num);
+    setMinutes(str);
+    notifyChange(hours, str, period);
   };
 
   const handleMinutesBlur = () => {
     let num = parseInt(minutes, 10);
     if (isNaN(num) || num < 0) num = 0;
     if (num > 59) num = 59;
-    setMinutes(String(num).padStart(2, '0'));
+    const formatted = String(num).padStart(2, '0');
+    setMinutes(formatted);
+    notifyChange(hours, formatted, period);
   };
 
   const togglePeriod = () => {
-    setPeriod((prev) => (prev === 'AM' ? 'PM' : 'AM'));
+    const nextPeriod = period === 'AM' ? 'PM' : 'AM';
+    setPeriod(nextPeriod);
+    notifyChange(hours, minutes, nextPeriod);
   };
 
   return (

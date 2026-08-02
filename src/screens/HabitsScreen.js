@@ -14,6 +14,7 @@ import { useTasks } from '../context/TaskContext';
 import { HabitCard } from '../components/HabitCard';
 import { Icon } from '../components/Icons';
 import { TimePickerInput } from '../components/TimePickerInput';
+import { formatMultiLineText } from '../utils/textUtils';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 
 export const HabitsScreen = ({ habits = [], onGoBack }) => {
@@ -32,14 +33,14 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
   const [priority, setPriority] = useState('Medium');
   const [time, setTime] = useState('08:00 AM');
   const [notes, setNotes] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState('none');
+  const [selectedIcon, setSelectedIcon] = useState('note');
   const [autoAddToday, setAutoAddToday] = useState(true);
 
   const categories = ['Health', 'Work', 'Personal', 'Finance'];
   const priorities = ['Low', 'Medium', 'High'];
 
   const availableIcons = [
-    { id: 'none', label: 'None', symbol: '⭕' },
+    { id: 'note', label: 'Note', symbol: '📝' },
     { id: 'droplet', label: 'Water', symbol: '💧' },
     { id: 'walking', label: 'Walking', symbol: '🚶' },
     { id: 'dumbbell', label: 'Workout', symbol: '🏋️' },
@@ -58,7 +59,7 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
     setPriority('Medium');
     setTime('08:00 AM');
     setNotes('');
-    setSelectedIcon('none');
+    setSelectedIcon('note');
     setAutoAddToday(false);
     setModalVisible(true);
   };
@@ -70,23 +71,25 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
     setPriority(habit.priority || 'Medium');
     setTime(habit.time || '08:00 AM');
     setNotes(habit.notes || '');
-    setSelectedIcon(habit.icon || 'none');
+    setSelectedIcon(habit.icon === 'none' || !habit.icon ? 'note' : habit.icon);
     setAutoAddToday(habit.autoAddToday !== false);
     setModalVisible(true);
   };
 
   const handleSave = () => {
-    if (!newTitle.trim()) return;
+    const cleanTitle = newTitle.trim();
+    if (!cleanTitle) return;
+    const cleanNotes = formatMultiLineText(notes);
 
     if (editingHabit) {
       // Edit existing habit
       const updated = {
         ...editingHabit,
-        title: newTitle,
+        title: cleanTitle,
         category,
         priority,
         time,
-        notes,
+        notes: cleanNotes,
         icon: selectedIcon,
         autoAddToday: autoAddToday,
       };
@@ -95,11 +98,11 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
       // Add new habit
       const newHabit = {
         id: 'h_' + Date.now(),
-        title: newTitle,
+        title: cleanTitle,
         category,
         priority,
         time,
-        notes,
+        notes: cleanNotes,
         progress: 0,
         streak: 0,
         completedToday: false,
@@ -202,9 +205,14 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
               </Text>
 
               {/* Habit Title */}
-              <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
-                Habit Title
-              </Text>
+              <View style={styles.labelRow}>
+                <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+                  Habit Title
+                </Text>
+                <Text style={[styles.charCounter, { color: theme.colors.textMuted }]}>
+                  {newTitle.length}/20
+                </Text>
+              </View>
               <TextInput
                 style={[
                   styles.modalInput,
@@ -214,8 +222,9 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
                     borderColor: theme.colors.border,
                   },
                 ]}
-                placeholder="e.g. Drinking Water, Morning Jog, Reading..."
+                placeholder="e.g., Drink Water, Morning Jog"
                 placeholderTextColor={theme.colors.textMuted}
+                maxLength={20}
                 value={newTitle}
                 onChangeText={setNewTitle}
               />
@@ -323,9 +332,14 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
               <TimePickerInput value={time} onChangeTime={setTime} />
 
               {/* Notes (Optional) */}
-              <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
-                Notes (Optional)
-              </Text>
+              <View style={styles.labelRow}>
+                <Text style={[styles.inputLabel, { color: theme.colors.textSecondary }]}>
+                  Notes (Optional)
+                </Text>
+                <Text style={[styles.charCounter, { color: theme.colors.textMuted }]}>
+                  {notes.length}/100
+                </Text>
+              </View>
               <TextInput
                 style={[
                   styles.modalInput,
@@ -339,6 +353,7 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
                 placeholder="Add daily habit goals, notes, or details..."
                 placeholderTextColor={theme.colors.textMuted}
                 multiline={true}
+                maxLength={100}
                 numberOfLines={3}
                 value={notes}
                 onChangeText={setNotes}
@@ -487,19 +502,29 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginBottom: 16,
   },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    marginBottom: 4,
+  },
   inputLabel: {
     fontSize: 13,
     fontWeight: '600',
-    marginBottom: 8,
-    marginTop: 8,
+  },
+  charCounter: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   modalInput: {
     borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
+    paddingVertical: 10,
+    fontSize: 14,
     marginBottom: 10,
+    includeFontPadding: false,
     outlineStyle: 'none',
   },
   textArea: {

@@ -1,30 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
   Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  Switch,
+  View,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { formatMultiLineText } from '../utils/textUtils';
 import { Icon } from './Icons';
 import { TimePickerInput } from './TimePickerInput';
-
-let Audio = null;
-let Asset = null;
-try {
-  Audio = require('expo-av').Audio;
-} catch (e) {
-  console.warn('expo-av load warning:', e);
-}
-try {
-  Asset = require('expo-asset').Asset;
-} catch (e) {
-  console.warn('expo-asset load warning:', e);
-}
 
 export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editingReminder }) => {
   const { theme } = useTheme();
@@ -32,154 +19,102 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
   const [title, setTitle] = useState('');
   const [importance, setImportance] = useState('');
   const [notes, setNotes] = useState('');
-  const [time, setTime] = useState('10:00 AM');
-  const [repeat, setRepeat] = useState('Does not repeat');
+  const [time, setTime] = useState('10:10 AM');
+  const [repeat, setRepeat] = useState('No Repeat');
   const [priority, setPriority] = useState('High');
-  const [alarmTone, setAlarmTone] = useState('Brisk Bell');
-  const [notification, setNotification] = useState(true);
   const [category, setCategory] = useState('Work');
+  const [validationError, setValidationError] = useState('');
 
-  const [soundObject, setSoundObject] = useState(null);
-  const [playingTone, setPlayingTone] = useState(null);
-
-  const repeatOptions = ['Does not repeat', 'Daily', 'Weekly', 'Monthly', 'Yearly'];
+  const repeatOptions = ['No Repeat', 'Daily', 'Weekly', 'Monthly', 'Yearly'];
   const priorityOptions = ['Normal', 'High', 'Critical'];
   const categoryOptions = ['Work', 'Health', 'Personal', 'Finance'];
-  const toneOptions = [
-    { id: 'No Ringtone', label: 'No Ringtone', icon: 'volumeOff', sound: null },
-    { id: 'Cartoon Bell', label: 'Cartoon Bell', icon: 'bell', sound: require('../../assets/sounds/cartoon.wav') },
-    { id: 'Brisk Bell', label: 'Brisk Bell', icon: 'bell', sound: require('../../assets/sounds/brisk bell.wav') },
-    { id: 'Gentle Chime', label: 'Gentle Chime', icon: 'music', sound: require('../../assets/sounds/gentle chime.wav') },
-    { id: 'Soft Bell', label: 'Soft Bell', icon: 'bell', sound: require('../../assets/sounds/soft bell.mp3') },
-  ];
 
-  const stopAudioIfPlaying = async () => {
-    if (soundObject) {
-      try {
-        await soundObject.stopAsync();
-        await soundObject.unloadAsync();
-      } catch (e) {}
-      setSoundObject(null);
-    }
-    setPlayingTone(null);
-  };
-
-  useEffect(() => {
-    return () => {
-      stopAudioIfPlaying();
-    };
-  }, []);
-
-  const handleSelectTone = async (toneObj) => {
-    setAlarmTone(toneObj.label);
-
-    await stopAudioIfPlaying();
-
-    if (!toneObj.sound) {
-      return;
-    }
-
+  const parseDateTime = (dStr, tStr) => {
     try {
-      setPlayingTone(toneObj.id);
-
-      if (Audio && Audio.Sound) {
-        try {
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: false,
-            playsInSilentModeIOS: true,
-            staysActiveInBackground: false,
-            shouldDuckAndroid: true,
-          });
-        } catch (modeErr) {}
-
-        let soundSource = toneObj.sound;
-        if (Asset && typeof toneObj.sound === 'number') {
-          try {
-            const asset = Asset.fromModule(toneObj.sound);
-            await asset.downloadAsync();
-            if (asset.localUri || asset.uri) {
-              soundSource = { uri: asset.localUri || asset.uri };
-            }
-          } catch (assetErr) {
-            console.warn('Asset download fallback:', assetErr);
-          }
+      if (!dStr) return new Date(0);
+      const parts = dStr.split('-').map(Number);
+      let h = 10, m = 10;
+      if (tStr) {
+        const isPM = tStr.toUpperCase().includes('PM');
+        const isAM = tStr.toUpperCase().includes('AM');
+        const clean = tStr.replace(/(AM|PM|\s)/gi, '');
+        const tParts = clean.split(':').map(Number);
+        if (tParts.length >= 2 && !isNaN(tParts[0]) && !isNaN(tParts[1])) {
+          h = tParts[0];
+          m = tParts[1];
+          if (isPM && h < 12) h += 12;
+          if (isAM && h === 12) h = 0;
         }
-
-        const { sound } = await Audio.Sound.createAsync(
-          soundSource,
-          { shouldPlay: true, volume: 1.0 }
-        );
-
-        setSoundObject(sound);
-        await sound.setPositionAsync(0);
-        await sound.playAsync();
-
-        sound.setOnPlaybackStatusUpdate((status) => {
-          if (status.didJustFinish) {
-            setPlayingTone(null);
-            sound.unloadAsync();
-          }
-        });
-      } else if (typeof window !== 'undefined' && window.Audio) {
-        const htmlAudio = new window.Audio(toneObj.sound);
-        htmlAudio.volume = 1.0;
-        htmlAudio.play().catch(() => {});
-        setSoundObject({
-          stopAsync: async () => htmlAudio.pause(),
-          unloadAsync: async () => {
-            htmlAudio.pause();
-            htmlAudio.currentTime = 0;
-          },
-        });
-        htmlAudio.onended = () => {
-          setPlayingTone(null);
-        };
       }
+      return new Date(parts[0], parts[1] - 1, parts[2], h, m, 0, 0);
     } catch (e) {
-      console.error('Audio playback error:', e);
-      setPlayingTone(null);
+      return new Date(0);
     }
   };
 
   useEffect(() => {
+    setValidationError('');
     if (editingReminder) {
       setTitle(editingReminder.title || '');
       setImportance(editingReminder.importance || '');
       setNotes(editingReminder.notes || '');
-      setTime(editingReminder.time || '10:00 AM');
-      setRepeat(editingReminder.repeat || 'Does not repeat');
+      setTime(editingReminder.time || '10:10 AM');
+      setRepeat((editingReminder.repeat === 'Does not repeat' || editingReminder.repeat === "Doesn't repeat" || !editingReminder.repeat) ? 'No Repeat' : editingReminder.repeat);
       setPriority(editingReminder.priority || 'High');
-      setAlarmTone(editingReminder.alarmTone || 'Brisk Bell');
-      setNotification(editingReminder.notification !== false);
       setCategory(editingReminder.category || 'Work');
     } else {
       resetForm();
     }
   }, [editingReminder, visible]);
 
-  const handleClose = async () => {
-    await stopAudioIfPlaying();
+  const handleClose = () => {
+    setValidationError('');
     onClose();
   };
 
-  const handleSave = async () => {
-    if (!title.trim()) return;
-    await stopAudioIfPlaying();
+  const handleSave = () => {
+    setValidationError('');
+
+    // 1. Title mandatory check
+    if (!title.trim()) {
+      setValidationError('Title field is mandatory.');
+      return;
+    }
+
+    // 2. Time mandatory check
+    if (!time || !time.trim()) {
+      setValidationError('Reminder time is mandatory.');
+      return;
+    }
+
+    // 3. Past time check (Reminder time must be greater than current time)
+    const activeDateStr = editingReminder
+      ? editingReminder.date
+      : selectedDate && selectedDate >= new Date().toISOString().split('T')[0]
+        ? selectedDate
+        : new Date().toISOString().split('T')[0];
+
+    const targetDateTime = parseDateTime(activeDateStr, time);
+    const now = new Date();
+
+    if (targetDateTime.getTime() <= now.getTime()) {
+      setValidationError('Reminder time must be greater than current time. You cannot set a reminder in the past.');
+      return;
+    }
+
+    const cleanTitle = title.trim();
+    const cleanImportance = formatMultiLineText(importance);
+    const cleanNotes = formatMultiLineText(notes);
+
     const reminderData = {
       id: editingReminder ? editingReminder.id : 'r_' + Date.now(),
-      title,
-      importance,
-      notes,
-      date: editingReminder
-        ? editingReminder.date
-        : selectedDate && selectedDate >= new Date().toISOString().split('T')[0]
-        ? selectedDate
-        : new Date().toISOString().split('T')[0],
+      title: cleanTitle,
+      importance: cleanImportance,
+      notes: cleanNotes,
+      date: activeDateStr,
       time,
-      alarmTone,
       repeat,
       priority,
-      notification,
       category,
       notificationId: editingReminder ? editingReminder.notificationId : null,
     };
@@ -189,14 +124,14 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
   };
 
   const resetForm = () => {
+    setValidationError('');
     setTitle('');
     setImportance('');
     setNotes('');
-    setTime('10:00 AM');
-    setRepeat('Does not repeat');
+    setTime('10:10 AM');
+    setRepeat('No Repeat');
     setPriority('High');
-    setAlarmTone('Brisk Bell');
-    setNotification(true);
+    setCategory('Work');
   };
 
   return (
@@ -227,21 +162,35 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
           </View>
 
           <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
+            {/* Validation Error Banner */}
+            {validationError ? (
+              <View style={styles.errorBox}>
+                <Icon name="ban" size={16} color="#EF4444" style={{ marginRight: 8 }} />
+                <Text style={styles.errorText}>{validationError}</Text>
+              </View>
+            ) : null}
+
             {/* Title Field */}
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Title Field</Text>
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+              Title Field <Text style={{ color: '#EF4444' }}>*</Text>
+            </Text>
             <TextInput
               style={[
                 styles.input,
                 {
                   backgroundColor: theme.colors.surfaceVariant,
                   color: theme.colors.textPrimary,
-                  borderColor: theme.colors.border,
+                  borderColor: validationError && validationError.includes('Title') ? '#EF4444' : theme.colors.border,
                 },
               ]}
               placeholder="Add Reminder Title (e.g., Team Meeting)"
               placeholderTextColor={theme.colors.textMuted}
+              maxLength={20}
               value={title}
-              onChangeText={setTitle}
+              onChangeText={(txt) => {
+                setValidationError('');
+                setTitle(txt);
+              }}
             />
 
             {/* Importance Field */}
@@ -261,12 +210,13 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
               placeholder="Importance details (e.g., Annual project deliverable)"
               placeholderTextColor={theme.colors.textMuted}
               multiline={true}
+              maxLength={100}
               numberOfLines={2}
               value={importance}
               onChangeText={setImportance}
             />
 
-            {/* Notes / Motivation Quote */}
+            {/* Motivation Quote / Quick Notes */}
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
               Motivation Quote / Quick Notes
             </Text>
@@ -280,62 +230,26 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
                   borderColor: theme.colors.border,
                 },
               ]}
-              placeholder="Quick notes or motivational reminder..."
+              placeholder="Quick notes or motivational reminder message..."
               placeholderTextColor={theme.colors.textMuted}
               multiline={true}
+              maxLength={100}
               numberOfLines={2}
               value={notes}
               onChangeText={setNotes}
             />
 
             {/* Time Selector */}
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Reminder Time</Text>
-            <TimePickerInput value={time} onChangeTime={setTime} />
-
-            {/* Alarm Ringtone Selector */}
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Ringtone</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollOptions}>
-              {toneOptions.map((toneObj) => {
-                const isSelected = alarmTone === toneObj.label || alarmTone === toneObj.id;
-                const isPlaying = playingTone === toneObj.id;
-
-                return (
-                  <TouchableOpacity
-                    key={toneObj.id}
-                    style={[
-                      styles.tonePill,
-                      {
-                        backgroundColor: isSelected
-                          ? theme.colors.primary
-                          : theme.colors.surfaceVariant,
-                        borderColor: isPlaying ? '#10B981' : isSelected ? theme.colors.primary : theme.colors.border,
-                      },
-                    ]}
-                    onPress={() => handleSelectTone(toneObj)}
-                    activeOpacity={0.8}
-                  >
-                    <Icon
-                      name={isPlaying ? 'sparkles' : toneObj.icon}
-                      size={15}
-                      color={isSelected ? '#FFFFFF' : theme.colors.primary}
-                      style={{ marginRight: 6 }}
-                    />
-                    <Text
-                      style={[
-                        styles.optionText,
-                        {
-                          color: isSelected ? '#FFFFFF' : theme.colors.textSecondary,
-                          fontWeight: isSelected ? '700' : '600',
-                        },
-                      ]}
-                    >
-                      {toneObj.label}
-                    </Text>
-                    {isPlaying && <View style={styles.playingDot} />}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+              Reminder Time <Text style={{ color: '#EF4444' }}>*</Text>
+            </Text>
+            <TimePickerInput
+              value={time}
+              onChangeTime={(t) => {
+                setValidationError('');
+                setTime(t);
+              }}
+            />
 
             {/* Category Selector */}
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Category</Text>
@@ -406,7 +320,7 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
                     {
                       backgroundColor:
                         repeat === rep
-                          ? theme.colors.secondary
+                          ? theme.colors.primary
                           : theme.colors.surfaceVariant,
                       marginRight: 8,
                     },
@@ -424,19 +338,6 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
                 </TouchableOpacity>
               ))}
             </ScrollView>
-
-            {/* Notification Toggle */}
-            <View style={styles.toggleRow}>
-              <Text style={[styles.label, { color: theme.colors.textPrimary, marginBottom: 0 }]}>
-                Enable Trigger Notification & Alarm
-              </Text>
-              <Switch
-                value={notification}
-                onValueChange={setNotification}
-                trackColor={{ false: theme.colors.border, true: theme.colors.primaryLight }}
-                thumbColor={notification ? theme.colors.primary : '#F4F3F4'}
-              />
-            </View>
           </ScrollView>
 
           {/* Submit Button */}
@@ -477,19 +378,15 @@ const styles = StyleSheet.create({
   headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
   },
   dateBadge: {
     fontSize: 13,
     fontWeight: '600',
-    marginLeft: 10,
-    backgroundColor: 'rgba(99, 102, 241, 0.12)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
   },
   closeBtn: {
     padding: 4,
@@ -520,37 +417,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
   },
+  scrollOptions: {
+    flexDirection: 'row',
+  },
   optionPill: {
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
   },
-  tonePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    marginRight: 8,
-  },
-  playingDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10B981',
-    marginLeft: 6,
-  },
   optionText: {
     fontSize: 13,
     fontWeight: '600',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    paddingVertical: 8,
   },
   saveBtn: {
     height: 52,
@@ -566,5 +443,22 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginBottom: 4,
+    marginTop: 2,
+  },
+  errorText: {
+    color: '#EF4444',
+    fontSize: 12,
+    fontWeight: '600',
+    flex: 1,
+    lineHeight: 16,
   },
 });

@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 try {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
+      shouldShowBanner: true,
       shouldShowAlert: true,
       shouldPlaySound: true,
       shouldSetBadge: true,
@@ -91,62 +92,44 @@ export const NotificationService = {
       const targetDate = parseReminderDateTime(reminder.date, reminder.time);
       const now = new Date();
 
-      if (isNaN(targetDate.getTime()) || targetDate <= now) {
-        // Fallback: 5 seconds test delay if time has passed
+      if (reminder.repeat === 'Daily') {
+        trigger = Notifications.SchedulableTriggerInputTypes?.DAILY
+          ? { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: targetDate.getHours(), minute: targetDate.getMinutes() }
+          : { hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
+      } else if (reminder.repeat === 'Weekly') {
+        trigger = Notifications.SchedulableTriggerInputTypes?.WEEKLY
+          ? { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: targetDate.getDay() + 1, hour: targetDate.getHours(), minute: targetDate.getMinutes() }
+          : { weekday: targetDate.getDay() + 1, hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
+      } else if (reminder.repeat === 'Monthly') {
+        trigger = Notifications.SchedulableTriggerInputTypes?.MONTHLY
+          ? { type: Notifications.SchedulableTriggerInputTypes.MONTHLY, day: targetDate.getDate(), hour: targetDate.getHours(), minute: targetDate.getMinutes() }
+          : { day: targetDate.getDate(), hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
+      } else if (reminder.repeat === 'Yearly') {
+        trigger = Notifications.SchedulableTriggerInputTypes?.YEARLY
+          ? { type: Notifications.SchedulableTriggerInputTypes.YEARLY, month: targetDate.getMonth() + 1, day: targetDate.getDate(), hour: targetDate.getHours(), minute: targetDate.getMinutes() }
+          : { month: targetDate.getMonth() + 1, day: targetDate.getDate(), hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
+      } else {
+        // Standard One-Time Notification at Exact Target Date & Time (Does not repeat)
+        const secondsFromNow = Math.max(1, Math.floor((targetDate.getTime() - now.getTime()) / 1000));
         if (Notifications.SchedulableTriggerInputTypes?.TIME_INTERVAL) {
           trigger = {
             type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-            seconds: 5,
+            seconds: secondsFromNow,
             repeats: false,
           };
         } else {
-          trigger = { seconds: 5 };
-        }
-      } else {
-        if (reminder.repeat === 'Daily') {
-          if (Notifications.SchedulableTriggerInputTypes?.DAILY) {
-            trigger = {
-              type: Notifications.SchedulableTriggerInputTypes.DAILY,
-              hour: targetDate.getHours(),
-              minute: targetDate.getMinutes(),
-            };
-          } else {
-            trigger = { hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
-          }
-        } else if (reminder.repeat === 'Weekly') {
-          if (Notifications.SchedulableTriggerInputTypes?.WEEKLY) {
-            trigger = {
-              type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-              weekday: targetDate.getDay() + 1,
-              hour: targetDate.getHours(),
-              minute: targetDate.getMinutes(),
-            };
-          } else {
-            trigger = { weekday: targetDate.getDay() + 1, hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
-          }
-        } else {
-          // Standard One-Time Alarm at Exact Target Date & Time (e.g., tomorrow at 09:00 AM)
-          if (Notifications.SchedulableTriggerInputTypes?.DATE) {
-            trigger = {
-              type: Notifications.SchedulableTriggerInputTypes.DATE,
-              date: targetDate,
-            };
-          } else {
-            trigger = targetDate;
-          }
+          trigger = { seconds: secondsFromNow };
         }
       }
 
-      const toneLabel = reminder.alarmTone || 'Default Ringtone';
-
       const notificationId = await Notifications.scheduleNotificationAsync({
         content: {
-          title: `⏰ Daybook Alarm: ${reminder.title}`,
-          body: `${reminder.importance || reminder.notes || 'Time for your scheduled activity.'} (Tone: ${toneLabel})`,
-          sound: true,
+          title: `⏰ Daybook Reminder: ${reminder.title}`,
+          body: `${reminder.importance || reminder.notes || 'Time for your scheduled activity.'}`,
+          sound: true, // Native system notification chime
           priority: Notifications.AndroidNotificationPriority.MAX,
           channelId: 'daybook_alarms',
-          data: { reminderId: reminder.id, alarmTone: toneLabel },
+          data: { reminderId: reminder.id },
         },
         trigger,
       });

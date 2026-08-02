@@ -89,6 +89,7 @@ export const Icon = ({ name, size = 22, color = '#6366F1', style }) => {
     plus: '➕',
     check: '✓',
     bell: '🔔',
+    note: '📝',
     volumeOff: '🔕',
     music: '🎶',
     droplet: '💧',

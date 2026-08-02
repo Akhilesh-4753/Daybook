@@ -11,6 +11,7 @@ import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { Icon } from '../components/Icons';
 import { useTasks } from '../context/TaskContext';
 import { useTheme } from '../theme/ThemeContext';
+import { formatMultiLineText } from '../utils/textUtils';
 
 export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
   const { theme } = useTheme();
@@ -98,8 +99,27 @@ export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
     return days;
   };
 
+  const parseTimeToMinutes = (timeStr) => {
+    if (!timeStr) return 0;
+    try {
+      const isPM = timeStr.toUpperCase().includes('PM');
+      const isAM = timeStr.toUpperCase().includes('AM');
+      const cleanTime = timeStr.replace(/(AM|PM|\s)/gi, '');
+      const parts = cleanTime.split(':').map(Number);
+      let hours = parts[0] || 0;
+      let minutes = parts[1] || 0;
+      if (isPM && hours < 12) hours += 12;
+      if (isAM && hours === 12) hours = 0;
+      return hours * 60 + minutes;
+    } catch (e) {
+      return 0;
+    }
+  };
+
   const calendarGrid = generateCalendarDays();
-  const selectedReminders = reminders.filter((r) => r.date === selectedDate);
+  const selectedReminders = reminders
+    .filter((r) => r.date === selectedDate)
+    .sort((a, b) => parseTimeToMinutes(a.time) - parseTimeToMinutes(b.time));
   const isPastDate = selectedDate < todayStr;
 
   const handleSaveEditedReminder = async (updated) => {
@@ -272,9 +292,15 @@ export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
                   <Text style={[styles.reminderTitle, { color: theme.colors.textPrimary }]}>
                     {rem.title}
                   </Text>
-                  <Text style={[styles.reminderTime, { color: theme.colors.primary }]}>
-                    ⏰ {rem.time} • Repeat: {rem.repeat || 'None'}
-                  </Text>
+                  <View style={styles.timeInfoRow}>
+                    <Text style={[styles.timeText, { color: theme.colors.primary }]}>
+                      ⏰ {rem.time}
+                    </Text>
+                    <Text style={[styles.bulletDot, { color: theme.colors.textMuted }]}>•</Text>
+                    <Text style={[styles.repeatText, { color: theme.colors.textSecondary }]}>
+                      Repeat: {(!rem.repeat || rem.repeat === 'Does not repeat' || rem.repeat === "Doesn't repeat" || rem.repeat === 'No Repeat') ? 'No Repeat' : rem.repeat}
+                    </Text>
+                  </View>
                 </View>
 
                 {/* Edit & Delete Action Buttons */}
@@ -297,21 +323,29 @@ export const CalendarScreen = ({ reminders = [], onAddReminder }) => {
                 </View>
               </View>
 
-              {rem.importance ? (
+              {rem.importance && rem.importance.trim() ? (
                 <View style={[styles.noteBox, { backgroundColor: theme.colors.surfaceVariant }]}>
-                  <Text style={[styles.noteImportanceTitle, { color: theme.colors.textSecondary }]}>
-                    💡 Importance & Details:
-                  </Text>
+                  <View style={styles.noteTitleRow}>
+                    <Text style={styles.bulbIcon}>💡</Text>
+                    <Text style={[styles.noteImportanceTitle, { color: theme.colors.textSecondary }]}>
+                      Importance & Details:
+                    </Text>
+                  </View>
                   <Text style={[styles.noteImportanceText, { color: theme.colors.textPrimary }]}>
-                    {rem.importance}
+                    {formatMultiLineText(rem.importance)}
                   </Text>
                 </View>
               ) : null}
 
-              {rem.notes ? (
-                <Text style={[styles.notesText, { color: theme.colors.textMuted }]}>
-                  Notes: {rem.notes}
-                </Text>
+              {rem.notes && rem.notes.trim() ? (
+                <View style={styles.notesRow}>
+                  <Text style={[styles.notesLabel, { color: theme.colors.textMuted }]}>
+                    Notes:
+                  </Text>
+                  <Text style={[styles.notesText, { color: theme.colors.textSecondary }]}>
+                    {formatMultiLineText(rem.notes)}
+                  </Text>
+                </View>
               ) : null}
             </View>
           ))
@@ -492,10 +526,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-  reminderTime: {
+  timeInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: 3,
+    gap: 4,
+  },
+  timeText: {
     fontSize: 12,
-    marginTop: 2,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  bulletDot: {
+    fontSize: 12,
+    marginHorizontal: 2,
+  },
+  repeatText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   reminderActions: {
     flexDirection: 'row',
@@ -512,21 +560,42 @@ const styles = StyleSheet.create({
   },
   noteBox: {
     marginTop: 12,
-    padding: 10,
-    borderRadius: 10,
+    padding: 12,
+    borderRadius: 12,
+  },
+  noteTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  bulbIcon: {
+    fontSize: 13,
+    marginRight: 6,
   },
   noteImportanceTitle: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
-    marginBottom: 2,
   },
   noteImportanceText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
+    paddingLeft: 22,
+    lineHeight: 18,
+  },
+  notesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 4,
+  },
+  notesLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginRight: 4,
   },
   notesText: {
     fontSize: 12,
-    marginTop: 8,
     fontStyle: 'italic',
+    flex: 1,
   },
 });

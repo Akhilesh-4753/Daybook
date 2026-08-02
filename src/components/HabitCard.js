@@ -28,7 +28,7 @@ export const HabitCard = ({ habit, onToggleAutoAdd, onEdit, onDelete }) => {
     }
   };
 
-  const hasIcon = habit.icon && habit.icon !== 'none';
+  const activeIcon = (!habit.icon || habit.icon === 'none') ? 'note' : habit.icon;
 
   return (
     <View
@@ -42,16 +42,14 @@ export const HabitCard = ({ habit, onToggleAutoAdd, onEdit, onDelete }) => {
     >
       <View style={styles.topRow}>
         <View style={styles.leftGroup}>
-          {hasIcon ? (
-            <View
-              style={[
-                styles.iconContainer,
-                { backgroundColor: theme.colors.surfaceVariant },
-              ]}
-            >
-              <Icon name={habit.icon} size={22} color={theme.colors.primary} />
-            </View>
-          ) : null}
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: theme.colors.surfaceVariant },
+            ]}
+          >
+            <Icon name={activeIcon} size={22} color={theme.colors.primary} />
+          </View>
           <View>
             <Text style={[styles.title, { color: theme.colors.textPrimary }]}>
               {habit.title}

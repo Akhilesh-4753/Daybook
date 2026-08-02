@@ -244,8 +244,13 @@ export const TaskProvider = ({ children }) => {
   }, []);
 
   const updateReminder = useCallback(async (updatedReminder) => {
-    await ReminderRepository.update(updatedReminder);
-    setReminders((prev) => prev.map((r) => (r.id === updatedReminder.id ? updatedReminder : r)));
+    if (updatedReminder.notificationId) {
+      await NotificationService.cancelReminder(updatedReminder.notificationId);
+    }
+    const notifId = await NotificationService.scheduleReminder(updatedReminder);
+    const finalReminder = { ...updatedReminder, notificationId: notifId };
+    await ReminderRepository.update(finalReminder);
+    setReminders((prev) => prev.map((r) => (r.id === finalReminder.id ? finalReminder : r)));
   }, []);
 
   const deleteReminder = useCallback(async (reminderId, notificationId) => {

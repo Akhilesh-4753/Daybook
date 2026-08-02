@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from '../components/Icons';
+import { formatMultiLineText } from '../utils/textUtils';
 
 export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) => {
   const { theme } = useTheme();
@@ -79,7 +80,8 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
   }, [diaryEntries, selectedYear, selectedMonth]);
 
   const handleSave = () => {
-    if (!content.trim()) {
+    const cleanContent = formatMultiLineText(content);
+    if (!cleanContent) {
       Alert.alert('Empty Reflection', 'Please write a few thoughts before saving.');
       return;
     }
@@ -87,9 +89,9 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
       id: 'd_' + Date.now(),
       date,
       formattedDate,
-      title: title || 'Daily Reflection',
+      title: title ? title.trim() : 'Daily Reflection',
       mood,
-      content,
+      content: cleanContent,
     };
     onSaveEntry(newEntry);
     setTitle('');
@@ -148,8 +150,9 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
                   borderColor: theme.colors.border,
                 },
               ]}
-              placeholder="Give today's entry a title..."
+              placeholder="e.g., Grateful for family, Achieved workout goal..."
               placeholderTextColor={theme.colors.textMuted}
+              maxLength={20}
               value={title}
               onChangeText={setTitle}
             />
@@ -203,6 +206,7 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
                 placeholder="Write about your daily highlights, achievements, learnings, or thoughts..."
                 placeholderTextColor={theme.colors.textMuted}
                 multiline={true}
+                maxLength={500}
                 numberOfLines={10}
                 value={content}
                 onChangeText={setContent}

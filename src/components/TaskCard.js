@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { formatMultiLineText } from '../utils/textUtils';
 import { Icon } from './Icons';
 
 export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDeleteTask }) => {
@@ -17,7 +17,7 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
         const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
         return d.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
       }
-    } catch (e) {}
+    } catch (e) { }
     return dateStr;
   };
 
@@ -46,7 +46,7 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
   };
 
   const badgeStyle = getPriorityBadge(task.priority);
-  const hasIcon = task.icon && task.icon !== 'none';
+  const activeIcon = (!task.icon || task.icon === 'none') ? 'note' : task.icon;
 
   return (
     <View
@@ -59,8 +59,8 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
           borderColor: isSelected
             ? theme.colors.primary
             : isOverdue
-            ? '#EF4444'
-            : theme.colors.border,
+              ? '#EF4444'
+              : theme.colors.border,
         },
         task.completed && styles.completedCard,
         isSelected && { borderWidth: 2, backgroundColor: theme.colors.surfaceVariant },
@@ -75,15 +75,15 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
             borderColor: task.completed
               ? theme.colors.success
               : isSelected
-              ? theme.colors.primary
-              : isOverdue
-              ? '#EF4444'
-              : theme.colors.textMuted,
+                ? theme.colors.primary
+                : isOverdue
+                  ? '#EF4444'
+                  : theme.colors.textMuted,
             backgroundColor: task.completed
               ? theme.colors.success
               : isSelected
-              ? theme.colors.primary
-              : 'transparent',
+                ? theme.colors.primary
+                : 'transparent',
           },
         ]}
         onPress={() => onToggleCheckbox(task.id)}
@@ -102,11 +102,9 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
       >
         <View style={styles.titleRow}>
           <View style={styles.iconTitleGroup}>
-            {hasIcon ? (
-              <View style={[styles.taskIconCircle, { backgroundColor: theme.colors.surfaceVariant }]}>
-                <Icon name={task.icon} size={16} color={theme.colors.primary} />
-              </View>
-            ) : null}
+            <View style={[styles.taskIconCircle, { backgroundColor: theme.colors.surfaceVariant }]}>
+              <Icon name={activeIcon} size={16} color={theme.colors.primary} />
+            </View>
             <Text
               style={[
                 styles.title,
@@ -161,13 +159,13 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
           ) : null}
         </View>
 
-        {task.notes ? (
-          <Text
-            numberOfLines={1}
-            style={[styles.notesSnippet, { color: theme.colors.textMuted }]}
-          >
-            {task.notes}
-          </Text>
+        {task.notes && task.notes.trim() ? (
+          <View style={styles.notesBox}>
+            <Text style={[styles.notesLabel, { color: theme.colors.textMuted }]}>Notes:</Text>
+            <Text style={[styles.notesText, { color: theme.colors.textSecondary }]}>
+              {formatMultiLineText(task.notes)}
+            </Text>
+          </View>
         ) : null}
       </TouchableOpacity>
 
@@ -288,10 +286,17 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
-  notesSnippet: {
+  notesBox: {
+    marginTop: 8,
+  },
+  notesLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  notesText: {
     fontSize: 12,
-    marginTop: 4,
-    fontStyle: 'italic',
+    lineHeight: 16,
   },
   deleteButton: {
     padding: 6,

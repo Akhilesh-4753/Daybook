@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
   Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
+  View,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { formatMultiLineText } from '../utils/textUtils';
 import { Icon } from './Icons';
 import { TimePickerInput } from './TimePickerInput';
 
@@ -20,13 +21,13 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
   const [priority, setPriority] = useState('High');
   const [time, setTime] = useState('10:00 AM');
   const [notes, setNotes] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState('none');
+  const [selectedIcon, setSelectedIcon] = useState('note');
 
   const categories = ['Work', 'Health', 'Personal', 'Finance'];
   const priorities = ['Low', 'Medium', 'High'];
 
   const availableIcons = [
-    { id: 'none', label: 'None', symbol: '⭕' },
+    { id: 'note', label: 'Note', symbol: '📝' },
     { id: 'droplet', label: 'Water', symbol: '💧' },
     { id: 'walking', label: 'Walking', symbol: '🚶' },
     { id: 'dumbbell', label: 'Workout', symbol: '🏋️' },
@@ -41,12 +42,12 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
   const handleSave = () => {
     if (!title.trim()) return;
     const newTask = {
-      id: 't_' + Date.now(),
-      title,
+      id: Date.now().toString(),
+      title: title.trim(),
+      notes: formatMultiLineText(notes),
       category,
       priority,
       time,
-      notes,
       icon: selectedIcon,
       completed: false,
       date: new Date().toISOString().split('T')[0],
@@ -61,7 +62,7 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
     setNotes('');
     setCategory('Work');
     setPriority('High');
-    setSelectedIcon('none');
+    setSelectedIcon('note');
     setTime('10:00 AM');
   };
 
@@ -101,6 +102,7 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
               ]}
               placeholder="What do you need to get done?"
               placeholderTextColor={theme.colors.textMuted}
+              maxLength={20}
               value={title}
               onChangeText={setTitle}
             />
@@ -211,9 +213,10 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
                   borderColor: theme.colors.border,
                 },
               ]}
-              placeholder="Add details, subtasks, or links..."
+              placeholder="Add details, subtasks, or helpful context..."
               placeholderTextColor={theme.colors.textMuted}
               multiline={true}
+              maxLength={100}
               numberOfLines={3}
               value={notes}
               onChangeText={setNotes}
