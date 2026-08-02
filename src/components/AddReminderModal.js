@@ -13,7 +13,7 @@ import { formatMultiLineText } from '../utils/textUtils';
 import { Icon } from './Icons';
 import { TimePickerInput } from './TimePickerInput';
 
-export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editingReminder }) => {
+export const AddReminderModal = ({ visible, onClose, onSave, selectedDate = null, editingReminder = null }) => {
   const { theme } = useTheme();
 
   const [title, setTitle] = useState('');

@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Icon } from '../components/Icons';
 import { useTheme } from '../theme/ThemeContext';
 import { LoginScreen } from './LoginScreen';
 import { SignupScreen } from './SignupScreen';

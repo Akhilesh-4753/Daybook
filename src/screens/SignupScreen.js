@@ -68,7 +68,6 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin }) => {
       };
       onSignupSuccess && onSignupSuccess(userData);
     } catch (error) {
-      console.log('Signup error:', error);
       let msg = error.message || 'Registration failed. Please try again.';
       if (error.code === 'auth/email-already-in-use') {
         msg = 'An account with this email address already exists. Please log in.';

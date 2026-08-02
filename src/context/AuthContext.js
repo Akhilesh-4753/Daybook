@@ -16,13 +16,13 @@ export const AuthProvider = ({ children }) => {
       if (firebaseUser) {
         const savedUser = await PreferencesService.getSession();
         const userData = {
-          name: (savedUser && savedUser.name) || firebaseUser.displayName || 'Akhilesh',
+          name: (savedUser && savedUser.name) || firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'User'),
           email: firebaseUser.email,
           uid: firebaseUser.uid,
           photoUri: (savedUser && savedUser.photoUri) || firebaseUser.photoURL || null,
-          createdAt: (savedUser && savedUser.createdAt) || '2026-06-01',
-          productivityScore: 87,
-          streak: 12,
+          createdAt: (savedUser && savedUser.createdAt) || new Date().toISOString().split('T')[0],
+          productivityScore: (savedUser && savedUser.productivityScore) || 100,
+          streak: (savedUser && savedUser.streak) || 1,
         };
         setUser(userData);
         setIsAuthenticated(true);
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
     setUser((prev) => {
       const updated = {
         ...(prev || {}),
-        name: name !== undefined ? name : (prev?.name || 'Akhilesh'),
+        name: name !== undefined ? name : (prev?.name || 'User'),
         photoUri: permanentPhoto !== undefined ? permanentPhoto : prev?.photoUri,
       };
       PreferencesService.saveSession(updated);

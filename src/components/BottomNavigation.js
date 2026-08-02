@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from './Icons';
 
-export const BottomNavigation = ({ activeTab, onTabPress }) => {
+export const BottomNavigation = ({ activeTab, onTabPress, onFabPress }) => {
   const { theme } = useTheme();
 
   const tabs = [

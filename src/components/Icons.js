@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-export const Icon = ({ name, size = 22, color = '#6366F1', style }) => {
+export const Icon = ({ name, size = 22, color = '#6366F1', style = undefined }) => {
   // Calendar Icon: Red top header, White body, Black date text
   if (name === 'calendar') {
     const s = Math.max(22, size);

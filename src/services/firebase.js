@@ -54,7 +54,7 @@ try {
     db = getFirestore(app);
   }
 } catch (e) {
-  console.log("Firebase init note:", e.message);
+  // Offline fallback
 }
 
 export { auth, db };
@@ -69,7 +69,7 @@ export const signUpUser = async (name, email, password) => {
     return {
       user: {
         uid: 'demo_' + Date.now(),
-        displayName: name || 'Akhilesh',
+        displayName: name || (email ? email.split('@')[0] : 'User'),
         email: email,
       },
       isDemo: true,
@@ -96,7 +96,7 @@ export const loginUser = async (email, password) => {
     return {
       user: {
         uid: 'demo_user',
-        displayName: email.split('@')[0] || 'Akhilesh',
+        displayName: (email ? email.split('@')[0] : 'User'),
         email: email,
       },
       isDemo: true,

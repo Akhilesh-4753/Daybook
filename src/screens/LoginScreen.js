@@ -55,7 +55,6 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
       };
       onLoginSuccess && onLoginSuccess(userData);
     } catch (error) {
-      console.log('Login error:', error);
       let msg = error.message || 'Login failed. Please try again.';
       if (
         error.code === 'auth/user-not-found' ||

@@ -96,11 +96,11 @@ export const initialHabits = [
 export const initialDiaryEntries = [];
 
 export const initialUser = {
-  name: 'Akhilesh',
-  email: 'akhilesh@daybook.app',
+  name: 'User',
+  email: 'user@daybook.app',
   profilePic: null,
-  streak: 12,
-  productivityScore: 87,
+  streak: 1,
+  productivityScore: 100,
 };
 
 export const StorageService = {

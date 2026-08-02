@@ -44,10 +44,10 @@ function MainApp() {
   const [isReminderModalVisible, setIsReminderModalVisible] = useState(false);
 
   // Selection & Confirmation states
-  const [selectedTaskIds, setSelectedTaskIds] = useState([]);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<any[]>([]);
   const [isConfirmCompleteVisible, setIsConfirmCompleteVisible] = useState(false);
   const [showNoTaskAlert, setShowNoTaskAlert] = useState(false);
-  const [taskToDelete, setTaskToDelete] = useState(null);
+  const [taskToDelete, setTaskToDelete] = useState<any>(null);
 
   const insets = useSafeAreaInsets();
   const topPadding = Platform.OS === 'android'
@@ -60,16 +60,16 @@ function MainApp() {
       <View style={[styles.safeArea, { backgroundColor: theme.colors.background, paddingTop: topPadding }]}>
         <RNStatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={theme.colors.background} translucent={true} />
         <AuthScreen
-          onAuthSuccess={(userData) => setUser(userData)}
-          onLoginSuccess={(userData) => setUser(userData)}
+          onAuthSuccess={(userData: any) => setUser(userData)}
+          onLoginSuccess={(userData: any) => setUser(userData)}
         />
       </View>
     );
   }
 
   // Toggle checkbox selection state
-  const handleToggleSelectTask = (taskId) => {
-    setSelectedTaskIds((prev) =>
+  const handleToggleSelectTask = (taskId: any) => {
+    setSelectedTaskIds((prev: any[]) =>
       prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId]
     );
   };
@@ -92,14 +92,14 @@ function MainApp() {
   };
 
   // Delete task confirmation
-  const handleRequestDeleteTask = (task) => {
+  const handleRequestDeleteTask = (task: any) => {
     setTaskToDelete(task);
   };
 
   const handleConfirmDeleteTask = () => {
     if (taskToDelete) {
       deleteTask(taskToDelete.id);
-      setSelectedTaskIds((prev) => prev.filter((id) => id !== taskToDelete.id));
+      setSelectedTaskIds((prev: any[]) => prev.filter((id) => id !== taskToDelete.id));
       setTaskToDelete(null);
     }
   };
@@ -148,7 +148,7 @@ function MainApp() {
         return (
           <MoreScreen
             user={user}
-            onNavigateTab={(tab) => setActiveTab(tab)}
+            onNavigateTab={(tab: any) => setActiveTab(tab)}
             onLogout={logout}
           />
         );
@@ -185,8 +185,8 @@ function MainApp() {
 
         <BottomNavigation
           activeTab={activeTab}
-          onTabPress={(tabId) => setActiveTab(tabId)}
-          onFabPress={() => setIsTaskModalVisible(true)}
+          onTabPress={(tabId: any) => setActiveTab(tabId)}
+          onFabPress={() => setIsTaskModalVisible(false)}
         />
 
         {/* Security App Lock Modal */}
@@ -196,7 +196,7 @@ function MainApp() {
         <AddTaskModal
           visible={isTaskModalVisible}
           onClose={() => setIsTaskModalVisible(false)}
-          onSave={(newTask) => {
+          onSave={(newTask: any) => {
             addTask(newTask);
             setIsTaskModalVisible(false);
           }}
@@ -205,7 +205,7 @@ function MainApp() {
         <AddReminderModal
           visible={isReminderModalVisible}
           onClose={() => setIsReminderModalVisible(false)}
-          onSave={(newReminder) => {
+          onSave={(newReminder: any) => {
             addReminder(newReminder);
             setIsReminderModalVisible(false);
           }}
@@ -214,7 +214,9 @@ function MainApp() {
         {/* Delete Confirmation Modal */}
         <DeleteConfirmModal
           visible={!!taskToDelete}
+          title="Delete Task?"
           itemTitle={taskToDelete?.title}
+          itemType="Task"
           onConfirm={handleConfirmDeleteTask}
           onCancel={() => setTaskToDelete(null)}
         />
