@@ -276,7 +276,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
           subtitle: 'Option disabled',
           icon: 'cloud',
           disabled: true,
-          onPress: () => {},
+          onPress: () => { },
         },
         {
           id: 'import_backup',
@@ -284,7 +284,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
           subtitle: 'Option disabled',
           icon: 'sparkles',
           disabled: true,
-          onPress: () => {},
+          onPress: () => { },
         },
       ],
     },
@@ -912,6 +912,19 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
                   <Icon name="github" size={18} color="#FFFFFF" />
                   <Text style={styles.socialBtnText}>GitHub</Text>
                 </TouchableOpacity>
+              </View>
+
+              {/* Minimalist Professional Footer (3 Lines) */}
+              <View style={styles.minimalFooterContainer}>
+                <Text style={[styles.footerVersionText, { color: theme.colors.textMuted }]}>
+                  Version 1.0.0
+                </Text>
+                <Text style={[styles.footerCreditText, { color: theme.colors.textSecondary }]}>
+                  Built with ❤️ by <Text style={{ fontWeight: '700', color: theme.colors.primary }}>Akhilesh</Text>
+                </Text>
+                <Text style={[styles.footerCopyrightText, { color: theme.colors.textMuted }]}>
+                  © 2026 Daybook. All Rights Reserved.
+                </Text>
               </View>
             </ScrollView>
 
@@ -1666,6 +1679,28 @@ const styles = StyleSheet.create({
   quoteText: {
     fontSize: 12,
     lineHeight: 18,
+  },
+  minimalFooterContainer: {
+    marginTop: 24,
+    marginBottom: 10,
+    alignItems: 'center',
+    gap: 3,
+  },
+  footerVersionText: {
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  footerCreditText: {
+    fontSize: 11,
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  footerCopyrightText: {
+    fontSize: 10,
+    fontWeight: '500',
+    textAlign: 'center',
+    opacity: 0.7,
   },
   uniqueBox: {
     marginBottom: 16,
