@@ -273,16 +273,18 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
         {
           id: 'export_backup',
           title: 'Export Backup (JSON)',
-          subtitle: 'Save daybook_backup.json locally',
+          subtitle: 'Option disabled',
           icon: 'cloud',
-          onPress: handleExportBackup,
+          disabled: true,
+          onPress: () => {},
         },
         {
           id: 'import_backup',
           title: 'Restore Data from Backup',
-          subtitle: 'Import offline daybook_backup.json',
+          subtitle: 'Option disabled',
           icon: 'sparkles',
-          onPress: handleImportBackup,
+          disabled: true,
+          onPress: () => {},
         },
       ],
     },
@@ -396,7 +398,9 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
                       styles.itemBorder,
                       { borderBottomColor: theme.colors.border },
                     ],
+                    item.disabled && { opacity: 0.4 },
                   ]}
+                  disabled={item.disabled}
                   onPress={item.onPress}
                   activeOpacity={item.isSwitch ? 1 : 0.7}
                 >
@@ -789,51 +793,87 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
                 </Text>
 
                 <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary }]}>
-                  Daybook was born from a simple challenge—staying consistent every day. After relying on notebooks to manage my tasks and routines, I realized there had to be a smarter way.
+                  Every meaningful journey begins with a <Text style={{ fontWeight: '700', color: theme.colors.primary }}>simple idea</Text>.
                 </Text>
 
                 <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary }]}>
-                  As I transitioned into software development, I built <Text style={{ fontWeight: '700', color: theme.colors.primary }}>Daybook</Text> to bring tasks, habits, reminders, and journaling together in one simple, focused, and private space.
+                  For years, I relied on <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>handwritten notes and sticky notes</Text> to remember important tasks, ideas, and daily plans. They helped me stay organized—but were <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>easy to misplace and difficult to manage</Text>. I realized I was spending more time trying to <Text style={{ fontStyle: 'italic', fontWeight: '700', color: theme.colors.primary }}>remember</Text> my plans than actually <Text style={{ fontStyle: 'italic', fontWeight: '700', color: theme.colors.primary }}>completing</Text> them.
                 </Text>
 
                 <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary }]}>
-                  Today, Daybook helps you stay organized, build better habits, and make consistent progress—one day at a time.
+                  As I transitioned into software development, I saw an opportunity to create something better. That idea became <Text style={{ fontWeight: '800', color: theme.colors.primary }}>Daybook</Text>—a <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>simple, private, and reliable productivity companion</Text> that brings your tasks, habits, reminders, and personal journal together in one place.
                 </Text>
+
+                <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary }]}>
+                  The purpose of Daybook is not just to create a to-do list. It's designed to help you <Text style={{ fontWeight: '700', color: theme.colors.primary }}>plan with clarity</Text>, <Text style={{ fontWeight: '700', color: theme.colors.primary }}>stay organized</Text>, <Text style={{ fontWeight: '700', color: theme.colors.primary }}>build consistent habits</Text>, and focus on what truly matters. Instead of trying to remember everything, <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>let Daybook remember it for you</Text>, so you can focus your energy on taking action.
+                </Text>
+
+                <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary }]}>
+                  Every goal begins with a plan. <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>Every achievement begins with a single step.</Text> Whether you're managing your daily routine, working toward a dream, or simply keeping life's important moments safe, Daybook is here to help you <Text style={{ fontWeight: '700', color: theme.colors.primary }}>stay focused, stay consistent, and grow—one day at a time.</Text>
+                </Text>
+
+                <View style={[styles.quoteCard, { backgroundColor: 'rgba(99, 102, 241, 0.08)', borderColor: theme.colors.primary }]}>
+                  <Text style={[styles.quoteText, { color: theme.colors.textPrimary }]}>
+                    "Don't fill your mind with things you can write down. Free your mind to think, create, and achieve."
+                  </Text>
+                </View>
               </View>
 
-              {/* Why Choose Daybook */}
+              {/* Why You'll Love Daybook */}
               <View style={styles.uniqueBox}>
                 <Text style={[styles.uniqueTitle, { color: theme.colors.textPrimary }]}>
-                  ✨ Why Choose Daybook?
+                  Why You'll Love Daybook
                 </Text>
 
                 <View style={styles.bulletRow}>
-                  <Text style={styles.bulletEmoji}>🔒</Text>
+                  <Text style={styles.bulletEmoji}>📝</Text>
                   <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
-                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>Privacy First:</Text> Your data stays on your device, giving you complete control.
-                  </Text>
-                </View>
-
-                <View style={styles.bulletRow}>
-                  <Text style={styles.bulletEmoji}>📋</Text>
-                  <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
-                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>Everything Together:</Text> Tasks, habits, reminders, diary, and insights in one place.
-                  </Text>
-                </View>
-
-                <View style={styles.bulletRow}>
-                  <Text style={styles.bulletEmoji}>⚡</Text>
-                  <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
-                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>Built for Consistency:</Text> Stay focused with a clean, distraction-free experience.
+                    Organize your daily life in one place.
                   </Text>
                 </View>
 
                 <View style={styles.bulletRow}>
                   <Text style={styles.bulletEmoji}>🎯</Text>
                   <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
-                    <Text style={{ fontWeight: '700', color: theme.colors.textPrimary }}>Purpose-Driven:</Text> Small daily actions that lead to meaningful long-term growth.
+                    Turn plans into consistent actions.
                   </Text>
                 </View>
+
+                <View style={styles.bulletRow}>
+                  <Text style={styles.bulletEmoji}>⏰</Text>
+                  <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
+                    Never forget important tasks or reminders.
+                  </Text>
+                </View>
+
+                <View style={styles.bulletRow}>
+                  <Text style={styles.bulletEmoji}>📖</Text>
+                  <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
+                    Keep your thoughts and memories safe.
+                  </Text>
+                </View>
+
+                <View style={styles.bulletRow}>
+                  <Text style={styles.bulletEmoji}>🌱</Text>
+                  <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
+                    Build habits that create lasting success.
+                  </Text>
+                </View>
+
+                <View style={styles.bulletRow}>
+                  <Text style={styles.bulletEmoji}>🔒</Text>
+                  <Text style={[styles.bulletText, { color: theme.colors.textSecondary }]}>
+                    Enjoy complete privacy with your data stored locally on your device.
+                  </Text>
+                </View>
+              </View>
+
+              {/* A Thought to Remember */}
+              <View style={[styles.quoteCard, { backgroundColor: 'rgba(16, 185, 129, 0.08)', borderColor: theme.colors.success, marginTop: 6, marginBottom: 16 }]}>
+                <Text style={[styles.quoteHeader, { color: theme.colors.success }]}>💡 A Thought to Remember</Text>
+                <Text style={[styles.quoteText, { color: theme.colors.textPrimary, fontStyle: 'italic', marginTop: 4 }]}>
+                  "Success isn't built by remembering everything. Great achievements begin with a single thought, take shape through thoughtful planning, and become reality through consistent action. Daybook helps you do exactly that."
+                </Text>
               </View>
 
               {/* Social Media Connect Links */}
@@ -1611,6 +1651,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     marginBottom: 8,
+  },
+  quoteCard: {
+    padding: 12,
+    borderRadius: 14,
+    borderLeftWidth: 3.5,
+    marginTop: 6,
+    marginBottom: 16,
+  },
+  quoteHeader: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  quoteText: {
+    fontSize: 12,
+    lineHeight: 18,
   },
   uniqueBox: {
     marginBottom: 16,

@@ -57,7 +57,6 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
     if (editingReminder) {
       setTitle(editingReminder.title || '');
       setImportance(editingReminder.importance || '');
-      setNotes(editingReminder.notes || '');
       setTime(editingReminder.time || '10:10 AM');
       setRepeat((editingReminder.repeat === 'Does not repeat' || editingReminder.repeat === "Doesn't repeat" || !editingReminder.repeat) ? 'No Repeat' : editingReminder.repeat);
       setPriority(editingReminder.priority || 'High');
@@ -104,13 +103,12 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
 
     const cleanTitle = title.trim();
     const cleanImportance = formatMultiLineText(importance);
-    const cleanNotes = formatMultiLineText(notes);
 
     const reminderData = {
       id: editingReminder ? editingReminder.id : 'r_' + Date.now(),
       title: cleanTitle,
       importance: cleanImportance,
-      notes: cleanNotes,
+      notes: '',
       date: activeDateStr,
       time,
       repeat,
@@ -127,7 +125,6 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
     setValidationError('');
     setTitle('');
     setImportance('');
-    setNotes('');
     setTime('10:10 AM');
     setRepeat('No Repeat');
     setPriority('High');
@@ -214,29 +211,6 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate, editi
               numberOfLines={2}
               value={importance}
               onChangeText={setImportance}
-            />
-
-            {/* Motivation Quote / Quick Notes */}
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-              Motivation Quote / Quick Notes
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                styles.textArea,
-                {
-                  backgroundColor: theme.colors.surfaceVariant,
-                  color: theme.colors.textPrimary,
-                  borderColor: theme.colors.border,
-                },
-              ]}
-              placeholder="Quick notes or motivational reminder message..."
-              placeholderTextColor={theme.colors.textMuted}
-              multiline={true}
-              maxLength={100}
-              numberOfLines={2}
-              value={notes}
-              onChangeText={setNotes}
             />
 
             {/* Time Selector */}

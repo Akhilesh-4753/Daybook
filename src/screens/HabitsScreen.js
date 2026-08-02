@@ -118,7 +118,7 @@ export const HabitsScreen = ({ habits = [], onGoBack }) => {
           ))}
         </View>
 
-        <View style={{ height: 100 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
 
       {/* Add / Edit Habit Modal Component (100% Identical to AddTaskModal) */}
