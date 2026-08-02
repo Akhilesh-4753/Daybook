@@ -48,6 +48,13 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
   const badgeStyle = getPriorityBadge(task.priority);
   const activeIcon = (!task.icon || task.icon === 'none') ? 'note' : task.icon;
 
+  const trimmedNotes = task.notes ? task.notes.trim() : '';
+  const noteLines = trimmedNotes
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  const isMultiLine = noteLines.length > 1;
+
   return (
     <View
       style={[
@@ -159,13 +166,29 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
           ) : null}
         </View>
 
-        {task.notes && task.notes.trim() ? (
-          <View style={styles.notesBox}>
-            <Text style={[styles.notesLabel, { color: theme.colors.textMuted }]}>Notes:</Text>
-            <Text style={[styles.notesText, { color: theme.colors.textSecondary }]}>
-              {formatMultiLineText(task.notes)}
+        {trimmedNotes ? (
+          isMultiLine ? (
+            <View
+              style={[
+                styles.multiNotesCard,
+                { backgroundColor: theme.colors.surfaceVariant },
+              ]}
+            >
+              <View style={styles.notesHeaderRow}>
+                <Text style={styles.noteIconSymbol}>📌</Text>
+                <Text style={[styles.notesHeaderTitle, { color: theme.colors.textMuted }]}>
+                  Notes
+                </Text>
+              </View>
+              <Text style={[styles.multiNotesText, { color: theme.colors.textPrimary }]}>
+                {formatMultiLineText(trimmedNotes)}
+              </Text>
+            </View>
+          ) : (
+            <Text style={[styles.singleNotesText, { color: theme.colors.textSecondary }]}>
+              {trimmedNotes}
             </Text>
-          </View>
+          )
         ) : null}
       </TouchableOpacity>
 
@@ -286,17 +309,36 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
-  notesBox: {
+  multiNotesCard: {
     marginTop: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
   },
-  notesLabel: {
+  notesHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 4,
+  },
+  noteIconSymbol: {
     fontSize: 11,
-    fontWeight: '600',
-    marginBottom: 2,
   },
-  notesText: {
-    fontSize: 12,
-    lineHeight: 16,
+  notesHeaderTitle: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  multiNotesText: {
+    fontSize: 12.5,
+    lineHeight: 18,
+    fontWeight: '400',
+  },
+  singleNotesText: {
+    fontSize: 12.5,
+    marginTop: 6,
+    paddingLeft: 2,
   },
   deleteButton: {
     padding: 6,

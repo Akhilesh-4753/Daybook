@@ -1,4 +1,4 @@
-export const formatMultiLineText = (rawText) => {
+export const formatMultiLineText = (rawText, bullet = '•') => {
   if (!rawText) return '';
   const lines = rawText
     .split('\n')
@@ -8,5 +8,10 @@ export const formatMultiLineText = (rawText) => {
   if (lines.length === 0) return '';
   if (lines.length === 1) return lines[0];
 
-  return lines.map((line) => (line.startsWith('-') ? line : `- ${line}`)).join('\n');
+  return lines
+    .map((line) => {
+      const cleanedLine = line.replace(/^[-•.]\s*/, '');
+      return `${bullet} ${cleanedLine}`;
+    })
+    .join('\n');
 };
