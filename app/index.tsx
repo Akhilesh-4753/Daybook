@@ -36,6 +36,7 @@ function MainApp() {
     addHabit,
     addReminder,
     addDiaryEntry,
+    deleteDiaryEntry,
   } = useTasks();
 
   const [activeTab, setActiveTab] = useState('today');
@@ -131,6 +132,7 @@ function MainApp() {
           <DiaryScreen
             diaryEntries={diaryEntries}
             onSaveEntry={addDiaryEntry}
+            onDeleteEntry={deleteDiaryEntry}
           />
         );
       case 'reports':

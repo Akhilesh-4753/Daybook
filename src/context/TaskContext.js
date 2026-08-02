@@ -267,6 +267,11 @@ export const TaskProvider = ({ children }) => {
     setDiaryEntries((prev) => [created, ...prev]);
   }, []);
 
+  const deleteDiaryEntry = useCallback(async (entryId) => {
+    await DiaryRepository.delete(entryId);
+    setDiaryEntries((prev) => prev.filter((d) => d.id !== entryId));
+  }, []);
+
   const contextValue = useMemo(
     () => ({
       tasks,
@@ -286,6 +291,7 @@ export const TaskProvider = ({ children }) => {
       updateReminder,
       deleteReminder,
       addDiaryEntry,
+      deleteDiaryEntry,
       refreshData: loadAllData,
     }),
     [
@@ -306,6 +312,7 @@ export const TaskProvider = ({ children }) => {
       updateReminder,
       deleteReminder,
       addDiaryEntry,
+      deleteDiaryEntry,
       loadAllData,
     ]
   );

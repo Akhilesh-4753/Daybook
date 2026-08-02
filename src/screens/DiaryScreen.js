@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from '../components/Icons';
+import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
 import { formatMultiLineText } from '../utils/textUtils';
 
 export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) => {
@@ -19,6 +20,7 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
   const [mood, setMood] = useState('Happy');
   const [content, setContent] = useState('');
   const [showSavedList, setShowSavedList] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState(null);
 
   const [selectedYear, setSelectedYear] = useState('All');
   const [selectedMonth, setSelectedMonth] = useState('All');
@@ -97,6 +99,13 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
     setTitle('');
     setContent('');
     setShowSavedList(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (entryToDelete && onDeleteEntry) {
+      onDeleteEntry(entryToDelete.id);
+    }
+    setEntryToDelete(null);
   };
 
   return (
@@ -309,10 +318,12 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
 
                     {onDeleteEntry && (
                       <TouchableOpacity
-                        onPress={() => onDeleteEntry(entry.id)}
+                        onPress={() => setEntryToDelete(entry)}
                         style={styles.deleteBtn}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        activeOpacity={0.7}
                       >
-                        <Icon name="trash" size={16} color={theme.colors.danger || '#EF4444'} />
+                        <Icon name="trash" size={18} color={theme.colors.danger || '#EF4444'} />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -328,6 +339,16 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
 
         <View style={{ height: 20 }} />
       </ScrollView>
+
+      {/* Styled Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        visible={!!entryToDelete}
+        title="Delete Journal Entry?"
+        itemTitle={entryToDelete ? entryToDelete.title : ''}
+        itemType="Diary Entry"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setEntryToDelete(null)}
+      />
     </View>
   );
 };
@@ -523,7 +544,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   deleteBtn: {
-    padding: 4,
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(239, 68, 68, 0.12)',
     marginLeft: 8,
   },
   entryBodyText: {
