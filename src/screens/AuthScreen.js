@@ -13,7 +13,7 @@ import { LoginScreen } from './LoginScreen';
 import { SignupScreen } from './SignupScreen';
 
 export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
-  const { theme, isDarkMode, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const [isLoginMode, setIsLoginMode] = useState(true);
 
   const handleSuccess = (userData) => {
@@ -23,20 +23,6 @@ export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      {/* Absolute Top Right Header Theme Toggle */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.themeToggleBtn}
-          onPress={toggleTheme}
-          activeOpacity={0.7}
-        >
-          <Icon
-            name={isDarkMode ? 'sun' : 'moon'}
-            size={24}
-            color={isDarkMode ? '#F59E0B' : theme.colors.primary}
-          />
-        </TouchableOpacity>
-      </View>
 
       <ScrollView
         style={styles.scroll}

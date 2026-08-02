@@ -18,7 +18,7 @@ const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const systemColorScheme = useColorScheme();
-  const [isDarkMode, setIsDarkMode] = useState(true); // Default to Dark mode as highlighted in mockups
+  const [isDarkMode, setIsDarkMode] = useState(false); // Default to Light mode for new users
 
   useEffect(() => {
     loadThemePreference();
@@ -30,7 +30,7 @@ export const ThemeProvider = ({ children }) => {
       if (savedTheme !== null) {
         setIsDarkMode(savedTheme === 'dark');
       } else {
-        setIsDarkMode(systemColorScheme === 'dark' || true);
+        setIsDarkMode(false); // Default to Light mode for new installs
       }
     } catch (e) {
       console.warn('Error loading theme preference:', e);
