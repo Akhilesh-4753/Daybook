@@ -13,22 +13,27 @@ export const AuthProvider = ({ children }) => {
     loadInitialSession();
 
     const unsubscribe = subscribeToAuthChanges(async (firebaseUser) => {
-      if (firebaseUser) {
-        const savedUser = await PreferencesService.getSession();
-        const userData = {
-          name: (savedUser && savedUser.name) || firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'User'),
-          email: firebaseUser.email,
-          uid: firebaseUser.uid,
-          photoUri: (savedUser && savedUser.photoUri) || firebaseUser.photoURL || null,
-          createdAt: (savedUser && savedUser.createdAt) || new Date().toISOString().split('T')[0],
-          productivityScore: (savedUser && savedUser.productivityScore) || 100,
-          streak: (savedUser && savedUser.streak) || 1,
-        };
-        setUser(userData);
-        setIsAuthenticated(true);
-        PreferencesService.saveSession(userData);
+      try {
+        if (firebaseUser) {
+          const savedUser = await PreferencesService.getSession();
+          const userData = {
+            name: (savedUser && savedUser.name) || firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'User'),
+            email: firebaseUser.email,
+            uid: firebaseUser.uid,
+            photoUri: (savedUser && savedUser.photoUri) || firebaseUser.photoURL || null,
+            createdAt: (savedUser && savedUser.createdAt) || new Date().toISOString().split('T')[0],
+            productivityScore: (savedUser && savedUser.productivityScore) || 100,
+            streak: (savedUser && savedUser.streak) || 1,
+          };
+          setUser(userData);
+          setIsAuthenticated(true);
+          PreferencesService.saveSession(userData);
+        }
+      } catch (e) {
+        // Safe catch
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();

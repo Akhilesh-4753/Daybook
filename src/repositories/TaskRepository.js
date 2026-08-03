@@ -2,18 +2,22 @@ import { getDB } from '../db/database';
 
 export const TaskRepository = {
   getAll: async () => {
-    const db = await getDB();
-    const rows = await db.getAllAsync('SELECT * FROM tasks ORDER BY created_at DESC;');
-    return rows.map((r) => ({
-      id: r.id,
-      title: r.title,
-      category: r.category,
-      priority: r.priority,
-      time: r.time,
-      notes: r.notes,
-      completed: Boolean(r.completed),
-      date: r.date,
-    }));
+    try {
+      const db = await getDB();
+      const rows = await db.getAllAsync('SELECT * FROM tasks ORDER BY created_at DESC;');
+      return (rows || []).map((r) => ({
+        id: r.id,
+        title: r.title,
+        category: r.category,
+        priority: r.priority,
+        time: r.time,
+        notes: r.notes,
+        completed: Boolean(r.completed),
+        date: r.date,
+      }));
+    } catch (e) {
+      return [];
+    }
   },
 
   add: async (task) => {

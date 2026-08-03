@@ -79,11 +79,16 @@ export const TaskProvider = ({ children }) => {
         DiaryRepository.getAll(),
       ]);
 
+      const tasksList = Array.isArray(loadedTasks) ? loadedTasks : [];
+      const remindersList = Array.isArray(loadedReminders) ? loadedReminders : [];
+      const habitsList = Array.isArray(loadedHabits) ? loadedHabits : [];
+      const diaryList = Array.isArray(loadedDiary) ? loadedDiary : [];
+
       const todayStr = new Date().toISOString().split('T')[0];
       const currentMonthKey = todayStr.slice(0, 7); // e.g. "2026-08"
 
       // Process monthly habit reset if new month started
-      const processedHabits = loadedHabits.map((h) => {
+      const processedHabits = habitsList.map((h) => {
         if (h.lastMonthKey && h.lastMonthKey !== currentMonthKey) {
           // New month started: reset monthly streak and line fill
           return { ...h, streak: 0, progress: 0, completedToday: false, lastMonthKey: currentMonthKey };
@@ -95,7 +100,7 @@ export const TaskProvider = ({ children }) => {
       // 1. Past completed tasks stay in DB for reports, but filter out of Today screen.
       // 2. Past incomplete/pending tasks carry over to Today marked as Overdue (red).
       const finalTasks = [];
-      for (const task of loadedTasks) {
+      for (const task of tasksList) {
         if (task.date < todayStr) {
           if (!task.completed) {
             // Carry over incomplete task to Today marked as Overdue
@@ -110,9 +115,9 @@ export const TaskProvider = ({ children }) => {
       }
 
       setTasks(finalTasks);
-      setReminders(loadedReminders);
+      setReminders(remindersList);
       setHabits(processedHabits);
-      setDiaryEntries(loadedDiary);
+      setDiaryEntries(diaryList);
 
       await syncDailyHabitsToTasks(finalTasks, processedHabits);
     } catch (e) {

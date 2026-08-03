@@ -1,18 +1,21 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-try {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowBanner: true,
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-    }),
-  });
-} catch (e) {
-  console.warn('Expo Notifications handler warning:', e);
-}
+export const initNotificationHandler = () => {
+  try {
+    if (Notifications && typeof Notifications.setNotificationHandler === 'function') {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: true,
+        }),
+      });
+    }
+  } catch (e) {
+    // Safe fallback
+  }
+};
 
 const parseReminderDateTime = (dateStr, timeStr) => {
   try {
@@ -52,17 +55,21 @@ export const NotificationService = {
   setupAndroidChannel: async () => {
     if (Platform.OS === 'android') {
       try {
-        await Notifications.setNotificationChannelAsync('daybook_alarms', {
-          name: 'Daybook Reminders & Alarms',
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 500, 250, 500],
-          lightColor: '#6366F1',
-          sound: true,
-          enableVibrate: true,
-          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-        });
+        if (Notifications && typeof Notifications.setNotificationChannelAsync === 'function') {
+          const maxImportance = Notifications.AndroidImportance?.MAX || 5;
+          const publicVis = Notifications.AndroidNotificationVisibility?.PUBLIC || 1;
+          await Notifications.setNotificationChannelAsync('daybook_alarms', {
+            name: 'Daybook Reminders & Alarms',
+            importance: maxImportance,
+            vibrationPattern: [0, 500, 250, 500],
+            lightColor: '#6366F1',
+            sound: 'default',
+            enableVibrate: true,
+            lockscreenVisibility: publicVis,
+          });
+        }
       } catch (e) {
-        console.warn('Android channel setup warning:', e);
+        // Safe catch
       }
     }
   },

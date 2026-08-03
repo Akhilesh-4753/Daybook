@@ -82,13 +82,11 @@ export const initDatabase = async () => {
   const db = await getDB();
   try {
     if (db.execAsync) {
-      await db.execAsync(`
-        ${CREATE_TASKS_TABLE}
-        ${CREATE_REMINDERS_TABLE}
-        ${CREATE_HABITS_TABLE}
-        ${CREATE_DIARY_TABLE}
-        ${CREATE_REPORTS_TABLE}
-      `);
+      await db.execAsync(CREATE_TASKS_TABLE).catch(() => {});
+      await db.execAsync(CREATE_REMINDERS_TABLE).catch(() => {});
+      await db.execAsync(CREATE_HABITS_TABLE).catch(() => {});
+      await db.execAsync(CREATE_DIARY_TABLE).catch(() => {});
+      await db.execAsync(CREATE_REPORTS_TABLE).catch(() => {});
     }
 
     await seedInitialDataIfEmpty(db);

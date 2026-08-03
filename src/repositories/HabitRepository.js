@@ -2,18 +2,22 @@ import { getDB } from '../db/database';
 
 export const HabitRepository = {
   getAll: async () => {
-    const db = await getDB();
-    const rows = await db.getAllAsync('SELECT * FROM habits ORDER BY created_at DESC;');
-    return rows.map((r) => ({
-      id: r.id,
-      title: r.title,
-      frequency: r.frequency,
-      progress: r.progress,
-      streak: r.streak,
-      completedToday: Boolean(r.completed_today),
-      autoAddToday: Boolean(r.auto_add_today),
-      icon: r.icon,
-    }));
+    try {
+      const db = await getDB();
+      const rows = await db.getAllAsync('SELECT * FROM habits ORDER BY created_at DESC;');
+      return (rows || []).map((r) => ({
+        id: r.id,
+        title: r.title,
+        frequency: r.frequency,
+        progress: r.progress,
+        streak: r.streak,
+        completedToday: Boolean(r.completed_today),
+        autoAddToday: Boolean(r.auto_add_today),
+        icon: r.icon,
+      }));
+    } catch (e) {
+      return [];
+    }
   },
 
   add: async (habit) => {

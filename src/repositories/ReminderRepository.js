@@ -2,22 +2,26 @@ import { getDB } from '../db/database';
 
 export const ReminderRepository = {
   getAll: async () => {
-    const db = await getDB();
-    const rows = await db.getAllAsync('SELECT * FROM reminders ORDER BY created_at DESC;');
-    return rows.map((r) => ({
-      id: r.id,
-      title: r.title,
-      importance: r.importance,
-      notes: r.notes,
-      date: r.date,
-      time: r.time,
-      alarmTone: r.alarm_tone,
-      repeat: r.repeat_rule,
-      priority: r.priority,
-      notification: Boolean(r.notification),
-      category: r.category,
-      notificationId: r.notification_id,
-    }));
+    try {
+      const db = await getDB();
+      const rows = await db.getAllAsync('SELECT * FROM reminders ORDER BY created_at DESC;');
+      return (rows || []).map((r) => ({
+        id: r.id,
+        title: r.title,
+        importance: r.importance,
+        notes: r.notes,
+        date: r.date,
+        time: r.time,
+        alarmTone: r.alarm_tone,
+        repeat: r.repeat_rule,
+        priority: r.priority,
+        notification: Boolean(r.notification),
+        category: r.category,
+        notificationId: r.notification_id,
+      }));
+    } catch (e) {
+      return [];
+    }
   },
 
   add: async (reminder) => {

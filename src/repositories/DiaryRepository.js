@@ -2,16 +2,20 @@ import { getDB } from '../db/database';
 
 export const DiaryRepository = {
   getAll: async () => {
-    const db = await getDB();
-    const rows = await db.getAllAsync('SELECT * FROM diary_entries ORDER BY created_at DESC;');
-    return rows.map((r) => ({
-      id: r.id,
-      date: r.date,
-      formattedDate: r.formatted_date,
-      title: r.title,
-      mood: r.mood,
-      content: r.content,
-    }));
+    try {
+      const db = await getDB();
+      const rows = await db.getAllAsync('SELECT * FROM diary_entries ORDER BY created_at DESC;');
+      return (rows || []).map((r) => ({
+        id: r.id,
+        date: r.date,
+        formattedDate: r.formatted_date,
+        title: r.title,
+        mood: r.mood,
+        content: r.content,
+      }));
+    } catch (e) {
+      return [];
+    }
   },
 
   add: async (entry) => {

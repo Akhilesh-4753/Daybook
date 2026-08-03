@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal, Platform, StatusBar as RNStatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as SplashScreen from 'expo-splash-screen';
 import { AddReminderModal } from '../src/components/AddReminderModal';
 import { AddTaskModal } from '../src/components/AddTaskModal';
 import { BottomNavigation } from '../src/components/BottomNavigation';
@@ -20,10 +21,18 @@ import { ThemeProvider, useTheme } from '../src/theme/ThemeContext';
 
 import { SecurityLockModal } from '../src/components/SecurityLockModal';
 import { SecurityProvider } from '../src/context/SecurityContext';
+import { initNotificationHandler } from '../src/services/NotificationService';
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function MainApp() {
   const { user, isAuthenticated, logout, setUser } = useAuth();
   const { theme, isDarkMode } = useTheme();
+
+  useEffect(() => {
+    initNotificationHandler();
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
   const {
     tasks,
     reminders,
@@ -50,9 +59,10 @@ function MainApp() {
   const [taskToDelete, setTaskToDelete] = useState<any>(null);
 
   const insets = useSafeAreaInsets();
+  const safeTop = (insets && typeof insets.top === 'number') ? insets.top : 0;
   const topPadding = Platform.OS === 'android'
-    ? Math.max(insets.top, RNStatusBar.currentHeight || 28)
-    : Math.max(insets.top, 12);
+    ? Math.max(safeTop, RNStatusBar.currentHeight || 28)
+    : Math.max(safeTop, 12);
 
   // If user is not authenticated, show AuthScreen
   if (!isAuthenticated) {
@@ -262,20 +272,8 @@ function MainApp() {
   );
 }
 
-export default function App() {
-  return (
-    <SafeAreaProvider>
-      <SecurityProvider>
-        <AuthProvider>
-          <TaskProvider>
-            <ThemeProvider>
-              <MainApp />
-            </ThemeProvider>
-          </TaskProvider>
-        </AuthProvider>
-      </SecurityProvider>
-    </SafeAreaProvider>
-  );
+export default function Index() {
+  return <MainApp />;
 }
 
 const styles = StyleSheet.create({
