@@ -31,85 +31,88 @@ export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
       >
         {/* Branding Header */}
         <View style={styles.brandContainer}>
-        <Image
-          source={require('../../assets/images/daybook-logo.png')}
-          style={styles.logoImage}
-          resizeMode="contain"
-        />
-        <Text style={[styles.brandSubtitle, { color: theme.colors.textSecondary }]}>
-          Plan Your Day, Organize Your Life.
-        </Text>
-      </View>
-
-      {/* Main Card */}
-      <View
-        style={[
-          styles.card,
-          {
-            backgroundColor: theme.colors.card,
-            borderColor: theme.colors.border,
-          },
-        ]}
-      >
-        {/* Toggle Segment Bar */}
-        <View
-          style={[
-            styles.toggleContainer,
-            { backgroundColor: theme.colors.cardSecondary },
-          ]}
-        >
-          <TouchableOpacity
-            style={[
-              styles.toggleTab,
-              isLoginMode && [styles.activeToggleTab, { backgroundColor: theme.colors.primary }],
-            ]}
-            onPress={() => setIsLoginMode(true)}
-          >
-            <Text
-              style={[
-                styles.toggleText,
-                { color: isLoginMode ? '#FFFFFF' : theme.colors.textSecondary },
-              ]}
-            >
-              Log In
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.toggleTab,
-              !isLoginMode && [styles.activeToggleTab, { backgroundColor: theme.colors.primary }],
-            ]}
-            onPress={() => setIsLoginMode(false)}
-          >
-            <Text
-              style={[
-                styles.toggleText,
-                { color: !isLoginMode ? '#FFFFFF' : theme.colors.textSecondary },
-              ]}
-            >
-              Sign Up
-            </Text>
-          </TouchableOpacity>
+          <Image
+            source={require('../../assets/images/daybook-logo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.brandTitle}>
+            Daybook
+          </Text>
+          <Text style={[styles.brandSubtitle, { color: theme.colors.textSecondary }]}>
+            Plan Your Day, Organize Your Life.
+          </Text>
         </View>
 
-        {/* Active Screen Component */}
-        {isLoginMode ? (
-          <LoginScreen
-            onLoginSuccess={handleSuccess}
-            onSwitchToSignup={() => setIsLoginMode(false)}
-          />
-        ) : (
-          <SignupScreen
-            onSignupSuccess={handleSuccess}
-            onSwitchToLogin={() => setIsLoginMode(true)}
-          />
-        )}
-      </View>
+        {/* Main Card */}
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: theme.colors.card,
+              borderColor: theme.colors.border,
+            },
+          ]}
+        >
+          {/* Toggle Segment Bar */}
+          <View
+            style={[
+              styles.toggleContainer,
+              { backgroundColor: theme.colors.cardSecondary },
+            ]}
+          >
+            <TouchableOpacity
+              style={[
+                styles.toggleTab,
+                isLoginMode && [styles.activeToggleTab, { backgroundColor: theme.colors.primary }],
+              ]}
+              onPress={() => setIsLoginMode(true)}
+            >
+              <Text
+                style={[
+                  styles.toggleText,
+                  { color: isLoginMode ? '#FFFFFF' : theme.colors.textSecondary },
+                ]}
+              >
+                Log In
+              </Text>
+            </TouchableOpacity>
 
-      <Text style={[styles.footerText, { color: theme.colors.textMuted }]}>
-        By logging in, you agree to Daybook's Terms of Service & Privacy Policy.
-      </Text>
+            <TouchableOpacity
+              style={[
+                styles.toggleTab,
+                !isLoginMode && [styles.activeToggleTab, { backgroundColor: theme.colors.primary }],
+              ]}
+              onPress={() => setIsLoginMode(false)}
+            >
+              <Text
+                style={[
+                  styles.toggleText,
+                  { color: !isLoginMode ? '#FFFFFF' : theme.colors.textSecondary },
+                ]}
+              >
+                Sign Up
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Active Screen Component */}
+          {isLoginMode ? (
+            <LoginScreen
+              onLoginSuccess={handleSuccess}
+              onSwitchToSignup={() => setIsLoginMode(false)}
+            />
+          ) : (
+            <SignupScreen
+              onSignupSuccess={handleSuccess}
+              onSwitchToLogin={() => setIsLoginMode(true)}
+            />
+          )}
+        </View>
+
+        <Text style={[styles.footerText, { color: theme.colors.textMuted }]}>
+          By logging in, you agree to Daybook's Terms of Service & Privacy Policy.
+        </Text>
       </ScrollView>
     </View>
   );
@@ -152,7 +155,10 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontSize: 26,
     fontWeight: '800',
-    letterSpacing: -0.5,
+    letterSpacing: 1,
+    color: '#1A3FAA',
+    marginTop: -4,
+    marginBottom: 4,
   },
   brandSubtitle: {
     fontSize: 13,

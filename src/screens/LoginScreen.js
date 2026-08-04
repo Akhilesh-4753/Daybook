@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
   Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useTheme } from '../theme/ThemeContext';
 import { Icon } from '../components/Icons';
 import { useAuth } from '../context/AuthContext';
 import { resetUserPassword } from '../services/firebase';
+import { useTheme } from '../theme/ThemeContext';
 
 export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
   const { theme } = useTheme();
