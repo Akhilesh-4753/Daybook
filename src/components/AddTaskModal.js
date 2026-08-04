@@ -15,15 +15,18 @@ import { formatMultiLineText } from '../utils/textUtils';
 import { Icon } from './Icons';
 import { TimePickerInput } from './TimePickerInput';
 
-export const AddTaskModal = ({ visible, onClose, onSave }) => {
+const generateTaskId = () => Date.now().toString();
+const getTodayDateString = () => new Date().toISOString().split('T')[0];
+
+export const AddTaskModal = ({ visible, onClose, onSave, taskToEdit }) => {
   const { theme } = useTheme();
 
-  const [title, setTitle] = useState('');
-  const [category, setCategory] = useState('Work');
-  const [priority, setPriority] = useState('High');
-  const [time, setTime] = useState('10:00 AM');
-  const [notes, setNotes] = useState('');
-  const [selectedIcon, setSelectedIcon] = useState('note');
+  const [title, setTitle] = useState(taskToEdit ? (taskToEdit.title || '') : '');
+  const [category, setCategory] = useState(taskToEdit ? (taskToEdit.category || 'Work') : 'Work');
+  const [priority, setPriority] = useState(taskToEdit ? (taskToEdit.priority || 'High') : 'High');
+  const [time, setTime] = useState(taskToEdit ? (taskToEdit.time || '10:00 AM') : '10:00 AM');
+  const [notes, setNotes] = useState(taskToEdit ? (taskToEdit.notes || '') : '');
+  const [selectedIcon, setSelectedIcon] = useState(taskToEdit ? (taskToEdit.icon || 'note') : 'note');
 
   const categories = ['Work', 'Health', 'Personal', 'Finance'];
   const priorities = ['Low', 'Medium', 'High'];
@@ -43,18 +46,28 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
 
   const handleSave = () => {
     if (!title.trim()) return;
-    const newTask = {
-      id: Date.now().toString(),
+    const taskData = {
       title: title.trim(),
       notes: formatMultiLineText(notes),
       category,
       priority,
       time,
       icon: selectedIcon,
-      completed: false,
-      date: new Date().toISOString().split('T')[0],
     };
-    onSave(newTask);
+    if (taskToEdit) {
+      onSave({
+        ...taskToEdit,
+        ...taskData,
+      });
+    } else {
+      const newTask = {
+        id: generateTaskId(),
+        ...taskData,
+        completed: false,
+        date: getTodayDateString(),
+      };
+      onSave(newTask);
+    }
     reset();
     onClose();
   };
@@ -86,7 +99,7 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
           {/* Header */}
           <View style={styles.header}>
             <Text style={[styles.headerTitle, { color: theme.colors.textPrimary }]}>
-              Create New Task
+              {taskToEdit ? 'Edit Task' : 'Create New Task'}
             </Text>
             <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
               <Icon name="close" size={20} color={theme.colors.textMuted} />
@@ -240,7 +253,7 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
             onPress={handleSave}
             activeOpacity={0.85}
           >
-            <Text style={styles.saveBtnText}>Add Task</Text>
+            <Text style={styles.saveBtnText}>{taskToEdit ? 'Save Changes' : 'Add Task'}</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

@@ -3,7 +3,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { formatMultiLineText } from '../utils/textUtils';
 import { Icon } from './Icons';
 
-export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDeleteTask }) => {
+export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onEditTask, onDeleteTask }) => {
   const { theme } = useTheme();
 
   const todayStr = new Date().toISOString().split('T')[0];
@@ -198,6 +198,15 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
         ) : null}
       </View>
 
+      {onEditTask && (
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => onEditTask(task)}
+        >
+          <Icon name="edit" size={16} color={theme.colors.textMuted} />
+        </TouchableOpacity>
+      )}
+
       {onDeleteTask && (
         <TouchableOpacity
           style={styles.deleteButton}
@@ -346,6 +355,10 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     marginTop: 6,
     paddingLeft: 2,
+  },
+  editButton: {
+    padding: 6,
+    marginLeft: 6,
   },
   deleteButton: {
     padding: 6,

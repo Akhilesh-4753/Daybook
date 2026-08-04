@@ -41,6 +41,7 @@ function MainApp() {
     addTask,
     toggleTaskCompletion,
     deleteTask,
+    updateTask,
     toggleHabit,
     addHabit,
     addReminder,
@@ -51,6 +52,7 @@ function MainApp() {
   const [activeTab, setActiveTab] = useState('today');
   const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
   const [isReminderModalVisible, setIsReminderModalVisible] = useState(false);
+  const [taskToEdit, setTaskToEdit] = useState<any>(null);
 
   // Tracks the clicked date from CalendarScreen (e.g., '2026-08-06')
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -128,9 +130,16 @@ function MainApp() {
             selectedTaskIds={selectedTaskIds}
             onToggleSelectTask={handleToggleSelectTask}
             onMarkSelectedCompleted={handleMarkSelectedCompleted}
-            onAddTask={() => setIsTaskModalVisible(true)}
+            onAddTask={() => {
+              setTaskToEdit(null);
+              setIsTaskModalVisible(true);
+            }}
             onOpenMore={() => setActiveTab('more')}
             onDeleteTask={handleRequestDeleteTask}
+            onEditTask={(task: any) => {
+              setTaskToEdit(task);
+              setIsTaskModalVisible(true);
+            }}
           />
         );
       case 'calendar':
@@ -187,9 +196,16 @@ function MainApp() {
             selectedTaskIds={selectedTaskIds}
             onToggleSelectTask={handleToggleSelectTask}
             onMarkSelectedCompleted={handleMarkSelectedCompleted}
-            onAddTask={() => setIsTaskModalVisible(true)}
+            onAddTask={() => {
+              setTaskToEdit(null);
+              setIsTaskModalVisible(true);
+            }}
             onOpenMore={() => setActiveTab('more')}
             onDeleteTask={handleRequestDeleteTask}
+            onEditTask={(task: any) => {
+              setTaskToEdit(task);
+              setIsTaskModalVisible(true);
+            }}
           />
         );
     }
@@ -212,11 +228,21 @@ function MainApp() {
 
         {/* Modals */}
         <AddTaskModal
+          key={isTaskModalVisible ? (taskToEdit ? `edit-${taskToEdit.id}` : 'new-task') : 'hidden'}
           visible={isTaskModalVisible}
-          onClose={() => setIsTaskModalVisible(false)}
-          onSave={(newTask: any) => {
-            addTask(newTask);
+          taskToEdit={taskToEdit}
+          onClose={() => {
             setIsTaskModalVisible(false);
+            setTaskToEdit(null);
+          }}
+          onSave={(taskData: any) => {
+            if (taskToEdit) {
+              updateTask(taskData);
+            } else {
+              addTask(taskData);
+            }
+            setIsTaskModalVisible(false);
+            setTaskToEdit(null);
           }}
         />
 

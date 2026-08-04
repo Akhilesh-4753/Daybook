@@ -15,9 +15,6 @@ export const TaskProvider = ({ children }) => {
   const [diaryEntries, setDiaryEntries] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadAllData();
-  }, []);
 
   const getDaysInCurrentMonth = () => {
     const now = new Date();
@@ -132,6 +129,19 @@ export const TaskProvider = ({ children }) => {
     }
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    setTimeout(() => {
+      if (active) {
+        loadAllData();
+      }
+    }, 0);
+    return () => {
+      active = false;
+    };
+  }, [loadAllData]);
+
+
   // Task actions
   const addTask = useCallback(async (newTask) => {
     const created = await TaskRepository.add(newTask);
@@ -173,6 +183,11 @@ export const TaskProvider = ({ children }) => {
   const deleteTask = useCallback(async (taskId) => {
     await TaskRepository.delete(taskId);
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
+  }, []);
+
+  const updateTask = useCallback(async (updatedTask) => {
+    await TaskRepository.update(updatedTask);
+    setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
   }, []);
 
   // Habit actions
@@ -292,6 +307,7 @@ export const TaskProvider = ({ children }) => {
       addTask,
       toggleTaskCompletion,
       deleteTask,
+      updateTask,
       toggleHabit,
       toggleAutoAddHabit,
       addHabit,
@@ -313,6 +329,7 @@ export const TaskProvider = ({ children }) => {
       addTask,
       toggleTaskCompletion,
       deleteTask,
+      updateTask,
       toggleHabit,
       toggleAutoAddHabit,
       addHabit,

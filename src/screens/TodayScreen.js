@@ -22,6 +22,7 @@ export const TodayScreen = ({
   onAddTask,
   onOpenMore,
   onDeleteTask,
+  onEditTask,
 }) => {
   const { theme, isDarkMode } = useTheme();
 
@@ -103,6 +104,7 @@ export const TodayScreen = ({
               task={task}
               isSelected={selectedTaskIds.includes(task.id)}
               onToggleCheckbox={onToggleSelectTask}
+              onEditTask={onEditTask}
               onDeleteTask={onDeleteTask}
             />
           ))
@@ -132,6 +134,7 @@ export const TodayScreen = ({
                   task={task}
                   isSelected={false}
                   onToggleCheckbox={onToggleSelectTask}
+                  onEditTask={onEditTask}
                   onDeleteTask={onDeleteTask}
                 />
               ))}
