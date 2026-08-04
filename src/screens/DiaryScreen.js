@@ -7,6 +7,8 @@ import {
   TextInput,
   TouchableOpacity,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from '../components/Icons';
@@ -109,7 +111,11 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
+    >
       {/* Top Header */}
       <View style={styles.topHeader}>
         <Text style={[styles.headerTitle, { color: theme.colors.textPrimary }]}>
@@ -126,7 +132,12 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets={true}
+      >
         {!showSavedList ? (
           <View style={styles.editorContainer}>
             {/* Date Card */}
@@ -350,7 +361,7 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
         onConfirm={handleConfirmDelete}
         onCancel={() => setEntryToDelete(null)}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
