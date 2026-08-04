@@ -15,19 +15,23 @@ export const AuthProvider = ({ children }) => {
     const unsubscribe = subscribeToAuthChanges(async (firebaseUser) => {
       try {
         if (firebaseUser) {
-          const savedUser = await PreferencesService.getSession();
+          const userKey = firebaseUser.uid || firebaseUser.email;
+          const savedSession = await PreferencesService.getSession();
+          const accountProfile = await PreferencesService.getUserProfile(userKey);
+
           const userData = {
-            name: (savedUser && savedUser.name) || firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'User'),
+            name: (accountProfile && accountProfile.name) || (savedSession && savedSession.name) || firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : 'User'),
             email: firebaseUser.email,
             uid: firebaseUser.uid,
-            photoUri: (savedUser && savedUser.photoUri) || firebaseUser.photoURL || null,
-            createdAt: (savedUser && savedUser.createdAt) || new Date().toISOString().split('T')[0],
-            productivityScore: (savedUser && savedUser.productivityScore) || 100,
-            streak: (savedUser && savedUser.streak) || 1,
+            photoUri: (accountProfile && accountProfile.photoUri) || (savedSession && savedSession.photoUri) || firebaseUser.photoURL || null,
+            createdAt: (savedSession && savedSession.createdAt) || new Date().toISOString().split('T')[0],
+            productivityScore: (savedSession && savedSession.productivityScore) || 100,
+            streak: (savedSession && savedSession.streak) || 1,
           };
           setUser(userData);
           setIsAuthenticated(true);
           PreferencesService.saveSession(userData);
+          PreferencesService.saveUserProfile(userKey, { name: userData.name, photoUri: userData.photoUri });
         }
       } catch (e) {
         // Safe catch
@@ -43,7 +47,12 @@ export const AuthProvider = ({ children }) => {
     try {
       const savedUser = await PreferencesService.getSession();
       if (savedUser) {
-        setUser(savedUser);
+        const userKey = savedUser.uid || savedUser.email;
+        const accountProfile = await PreferencesService.getUserProfile(userKey);
+        const mergedUser = accountProfile
+          ? { ...savedUser, name: accountProfile.name || savedUser.name, photoUri: accountProfile.photoUri || savedUser.photoUri }
+          : savedUser;
+        setUser(mergedUser);
         setIsAuthenticated(true);
       }
     } catch (e) {
@@ -55,23 +64,28 @@ export const AuthProvider = ({ children }) => {
 
   const login = useCallback(async (email, password) => {
     const res = await loginUser(email, password);
+    const userKey = res.user.uid || res.user.email || email;
     const savedUser = await PreferencesService.getSession();
+    const accountProfile = await PreferencesService.getUserProfile(userKey);
+
     const userData = {
-      name: (savedUser && savedUser.name) || res.user.displayName || email.split('@')[0],
+      name: (accountProfile && accountProfile.name) || (savedUser && savedUser.name) || res.user.displayName || email.split('@')[0],
       email: res.user.email || email,
       uid: res.user.uid,
-      photoUri: (savedUser && savedUser.photoUri) || res.user.photoURL || null,
+      photoUri: (accountProfile && accountProfile.photoUri) || (savedUser && savedUser.photoUri) || res.user.photoURL || null,
       productivityScore: 87,
       streak: 12,
     };
     setUser(userData);
     setIsAuthenticated(true);
     await PreferencesService.saveSession(userData);
+    await PreferencesService.saveUserProfile(userKey, { name: userData.name, photoUri: userData.photoUri });
     return res;
   }, []);
 
   const signup = useCallback(async (name, email, password) => {
     const res = await signUpUser(name, email, password);
+    const userKey = res.user.uid || res.user.email || email;
     const userData = {
       name: res.user.displayName || name,
       email: res.user.email || email,
@@ -83,6 +97,7 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
     setIsAuthenticated(true);
     await PreferencesService.saveSession(userData);
+    await PreferencesService.saveUserProfile(userKey, { name: userData.name, photoUri: userData.photoUri });
     return res;
   }, []);
 
@@ -106,6 +121,10 @@ export const AuthProvider = ({ children }) => {
         photoUri: permanentPhoto !== undefined ? permanentPhoto : prev?.photoUri,
       };
       PreferencesService.saveSession(updated);
+      const userKey = updated.uid || updated.email;
+      if (userKey) {
+        PreferencesService.saveUserProfile(userKey, { name: updated.name, photoUri: updated.photoUri });
+      }
       return updated;
     });
   }, []);
@@ -115,10 +134,15 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(!!userData);
     if (userData) {
       PreferencesService.saveSession(userData);
+      const userKey = userData.uid || userData.email;
+      if (userKey) {
+        PreferencesService.saveUserProfile(userKey, { name: userData.name, photoUri: userData.photoUri });
+      }
     } else {
       PreferencesService.clearSession();
     }
   }, []);
+
 
   return (
     <AuthContext.Provider

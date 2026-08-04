@@ -55,8 +55,16 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
     .filter((l) => l.length > 0);
   const isMultiLine = noteLines.length > 1;
 
+  const handleCardPress = () => {
+    if (onToggleCheckbox) {
+      onToggleCheckbox(task.id);
+    } else if (onPressTask) {
+      onPressTask(task);
+    }
+  };
+
   return (
-    <View
+    <TouchableOpacity
       style={[
         styles.card,
         {
@@ -73,6 +81,8 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
         isSelected && { borderWidth: 2, backgroundColor: theme.colors.surfaceVariant },
         isOverdue && !isSelected && { borderWidth: 1.5 },
       ]}
+      onPress={handleCardPress}
+      activeOpacity={0.85}
     >
       {/* Checkbox */}
       <TouchableOpacity
@@ -93,7 +103,7 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
                 : 'transparent',
           },
         ]}
-        onPress={() => onToggleCheckbox(task.id)}
+        onPress={() => onToggleCheckbox && onToggleCheckbox(task.id)}
         activeOpacity={0.7}
       >
         {(task.completed || isSelected) && (
@@ -102,11 +112,7 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
       </TouchableOpacity>
 
       {/* Task Details */}
-      <TouchableOpacity
-        style={styles.contentSection}
-        onPress={() => onPressTask && onPressTask(task)}
-        activeOpacity={0.8}
-      >
+      <View style={styles.contentSection}>
         <View style={styles.titleRow}>
           <View style={styles.iconTitleGroup}>
             <View style={[styles.taskIconCircle, { backgroundColor: theme.colors.surfaceVariant }]}>
@@ -190,7 +196,7 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
             </Text>
           )
         ) : null}
-      </TouchableOpacity>
+      </View>
 
       {onDeleteTask && (
         <TouchableOpacity
@@ -200,9 +206,10 @@ export const TaskCard = ({ task, isSelected, onToggleCheckbox, onPressTask, onDe
           <Icon name="trash" size={16} color={theme.colors.textMuted} />
         </TouchableOpacity>
       )}
-    </View>
+    </TouchableOpacity>
   );
 };
+
 
 const styles = StyleSheet.create({
   card: {

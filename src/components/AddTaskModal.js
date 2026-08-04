@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -68,7 +70,10 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View
           style={[
             styles.modalContainer,
@@ -88,7 +93,13 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scrollBody}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets={true}
+          >
+
             {/* Title */}
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Task Title</Text>
             <TextInput
@@ -232,8 +243,9 @@ export const AddTaskModal = ({ visible, onClose, onSave }) => {
             <Text style={styles.saveBtnText}>Add Task</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
+
   );
 };
 

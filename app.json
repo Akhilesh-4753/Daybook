@@ -4,18 +4,18 @@
     "slug": "Daybook",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/daybook-logo.png",
     "scheme": "daybook",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/images/daybook-logo.png"
     },
     "android": {
       "package": "com.akhilesh.daybook",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#0B0F19",
-        "foregroundImage": "./assets/images/android-icon-foreground.png"
+        "foregroundImage": "./assets/images/daybook-logo.png"
       },
       "predictiveBackGestureEnabled": false,
       "permissions": [
@@ -38,9 +38,10 @@
         {
           "backgroundColor": "#0B0F19",
           "image": "./assets/images/daybook-logo.png",
-          "imageWidth": 120
+          "imageWidth": 220
         }
       ],
+
       "expo-sqlite",
       "expo-sharing",
       "expo-notifications",

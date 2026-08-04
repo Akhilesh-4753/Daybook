@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -88,7 +90,10 @@ export const AddHabitModal = ({ visible, onClose, onSave, editingHabit }) => {
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View
           style={[
             styles.modalContainer,
@@ -108,7 +113,13 @@ export const AddHabitModal = ({ visible, onClose, onSave, editingHabit }) => {
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scrollBody}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets={true}
+          >
+
             {/* Habit Title */}
             <View style={styles.labelRow}>
               <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Habit Title</Text>
@@ -282,8 +293,9 @@ export const AddHabitModal = ({ visible, onClose, onSave, editingHabit }) => {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
+
   );
 };
 

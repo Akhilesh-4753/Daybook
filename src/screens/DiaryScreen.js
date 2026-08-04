@@ -120,8 +120,9 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
           onPress={() => setShowSavedList(!showSavedList)}
         >
           <Text style={[styles.historyBtnText, { color: theme.colors.primary }]}>
-            {showSavedList ? 'Write Entry' : 'Past Journal'}
+            {showSavedList ? 'Write Entry' : 'Past Diary'}
           </Text>
+
         </TouchableOpacity>
       </View>
 

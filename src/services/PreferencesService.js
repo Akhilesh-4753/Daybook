@@ -62,6 +62,27 @@ export const PreferencesService = {
     }
   },
 
+  // Account-specific Profile Storage (Persists photo & name across logout/login cycles)
+  getUserProfile: async (userKey) => {
+    if (!userKey) return null;
+    try {
+      const cleanKey = `@daybook_profile_${userKey.toLowerCase()}`;
+      const data = await AsyncStorage.getItem(cleanKey);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  },
+  saveUserProfile: async (userKey, profileData) => {
+    if (!userKey || !profileData) return;
+    try {
+      const cleanKey = `@daybook_profile_${userKey.toLowerCase()}`;
+      await AsyncStorage.setItem(cleanKey, JSON.stringify(profileData));
+    } catch (e) {
+      console.error(e);
+    }
+  },
+
   // Save profile image permanently (supports Base64 for web & local paths for mobile)
   saveProfilePhoto: async (sourceUri) => {
     if (!sourceUri) return null;

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import {
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -86,19 +88,24 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate = null
       return;
     }
 
-    // 3. Past time check (Reminder time must be greater than current time)
+    // 3. Past time check ONLY if reminder date is TODAY
+    const todayStr = new Date().toISOString().split('T')[0];
     const activeDateStr = editingReminder
       ? editingReminder.date
-      : selectedDate && selectedDate >= new Date().toISOString().split('T')[0]
+      : selectedDate && selectedDate >= todayStr
         ? selectedDate
-        : new Date().toISOString().split('T')[0];
+        : todayStr;
 
-    const targetDateTime = parseDateTime(activeDateStr, time);
-    const now = new Date();
+    const isToday = activeDateStr === todayStr;
 
-    if (targetDateTime.getTime() <= now.getTime()) {
-      setValidationError('Reminder time must be greater than current time. You cannot set a reminder in the past.');
-      return;
+    if (isToday) {
+      const targetDateTime = parseDateTime(activeDateStr, time);
+      const now = new Date();
+
+      if (targetDateTime.getTime() <= now.getTime()) {
+        setValidationError('Reminder time must be greater than current time when setting a reminder for today.');
+        return;
+      }
     }
 
     const cleanTitle = title.trim();
@@ -133,7 +140,10 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate = null
 
   return (
     <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={onClose}>
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View
           style={[
             styles.modalContainer,
@@ -158,7 +168,13 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate = null
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.scrollBody}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            automaticallyAdjustKeyboardInsets={true}
+          >
+
             {/* Validation Error Banner */}
             {validationError ? (
               <View style={styles.errorBox}>
@@ -325,7 +341,7 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate = null
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

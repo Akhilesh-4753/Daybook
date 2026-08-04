@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from '../components/Icons';
@@ -21,6 +22,8 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [focusedField, setFocusedField] = useState(null);
+  const [isSuccessModalVisible, setIsSuccessModalVisible] = useState(false);
+  const [pendingUserData, setPendingUserData] = useState(null);
 
   const handleLogin = async () => {
     setErrorMessage('');
@@ -53,7 +56,8 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
         productivityScore: 87,
         streak: 12,
       };
-      onLoginSuccess && onLoginSuccess(userData);
+      setPendingUserData(userData);
+      setIsSuccessModalVisible(true);
     } catch (error) {
       let msg = error.message || 'Login failed. Please try again.';
       if (
@@ -72,6 +76,13 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
       setErrorMessage(msg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleConfirmSuccess = () => {
+    setIsSuccessModalVisible(false);
+    if (pendingUserData && onLoginSuccess) {
+      onLoginSuccess(pendingUserData);
     }
   };
 
@@ -180,9 +191,46 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
           <Text style={[styles.switchLink, { color: theme.colors.primary }]}>Sign Up</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Login Successful Custom Success Modal */}
+      <Modal
+        visible={isSuccessModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleConfirmSuccess}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.stylishAlertContainer,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
+            <View style={[styles.successIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
+              <Icon name="check" size={32} color="#10B981" />
+            </View>
+
+            <Text style={[styles.stylishAlertTitle, { color: theme.colors.textPrimary }]}>
+              Login Successful
+            </Text>
+            <Text style={[styles.stylishAlertMessage, { color: theme.colors.textSecondary }]}>
+              Welcome back! You have successfully logged in.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.stylishAlertButton, { backgroundColor: theme.colors.primary }]}
+              onPress={handleConfirmSuccess}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.stylishAlertButtonText}>Continue</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {
@@ -281,4 +329,57 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  stylishAlertContainer: {
+    width: '100%',
+    maxWidth: 340,
+    borderRadius: 24,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: 'center',
+    elevation: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+  },
+  successIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  stylishAlertTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  stylishAlertMessage: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  stylishAlertButton: {
+    width: '100%',
+    height: 46,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stylishAlertButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
 });
+

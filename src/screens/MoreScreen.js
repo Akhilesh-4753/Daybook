@@ -2,6 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import {
   Image,
+  KeyboardAvoidingView,
   Linking,
   Modal,
   Platform,
@@ -26,6 +27,9 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
   const { user, updateUserProfile } = useAuth();
   const { isPinSet, setupPin, removeSecurity } = useSecurity();
   const { refreshData } = useTasks();
+
+  // Custom Logout Confirm Modal State
+  const [isLogoutConfirmVisible, setIsLogoutConfirmVisible] = useState(false);
 
   // Profile Edit Modal State
   const [isEditProfileVisible, setIsEditProfileVisible] = useState(false);
@@ -53,10 +57,12 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
   const [isSecuritySavedAlertVisible, setIsSecuritySavedAlertVisible] = useState(false);
   const [isSecurityRemovedAlertVisible, setIsSecurityRemovedAlertVisible] = useState(false);
 
-  // Privacy Policy, About Us, and Privacy FAQ Modal States
+  // Privacy Policy, Camera Privacy, About Us, and Privacy FAQ Modal States
   const [isPrivacyModalVisible, setIsPrivacyModalVisible] = useState(false);
+  const [isCameraPrivacyModalVisible, setIsCameraPrivacyModalVisible] = useState(false);
   const [isAboutUsModalVisible, setIsAboutUsModalVisible] = useState(false);
   const [isPrivacyFaqModalVisible, setIsPrivacyFaqModalVisible] = useState(false);
+
 
   const handleExportBackup = async () => {
     try {
@@ -295,6 +301,13 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
       title: 'About & Legal',
       items: [
         {
+          id: 'camera_privacy',
+          title: 'Camera & Gallery Privacy',
+          subtitle: 'Permissions, Sandboxing & Data Protection',
+          icon: 'shield',
+          onPress: () => setIsCameraPrivacyModalVisible(true),
+        },
+        {
           id: 'privacy_faq',
           title: 'Privacy & Authentication FAQ',
           subtitle: 'Why Firebase is used & how your data stays local',
@@ -325,10 +338,11 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
           title: 'Log Out',
           subtitle: 'Sign out of your Daybook account',
           icon: 'trash',
-          onPress: onLogout,
+          onPress: () => setIsLogoutConfirmVisible(true),
         },
       ],
     },
+
   ];
 
   return (
@@ -1170,6 +1184,161 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
           </View>
         </View>
       </Modal>
+
+      {/* Custom Logout Confirmation Modal */}
+      <Modal
+        visible={isLogoutConfirmVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsLogoutConfirmVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.stylishAlertContainer,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
+            <View style={[styles.successIconCircle, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
+              <Icon name="trash" size={32} color={theme.colors.danger || '#EF4444'} />
+            </View>
+
+            <Text style={[styles.stylishAlertTitle, { color: theme.colors.textPrimary }]}>
+              Log Out
+            </Text>
+            <Text style={[styles.stylishAlertMessage, { color: theme.colors.textSecondary, marginBottom: 24 }]}>
+              Are you sure you want to log out?
+            </Text>
+
+            <View style={[styles.modalBtnRow, { width: '100%' }]}>
+              <TouchableOpacity
+                style={[styles.cancelBtn, { borderColor: theme.colors.border, backgroundColor: theme.colors.cardSecondary }]}
+                onPress={() => setIsLogoutConfirmVisible(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.cancelBtnText, { color: theme.colors.textSecondary }]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.savePinBtn, { backgroundColor: theme.colors.danger || '#EF4444' }]}
+                onPress={() => {
+                  setIsLogoutConfirmVisible(false);
+                  onLogout && onLogout();
+                }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.savePinBtnText}>Logout</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Camera & Gallery Privacy Modal */}
+      <Modal
+        visible={isCameraPrivacyModalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setIsCameraPrivacyModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.aboutModalCard,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
+            <View style={styles.modalHeader}>
+              <View style={[styles.modalHeaderIconBg, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
+                <Icon name="shield" size={28} color={theme.colors.primary} />
+              </View>
+              <Text style={[styles.modalTitle, { color: theme.colors.textPrimary }]}>
+                Camera & Gallery Privacy
+              </Text>
+              <Text style={[styles.modalSub, { color: theme.colors.textSecondary }]}>
+                Your Privacy and Security are Our Highest Priorities
+              </Text>
+            </View>
+
+            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={true}>
+              <View style={[styles.privacyBadgeBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)', borderColor: '#10B981' }]}>
+                <Text style={styles.privacyBadgeTitle}>🔒 Camera & Gallery Privacy Guarantee</Text>
+                <Text style={[styles.privacyBadgeDesc, { color: theme.colors.textPrimary }]}>
+                  Daybook only accesses your camera or photo library when you explicitly choose to update your profile picture or attach an image.
+                </Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
+                  1. Your Data Stays Under Your Control
+                </Text>
+                <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
+                  Permission is always required. Daybook never accesses your camera or gallery without your explicit consent.
+                </Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
+                  2. Only the Selected Image is Accessible
+                </Text>
+                <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
+                  When you choose a photo, Android or iOS provides Daybook with only that specific image—not your entire photo library.
+                </Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
+                  3. No Background Access
+                </Text>
+                <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
+                  Daybook never runs your camera, gallery, or microphone in the background.
+                </Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
+                  4. Secure Operating System Protection
+                </Text>
+                <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
+                  Android and iOS isolate every app using system-level sandboxing, preventing Daybook from accessing other apps or your private files.
+                </Text>
+              </View>
+
+              <View style={styles.privacySection}>
+                <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
+                  5. Your Journal Remains Private
+                </Text>
+                <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
+                  Your personal notes, images, and app data are stored securely and are never accessed without your permission.
+                </Text>
+              </View>
+
+              {/* FAQ Section */}
+              <View style={[styles.faqCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border, marginTop: 14 }]}>
+                <Text style={[styles.optionTitle, { color: theme.colors.textPrimary, fontSize: 15, marginBottom: 8 }]}>
+                  ❓ Can Someone Hack My Camera or Gallery Through Daybook?
+                </Text>
+                <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, lineHeight: 21 }]}>
+                  <Text style={{ fontWeight: '800', color: theme.colors.primary }}>No.</Text> Granting camera or gallery permission does not allow anyone to remotely control your device. Daybook only uses the official Android and iOS system APIs, and access is limited to the actions you initiate.
+                </Text>
+                <Text style={[styles.storyParagraph, { color: theme.colors.textMuted, marginTop: 8, fontSize: 12 }]}>
+                  Your privacy is protected by both Daybook's security practices and the built-in security architecture of Android and iOS.
+                </Text>
+              </View>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[styles.closeModalBtn, { backgroundColor: theme.colors.primary, marginTop: 14 }]}
+              onPress={() => setIsCameraPrivacyModalVisible(false)}
+            >
+              <Text style={styles.closeModalBtnText}>Got It</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
 
       {/* Image Source Selection Modal */}
       <Modal
