@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { subscribeToAuthChanges, logoutUser, signUpUser, loginUser } from '../services/firebase';
 import { PreferencesService } from '../services/PreferencesService';
 
@@ -8,11 +8,18 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  // When a fresh login happens, we suppress the onAuthStateChanged handler
+  // for ~2.8s so the success modal in LoginScreen has time to display
+  // before the screen is unmounted by isAuthenticated becoming true.
+  const suppressAuthChange = useRef(false);
 
   useEffect(() => {
     loadInitialSession();
 
     const unsubscribe = subscribeToAuthChanges(async (firebaseUser) => {
+      // If a fresh login() call is in progress (showing the success modal),
+      // skip this automatic trigger — login() will set isAuthenticated itself.
+      if (suppressAuthChange.current) return;
       try {
         if (firebaseUser) {
           const userKey = firebaseUser.uid || firebaseUser.email;
@@ -63,6 +70,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = useCallback(async (email, password) => {
+    // Block onAuthStateChanged from firing immediately — we want the success
+    // modal in LoginScreen to stay visible for ~2.5s before navigating.
+    suppressAuthChange.current = true;
     const res = await loginUser(email, password);
     const userKey = res.user.uid || res.user.email || email;
     const savedUser = await PreferencesService.getSession();
@@ -76,11 +86,16 @@ export const AuthProvider = ({ children }) => {
       productivityScore: 87,
       streak: 12,
     };
-    setUser(userData);
-    setIsAuthenticated(true);
     await PreferencesService.saveSession(userData);
     await PreferencesService.saveUserProfile(userKey, { name: userData.name, photoUri: userData.photoUri });
-    return res;
+    // After 1.4s the modal will have finished — allow auth changes again and
+    // commit the user to state (which unmounts LoginScreen).
+    setTimeout(() => {
+      suppressAuthChange.current = false;
+      setUser(userData);
+      setIsAuthenticated(true);
+    }, 1400);
+    return { res, userData };
   }, []);
 
   const signup = useCallback(async (name, email, password) => {

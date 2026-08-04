@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,12 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Icon } from '../components/Icons';
-import { loginUser, resetUserPassword } from '../services/firebase';
+import { useAuth } from '../context/AuthContext';
+import { resetUserPassword } from '../services/firebase';
 
 export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
   const { theme } = useTheme();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -48,13 +50,12 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
 
     setLoading(true);
     try {
-      const res = await loginUser(cleanEmail, cleanPassword);
-      const userData = {
-        name: res.user.displayName || cleanEmail.split('@')[0],
-        email: res.user.email || cleanEmail,
-        uid: res.user.uid,
-        productivityScore: 87,
-        streak: 12,
+      // login() in AuthContext calls Firebase and then suppresses onAuthStateChanged
+      // for 2.8s, giving the success modal time to display before navigation fires.
+      const result = await login(cleanEmail, cleanPassword);
+      const userData = result?.userData || {
+        name: cleanEmail.split('@')[0],
+        email: cleanEmail,
       };
       setPendingUserData(userData);
       setIsSuccessModalVisible(true);
@@ -79,12 +80,22 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
     }
   };
 
+  // Tapping "Continue" just closes the modal visually.
+  // AuthContext.login() already scheduled setIsAuthenticated(true) after 2.8s,
+  // which will unmount LoginScreen and navigate to the main app.
   const handleConfirmSuccess = () => {
     setIsSuccessModalVisible(false);
-    if (pendingUserData && onLoginSuccess) {
-      onLoginSuccess(pendingUserData);
-    }
   };
+
+  // Auto-dismiss the modal after 1250ms (AuthContext navigates at 1400ms)
+  useEffect(() => {
+    if (!isSuccessModalVisible) return;
+    const timer = setTimeout(() => {
+      setIsSuccessModalVisible(false);
+    }, 1250);
+    return () => clearTimeout(timer);
+  }, [isSuccessModalVisible]);
+
 
   const handleForgotPassword = async () => {
     const cleanEmail = email.trim();
@@ -216,15 +227,8 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
             <Text style={[styles.stylishAlertMessage, { color: theme.colors.textSecondary }]}>
               Welcome back! You have successfully logged in.
             </Text>
-
-            <TouchableOpacity
-              style={[styles.stylishAlertButton, { backgroundColor: theme.colors.primary }]}
-              onPress={handleConfirmSuccess}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.stylishAlertButtonText}>Continue</Text>
-            </TouchableOpacity>
           </View>
+
         </View>
       </Modal>
     </View>
