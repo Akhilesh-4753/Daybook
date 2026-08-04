@@ -33,6 +33,12 @@ function MainApp() {
     SplashScreen.hideAsync().catch(() => { });
   }, []);
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      setActiveTab('today');
+    }
+  }, [isAuthenticated]);
+
   const {
     tasks,
     reminders,
