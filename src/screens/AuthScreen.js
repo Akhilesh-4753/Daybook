@@ -32,11 +32,11 @@ export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
         {/* Branding Header */}
         <View style={styles.brandContainer}>
           <Image
-            source={require('../../assets/images/text-logo-removebg-preview.png')}
+            source={require('../../assets/images/daybook-logo-square.png')}
             style={styles.logoImage}
             resizeMode="contain"
           />
-          <Text style={styles.brandTitle}>
+          <Text style={[styles.brandTitle, { color: theme.colors.primary }]}>
             Daybook
           </Text>
           <Text style={[styles.brandSubtitle, { color: theme.colors.textSecondary }]}>
@@ -148,15 +148,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   logoImage: {
-    width: 160,
-    height: 160,
-    marginBottom: 2,
+    width: 96,
+    height: 96,
+    marginBottom: 4,
   },
   brandTitle: {
     fontSize: 26,
     fontWeight: '800',
     letterSpacing: 1,
-    color: '#1A3FAA',
     marginTop: -4,
     marginBottom: 4,
   },
