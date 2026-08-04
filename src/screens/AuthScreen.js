@@ -32,7 +32,7 @@ export const AuthScreen = ({ onAuthSuccess, onLoginSuccess }) => {
         {/* Branding Header */}
         <View style={styles.brandContainer}>
           <Image
-            source={require('../../assets/images/daybook-logo.png')}
+            source={require('../../assets/images/text-logo-removebg-preview.png')}
             style={styles.logoImage}
             resizeMode="contain"
           />
@@ -148,9 +148,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   logoImage: {
-    width: 220,
-    height: 125,
-    marginBottom: 4,
+    width: 160,
+    height: 160,
+    marginBottom: 2,
   },
   brandTitle: {
     fontSize: 26,
