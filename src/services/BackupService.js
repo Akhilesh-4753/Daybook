@@ -1,10 +1,6 @@
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { getDB } from '../db/database';
-import { TaskRepository } from '../repositories/TaskRepository';
-import { DiaryRepository } from '../repositories/DiaryRepository';
-import { ReminderRepository } from '../repositories/ReminderRepository';
-import { HabitRepository } from '../repositories/HabitRepository';
 
 export const BackupService = {
   exportBackup: async () => {

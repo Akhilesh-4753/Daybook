@@ -63,7 +63,7 @@ export const NotificationService = {
             importance: maxImportance,
             vibrationPattern: [0, 500, 250, 500],
             lightColor: '#6366F1',
-            sound: 'default',
+            sound: true, // FIXED: Replaced 'default' string with boolean true to use standard system chime
             enableVibrate: true,
             lockscreenVisibility: publicVis,
           });

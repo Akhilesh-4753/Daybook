@@ -1,15 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Modal, Platform, StatusBar as RNStatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useState } from 'react';
+import { Modal, Platform, StatusBar as RNStatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AddReminderModal } from '../src/components/AddReminderModal';
 import { AddTaskModal } from '../src/components/AddTaskModal';
 import { BottomNavigation } from '../src/components/BottomNavigation';
 import { CompletionModal } from '../src/components/CompletionModal';
 import { DeleteConfirmModal } from '../src/components/DeleteConfirmModal';
 import { Icon } from '../src/components/Icons';
-import { AuthProvider, useAuth } from '../src/context/AuthContext';
-import { TaskProvider, useTasks } from '../src/context/TaskContext';
+import { useAuth } from '../src/context/AuthContext';
+import { useTasks } from '../src/context/TaskContext';
 import { AuthScreen } from '../src/screens/AuthScreen';
 import { CalendarScreen } from '../src/screens/CalendarScreen';
 import { DiaryScreen } from '../src/screens/DiaryScreen';
@@ -17,13 +17,12 @@ import { HabitsScreen } from '../src/screens/HabitsScreen';
 import { MoreScreen } from '../src/screens/MoreScreen';
 import { ReportsScreen } from '../src/screens/ReportsScreen';
 import { TodayScreen } from '../src/screens/TodayScreen';
-import { ThemeProvider, useTheme } from '../src/theme/ThemeContext';
+import { useTheme } from '../src/theme/ThemeContext';
 
 import { SecurityLockModal } from '../src/components/SecurityLockModal';
-import { SecurityProvider } from '../src/context/SecurityContext';
 import { initNotificationHandler } from '../src/services/NotificationService';
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.preventAutoHideAsync().catch(() => { });
 
 function MainApp() {
   const { user, isAuthenticated, logout, setUser } = useAuth();
@@ -31,8 +30,9 @@ function MainApp() {
 
   useEffect(() => {
     initNotificationHandler();
-    SplashScreen.hideAsync().catch(() => {});
+    SplashScreen.hideAsync().catch(() => { });
   }, []);
+
   const {
     tasks,
     reminders,
@@ -51,6 +51,9 @@ function MainApp() {
   const [activeTab, setActiveTab] = useState('today');
   const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
   const [isReminderModalVisible, setIsReminderModalVisible] = useState(false);
+
+  // Tracks the clicked date from CalendarScreen (e.g., '2026-08-06')
+  const [selectedDate, setSelectedDate] = useState<string>('');
 
   // Selection & Confirmation states
   const [selectedTaskIds, setSelectedTaskIds] = useState<any[]>([]);
@@ -134,7 +137,12 @@ function MainApp() {
         return (
           <CalendarScreen
             reminders={reminders}
-            onAddReminder={() => setIsReminderModalVisible(true)}
+            onAddReminder={(dateFromCalendar?: string) => {
+              if (dateFromCalendar) {
+                setSelectedDate(dateFromCalendar);
+              }
+              setIsReminderModalVisible(true);
+            }}
           />
         );
       case 'diary':
@@ -214,6 +222,7 @@ function MainApp() {
 
         <AddReminderModal
           visible={isReminderModalVisible}
+          selectedDate={selectedDate}
           onClose={() => setIsReminderModalVisible(false)}
           onSave={(newReminder: any) => {
             addReminder(newReminder);
@@ -331,4 +340,3 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
-
