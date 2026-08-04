@@ -48,6 +48,27 @@ export const TaskRepository = {
     }
   },
 
+  update: async (task) => {
+    try {
+      const db = await getDB();
+      await db.runAsync(
+        `UPDATE tasks SET title = ?, category = ?, priority = ?, time = ?, notes = ?, completed = ?, date = ? WHERE id = ?;`,
+        [
+          task.title,
+          task.category || 'General',
+          task.priority || 'Medium',
+          task.time || '',
+          task.notes || '',
+          task.completed ? 1 : 0,
+          task.date || new Date().toISOString().split('T')[0],
+          task.id,
+        ]
+      );
+    } catch (e) {
+      console.warn('TaskRepository.update error:', e);
+    }
+  },
+
   delete: async (taskId) => {
     const db = await getDB();
     await db.runAsync('DELETE FROM tasks WHERE id = ?;', [taskId]);

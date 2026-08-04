@@ -1,7 +1,6 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import {
-  Alert,
   Image,
   Linking,
   Modal,
@@ -49,6 +48,10 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
   const [confirmPin, setConfirmPin] = useState('');
   const [enableBio, setEnableBio] = useState(true);
   const [pinError, setPinError] = useState('');
+
+  // Security Success Modals
+  const [isSecuritySavedAlertVisible, setIsSecuritySavedAlertVisible] = useState(false);
+  const [isSecurityRemovedAlertVisible, setIsSecurityRemovedAlertVisible] = useState(false);
 
   // Privacy Policy, About Us, and Privacy FAQ Modal States
   const [isPrivacyModalVisible, setIsPrivacyModalVisible] = useState(false);
@@ -213,7 +216,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
       const isBio = selectedLockType === 'biometric' || enableBio;
       await setupPin(newPin, isBio);
       setIsSecurityModalVisible(false);
-      Alert.alert('Security Updated', 'App Lock security settings updated successfully.');
+      setIsSecuritySavedAlertVisible(true);
     } catch (e) {
       setPinError('Failed to save security PIN.');
     }
@@ -222,7 +225,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
   const handleDisableSecurity = async () => {
     await removeSecurity();
     setIsSecurityModalVisible(false);
-    Alert.alert('Security Disabled', 'App Lock & Biometric protection removed.');
+    setIsSecurityRemovedAlertVisible(true);
   };
 
   const handleOpenSocialLink = async (url) => {
@@ -1088,6 +1091,78 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
             <TouchableOpacity
               style={[styles.stylishAlertButton, { backgroundColor: theme.colors.primary }]}
               onPress={() => setIsProfileSavedAlertVisible(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.stylishAlertButtonText}>Got It</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Security Saved Success Modal */}
+      <Modal
+        visible={isSecuritySavedAlertVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsSecuritySavedAlertVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.stylishAlertContainer,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
+            <View style={[styles.successIconCircle, { backgroundColor: 'rgba(16, 185, 129, 0.15)' }]}>
+              <Icon name="check" size={32} color="#10B981" />
+            </View>
+
+            <Text style={[styles.stylishAlertTitle, { color: theme.colors.textPrimary }]}>
+              Security Updated
+            </Text>
+            <Text style={[styles.stylishAlertMessage, { color: theme.colors.textSecondary }]}>
+              App Lock has been enabled successfully. Your app is now protected.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.stylishAlertButton, { backgroundColor: theme.colors.primary }]}
+              onPress={() => setIsSecuritySavedAlertVisible(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.stylishAlertButtonText}>Got It</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Security Removed Success Modal */}
+      <Modal
+        visible={isSecurityRemovedAlertVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsSecurityRemovedAlertVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.stylishAlertContainer,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+            ]}
+          >
+            <View style={[styles.successIconCircle, { backgroundColor: 'rgba(239, 68, 68, 0.12)' }]}>
+              <Icon name="lock" size={30} color={theme.colors.danger || '#EF4444'} />
+            </View>
+
+            <Text style={[styles.stylishAlertTitle, { color: theme.colors.textPrimary }]}>
+              Lock Removed
+            </Text>
+            <Text style={[styles.stylishAlertMessage, { color: theme.colors.textSecondary }]}>
+              App Lock and biometric protection have been disabled.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.stylishAlertButton, { backgroundColor: theme.colors.primary }]}
+              onPress={() => setIsSecurityRemovedAlertVisible(false)}
               activeOpacity={0.85}
             >
               <Text style={styles.stylishAlertButtonText}>Got It</Text>

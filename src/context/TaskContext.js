@@ -101,15 +101,20 @@ export const TaskProvider = ({ children }) => {
       // 2. Past incomplete/pending tasks carry over to Today marked as Overdue (red).
       const finalTasks = [];
       for (const task of tasksList) {
-        if (task.date < todayStr) {
-          if (!task.completed) {
-            // Carry over incomplete task to Today marked as Overdue
-            const overdueTask = { ...task, date: todayStr, isOverdue: true };
-            await TaskRepository.update(overdueTask);
-            finalTasks.push(overdueTask);
+        try {
+          if (task.date < todayStr) {
+            if (!task.completed) {
+              // Carry over incomplete task to Today marked as Overdue
+              const overdueTask = { ...task, date: todayStr, isOverdue: true };
+              await TaskRepository.update(overdueTask);
+              finalTasks.push(overdueTask);
+            }
+            // Completed past tasks are left in DB for Reports but omitted from Today's list
+          } else {
+            finalTasks.push(task);
           }
-          // Completed past tasks are left in DB for Reports but omitted from Today's list
-        } else {
+        } catch (taskErr) {
+          // If one task fails to update, still include it so data isn't lost
           finalTasks.push(task);
         }
       }
