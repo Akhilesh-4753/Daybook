@@ -132,7 +132,7 @@ export const AddTaskModal = ({ visible, onClose, onSave, taskToEdit }) => {
               ]}
               placeholder="What do you need to get done?"
               placeholderTextColor={theme.colors.textMuted}
-              maxLength={20}
+              maxLength={25}
               value={title}
               onChangeText={(text) => {
                 setTitle(text);
@@ -371,5 +371,16 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  charCounter: {
+    fontSize: 11,
+    fontWeight: '600',
   },
 });

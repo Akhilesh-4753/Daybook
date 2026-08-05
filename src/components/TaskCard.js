@@ -224,7 +224,9 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 14,
+    paddingLeft: 16,
+    paddingRight: 10,
     borderRadius: 16,
     borderWidth: 1,
     marginBottom: 12,
@@ -275,18 +277,18 @@ const styles = StyleSheet.create({
   priorityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
+    borderRadius: 8,
   },
   priorityDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginRight: 5,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    marginRight: 4,
   },
   priorityText: {
-    fontSize: 11,
+    fontSize: 9.5,
     fontWeight: '700',
   },
   metaRow: {

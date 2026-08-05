@@ -293,8 +293,8 @@ export const TaskProvider = ({ children }) => {
   }, []);
 
   const updateDiaryEntry = useCallback(async (updatedEntry) => {
-    await DiaryRepository.update(updatedEntry);
-    setDiaryEntries((prev) => prev.map((d) => (d.id === updatedEntry.id ? updatedEntry : d)));
+    const updated = await DiaryRepository.update(updatedEntry);
+    setDiaryEntries((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
   }, []);
 
   const deleteDiaryEntry = useCallback(async (entryId) => {

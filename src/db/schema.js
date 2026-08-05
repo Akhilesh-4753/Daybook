@@ -56,7 +56,8 @@ CREATE TABLE IF NOT EXISTS diary_entries (
   title TEXT NOT NULL,
   mood TEXT NOT NULL DEFAULT 'happy',
   content TEXT NOT NULL,
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  modified_at TEXT
 );
 `;
 

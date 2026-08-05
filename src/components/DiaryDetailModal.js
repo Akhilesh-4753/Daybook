@@ -44,8 +44,33 @@ export const DiaryDetailModal = ({ visible, entry, onClose }) => {
     : ['No Tag'];
   const tagObjs = entryTags.map((tid) => tagsList.find((t) => t.id === tid) || tagsList[0]);
 
-  // Format date and time string e.g. Wednesday, Aug 5, 2026 • 05:15 PM
+  const formatIsoDateTime = (isoString) => {
+    try {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return '';
+      const datePart = d.toLocaleDateString('en-US', {
+        weekday: 'long', month: 'short', day: 'numeric', year: 'numeric',
+      });
+      const timePart = d.toLocaleTimeString('en-US', {
+        hour: '2-digit', minute: '2-digit', hour12: true
+      });
+      return `${datePart} • ${timePart}`;
+    } catch {
+      return '';
+    }
+  };
+
+  // Format entry date/time for detail view
   const formatDateTime = () => {
+    if (entry.modifiedAt) {
+      const formatted = formatIsoDateTime(entry.modifiedAt);
+      if (formatted) return `Modified: ${formatted}`;
+    }
+    if (entry.createdAt) {
+      const formatted = formatIsoDateTime(entry.createdAt);
+      if (formatted) return `Created: ${formatted}`;
+    }
+
     try {
       const d = entry.date ? new Date(entry.date + 'T12:00:00') : new Date();
       const datePart = d.toLocaleDateString('en-US', {
@@ -55,9 +80,10 @@ export const DiaryDetailModal = ({ visible, entry, onClose }) => {
         year: 'numeric',
       });
       const timePart = entry.time || '';
-      return timePart ? `${datePart} • ${timePart}` : datePart;
+      const formatted = timePart ? `${datePart} • ${timePart}` : datePart;
+      return `Created: ${formatted}`;
     } catch {
-      return entry.formattedDate || entry.date || '';
+      return `Created: ${entry.formattedDate || entry.date || ''}`;
     }
   };
 

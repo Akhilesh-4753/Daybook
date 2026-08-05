@@ -1,6 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  BackHandler,
   Image,
   KeyboardAvoidingView,
   Linking,
@@ -12,7 +13,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { Icon } from '../components/Icons';
 import { useAuth } from '../context/AuthContext';
@@ -62,6 +63,71 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
   const [isCameraPrivacyModalVisible, setIsCameraPrivacyModalVisible] = useState(false);
   const [isAboutUsModalVisible, setIsAboutUsModalVisible] = useState(false);
   const [isPrivacyFaqModalVisible, setIsPrivacyFaqModalVisible] = useState(false);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (isPrivacyModalVisible) {
+        setIsPrivacyModalVisible(false);
+        return true;
+      }
+      if (isCameraPrivacyModalVisible) {
+        setIsCameraPrivacyModalVisible(false);
+        return true;
+      }
+      if (isPrivacyFaqModalVisible) {
+        setIsPrivacyFaqModalVisible(false);
+        return true;
+      }
+      if (isAboutUsModalVisible) {
+        setIsAboutUsModalVisible(false);
+        return true;
+      }
+      if (isEditProfileVisible) {
+        setIsEditProfileVisible(false);
+        return true;
+      }
+      if (isSecurityModalVisible) {
+        setIsSecurityModalVisible(false);
+        return true;
+      }
+      if (isLogoutConfirmVisible) {
+        setIsLogoutConfirmVisible(false);
+        return true;
+      }
+      if (isImageOptionsVisible) {
+        setIsImageOptionsVisible(false);
+        return true;
+      }
+      if (isProfileSavedAlertVisible) {
+        setIsProfileSavedAlertVisible(false);
+        return true;
+      }
+      if (isSecuritySavedAlertVisible) {
+        setIsSecuritySavedAlertVisible(false);
+        return true;
+      }
+      if (isSecurityRemovedAlertVisible) {
+        setIsSecurityRemovedAlertVisible(false);
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [
+    isPrivacyModalVisible,
+    isCameraPrivacyModalVisible,
+    isPrivacyFaqModalVisible,
+    isAboutUsModalVisible,
+    isEditProfileVisible,
+    isSecurityModalVisible,
+    isLogoutConfirmVisible,
+    isImageOptionsVisible,
+    isProfileSavedAlertVisible,
+    isSecuritySavedAlertVisible,
+    isSecurityRemovedAlertVisible,
+  ]);
 
 
   const handleExportBackup = async () => {

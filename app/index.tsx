@@ -1,6 +1,6 @@
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect, useState } from 'react';
-import { Modal, Platform, StatusBar as RNStatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { BackHandler, Modal, PanResponder, Platform, StatusBar as RNStatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AddReminderModal } from '../src/components/AddReminderModal';
 import { AddTaskModal } from '../src/components/AddTaskModal';
@@ -33,9 +33,13 @@ function MainApp() {
     SplashScreen.hideAsync().catch(() => { });
   }, []);
 
+  const [activeTab, setActiveTab] = useState('today');
+  const [tabHistory, setTabHistory] = useState(['today']);
+
   useEffect(() => {
     if (isAuthenticated) {
       setActiveTab('today');
+      setTabHistory(['today']);
     }
   }, [isAuthenticated]);
 
@@ -56,7 +60,6 @@ function MainApp() {
     deleteDiaryEntry,
   } = useTasks();
 
-  const [activeTab, setActiveTab] = useState('today');
   const [isTaskModalVisible, setIsTaskModalVisible] = useState(false);
   const [isReminderModalVisible, setIsReminderModalVisible] = useState(false);
   const [taskToEdit, setTaskToEdit] = useState<any>(null);
@@ -75,6 +78,60 @@ function MainApp() {
   const topPadding = Platform.OS === 'android'
     ? Math.max(safeTop, RNStatusBar.currentHeight || 28)
     : Math.max(safeTop, 12);
+
+  const handleBackAction = () => {
+    if (isTaskModalVisible) {
+      setIsTaskModalVisible(false);
+      setTaskToEdit(null);
+      return true;
+    }
+    if (isReminderModalVisible) {
+      setIsReminderModalVisible(false);
+      return true;
+    }
+    if (isConfirmCompleteVisible) {
+      setIsConfirmCompleteVisible(false);
+      return true;
+    }
+    if (taskToDelete) {
+      setTaskToDelete(null);
+      return true;
+    }
+
+    if (tabHistory.length > 1) {
+      const newHistory = [...tabHistory];
+      newHistory.pop();
+      const prevTab = newHistory[newHistory.length - 1];
+      setTabHistory(newHistory);
+      setActiveTab(prevTab);
+      return true;
+    }
+    return false;
+  };
+
+  const handleBackRef = useRef(handleBackAction);
+  useEffect(() => {
+    handleBackRef.current = handleBackAction;
+  });
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        return evt.nativeEvent.pageX < 45 && gestureState.dx > 20 && Math.abs(gestureState.dy) < 30;
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dx > 40) {
+          handleBackRef.current();
+        }
+      },
+    })
+  ).current;
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => handleBackAction());
+    return () => subscription.remove();
+  }, [tabHistory, isTaskModalVisible, isReminderModalVisible, isConfirmCompleteVisible, taskToDelete]);
 
   // If user is not authenticated, show AuthScreen
   if (!isAuthenticated) {
@@ -126,6 +183,11 @@ function MainApp() {
     }
   };
 
+  const handleTabPress = (tabId: string) => {
+    setActiveTab(tabId);
+    setTabHistory((prev) => [...prev, tabId]);
+  };
+
   const renderCurrentScreen = () => {
     switch (activeTab) {
       case 'today':
@@ -141,7 +203,7 @@ function MainApp() {
               setTaskToEdit(null);
               setIsTaskModalVisible(true);
             }}
-            onOpenMore={() => setActiveTab('more')}
+            onOpenMore={() => handleTabPress('more')}
             onDeleteTask={handleRequestDeleteTask}
             onEditTask={(task: any) => {
               setTaskToEdit(task);
@@ -183,7 +245,7 @@ function MainApp() {
         return (
           <MoreScreen
             user={user}
-            onNavigateTab={(tab: any) => setActiveTab(tab)}
+            onNavigateTab={(tab: any) => handleTabPress(tab)}
             onLogout={logout}
           />
         );
@@ -208,7 +270,7 @@ function MainApp() {
               setTaskToEdit(null);
               setIsTaskModalVisible(true);
             }}
-            onOpenMore={() => setActiveTab('more')}
+            onOpenMore={() => handleTabPress('more')}
             onDeleteTask={handleRequestDeleteTask}
             onEditTask={(task: any) => {
               setTaskToEdit(task);
@@ -220,14 +282,14 @@ function MainApp() {
   };
 
   return (
-    <View style={[styles.safeArea, { backgroundColor: theme.colors.background, paddingTop: topPadding }]}>
+    <View style={[styles.safeArea, { backgroundColor: theme.colors.background, paddingTop: topPadding }]} {...panResponder.panHandlers}>
       <RNStatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} backgroundColor={theme.colors.background} translucent={true} />
       <View style={styles.container}>
         {renderCurrentScreen()}
 
         <BottomNavigation
           activeTab={activeTab}
-          onTabPress={(tabId: any) => setActiveTab(tabId)}
+          onTabPress={(tabId: any) => handleTabPress(tabId)}
           onFabPress={() => setIsTaskModalVisible(false)}
         />
 

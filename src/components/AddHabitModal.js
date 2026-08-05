@@ -26,6 +26,7 @@ export const AddHabitModal = ({ visible, onClose, onSave, editingHabit }) => {
   const [notes, setNotes] = useState('');
   const [selectedIcon, setSelectedIcon] = useState('note');
   const [autoAddToday, setAutoAddToday] = useState(false);
+  const [titleError, setTitleError] = useState('');
 
   const categories = ['Health', 'Work', 'Personal', 'Finance'];
   const priorities = ['Low', 'Medium', 'High'];
@@ -52,6 +53,7 @@ export const AddHabitModal = ({ visible, onClose, onSave, editingHabit }) => {
       setNotes(editingHabit.notes || '');
       setSelectedIcon(editingHabit.icon === 'none' || !editingHabit.icon ? 'note' : editingHabit.icon);
       setAutoAddToday(editingHabit.autoAddToday !== false);
+      setTitleError('');
     } else {
       reset();
     }
@@ -65,10 +67,14 @@ export const AddHabitModal = ({ visible, onClose, onSave, editingHabit }) => {
     setSelectedIcon('note');
     setTime('08:00 AM');
     setAutoAddToday(false);
+    setTitleError('');
   };
 
   const handleSave = () => {
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      setTitleError('Habit title is required.');
+      return;
+    }
     const cleanTitle = title.trim();
     const cleanNotes = formatMultiLineText(notes);
 
@@ -121,27 +127,31 @@ export const AddHabitModal = ({ visible, onClose, onSave, editingHabit }) => {
           >
 
             {/* Habit Title */}
-            <View style={styles.labelRow}>
-              <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Habit Title</Text>
-              <Text style={[styles.charCounter, { color: theme.colors.textMuted }]}>
-                {title.length}/20
-              </Text>
-            </View>
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Habit Title</Text>
             <TextInput
               style={[
                 styles.input,
                 {
                   backgroundColor: theme.colors.surfaceVariant,
                   color: theme.colors.textPrimary,
-                  borderColor: theme.colors.border,
+                  borderColor: titleError ? '#EF4444' : theme.colors.border,
+                  borderWidth: titleError ? 2 : 1,
                 },
               ]}
               placeholder="e.g., Drink Water, Morning Jog"
               placeholderTextColor={theme.colors.textMuted}
               maxLength={20}
               value={title}
-              onChangeText={setTitle}
+              onChangeText={(text) => {
+                setTitle(text);
+                if (text.trim() && titleError) {
+                  setTitleError('');
+                }
+              }}
             />
+            {titleError ? (
+              <Text style={styles.errorText}>⚠️ {titleError}</Text>
+            ) : null}
 
             {/* Choose Habit Icon */}
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Choose Icon</Text>
@@ -422,5 +432,13 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  errorText: {
+    color: '#EF4444',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 6,
+    marginLeft: 4,
+    marginBottom: 8,
   },
 });

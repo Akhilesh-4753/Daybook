@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
+  BackHandler,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -25,6 +26,30 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onUpdateEntry, onD
   const [entryToDelete, setEntryToDelete] = useState(null);
   const [entryToEdit, setEntryToEdit] = useState(null);
   const [selectedEntryDetail, setSelectedEntryDetail] = useState(null);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (selectedEntryDetail) {
+        setSelectedEntryDetail(null);
+        return true;
+      }
+      if (entryToEdit) {
+        setEntryToEdit(null);
+        setContent('');
+        setSelectedTags(['No Tag']);
+        setMood('Happy');
+        return true;
+      }
+      if (showSavedList) {
+        setShowSavedList(false);
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => subscription.remove();
+  }, [selectedEntryDetail, entryToEdit, showSavedList]);
 
   const [selectedYear, setSelectedYear] = useState('All');
   const [selectedMonth, setSelectedMonth] = useState('All');
@@ -60,18 +85,43 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onUpdateEntry, onD
     { id: 'Health', label: 'Health', emoji: '💪' },
   ];
 
-  // Format entry date as: Wednesday, Aug 5, 2026 • 05:15 PM
+  const formatIsoDateTime = (isoString) => {
+    try {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return '';
+      const datePart = d.toLocaleDateString('en-US', {
+        weekday: 'long', month: 'short', day: 'numeric', year: 'numeric',
+      });
+      const timePart = d.toLocaleTimeString('en-US', {
+        hour: '2-digit', minute: '2-digit', hour12: true
+      });
+      return `${datePart} • ${timePart}`;
+    } catch {
+      return '';
+    }
+  };
+
+  // Format entry date as: Created: Wednesday, Aug 5, 2026 • 05:15 PM or Modified: Thursday, Aug 6, 2026 • 09:30 AM
   const formatEntryDateTime = (entry) => {
+    if (entry.modifiedAt) {
+      const formatted = formatIsoDateTime(entry.modifiedAt);
+      if (formatted) return `Modified: ${formatted}`;
+    }
+    if (entry.createdAt) {
+      const formatted = formatIsoDateTime(entry.createdAt);
+      if (formatted) return `Created: ${formatted}`;
+    }
+
     try {
       const d = entry.date ? new Date(entry.date + 'T12:00:00') : new Date();
       const datePart = d.toLocaleDateString('en-US', {
         weekday: 'long', month: 'short', day: 'numeric', year: 'numeric',
       });
-      // Use saved time if available, else show empty string
       const timePart = entry.time || '';
-      return timePart ? `${datePart} • ${timePart}` : datePart;
+      const formatted = timePart ? `${datePart} • ${timePart}` : datePart;
+      return `Created: ${formatted}`;
     } catch {
-      return entry.formattedDate || entry.date || '';
+      return `Created: ${entry.formattedDate || entry.date || ''}`;
     }
   };
 
@@ -156,6 +206,7 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onUpdateEntry, onD
         tags: selectedTags,
         content: cleanContent,
         title: firstTag !== 'No Tag' ? firstTag : (entryToEdit.title || 'Daily Reflection'),
+        modifiedAt: new Date().toISOString(),
       };
       if (onUpdateEntry) {
         onUpdateEntry(updatedEntry);
@@ -173,6 +224,8 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onUpdateEntry, onD
         mood,
         tags: selectedTags,
         content: cleanContent,
+        createdAt: new Date().toISOString(),
+        modifiedAt: null,
       };
       onSaveEntry(newEntry);
     }
@@ -461,26 +514,12 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onUpdateEntry, onD
                     onPress={() => setSelectedEntryDetail(entry)}
                     activeOpacity={0.88}
                   >
-                    {/* Row 1: Mood circle | Content | Edit+Delete */}
-                    <View style={styles.entryTopRow}>
-
-                      {/* Mood circle */}
-                      <View style={[styles.entryMoodCircle, { backgroundColor: 'rgba(99,102,241,0.10)', borderColor: theme.colors.primary }]}>
-                        <Text style={styles.entryMoodEmoji}>
-                          {moodObj?.emoji || '📝'}
-                        </Text>
-                        <Text style={[styles.entryMoodName, { color: theme.colors.primary }]}>
-                          {moodObj?.label || 'Mood'}
-                        </Text>
-                      </View>
-
-                      {/* Diary text */}
-                      <Text style={[styles.entryBodyText, { color: theme.colors.textSecondary }]} numberOfLines={5}>
-                        {entry.content ? entry.content.replace(/^•\s*/gm, '') : ''}
+                    {/* Header Row: Date & Time + Edit/Delete Actions */}
+                    <View style={styles.entryHeaderRow}>
+                      <Text style={[styles.entryDateTime, { color: theme.colors.textMuted }]}>
+                        {formatEntryDateTime(entry)}
                       </Text>
-
-                      {/* Edit + Delete buttons */}
-                      <View style={styles.entryActions}>
+                      <View style={styles.entryActionsRow}>
                         <TouchableOpacity
                           style={[styles.entryActionBtn, { backgroundColor: 'rgba(99,102,241,0.12)', borderColor: theme.colors.primary }]}
                           onPress={(e) => {
@@ -506,12 +545,25 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onUpdateEntry, onD
                       </View>
                     </View>
 
-                    {/* Row 2: Date right-aligned */}
-                    <Text style={[styles.entryDateTime, { color: theme.colors.textMuted }]}>
-                      {formatEntryDateTime(entry)}
-                    </Text>
+                    {/* Main Row: Mood Circle + Diary Content */}
+                    <View style={styles.entryTopRow}>
+                      {/* Mood circle */}
+                      <View style={[styles.entryMoodCircle, { backgroundColor: 'rgba(99,102,241,0.10)', borderColor: theme.colors.primary }]}>
+                        <Text style={styles.entryMoodEmoji}>
+                          {moodObj?.emoji || '📝'}
+                        </Text>
+                        <Text style={[styles.entryMoodName, { color: theme.colors.primary }]}>
+                          {moodObj?.label || 'Mood'}
+                        </Text>
+                      </View>
 
-                    {/* Row 3: Tag chips (all selected tags) */}
+                      {/* Diary text */}
+                      <Text style={[styles.entryBodyText, { color: theme.colors.textSecondary }]} numberOfLines={5}>
+                        {entry.content ? entry.content.replace(/^•\s*/gm, '') : ''}
+                      </Text>
+                    </View>
+
+                    {/* Footer Row: Tag Chips */}
                     <View style={styles.entryTagsRow}>
                       {tagObjs.map((tagObj) => (
                         <View
@@ -780,24 +832,30 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     paddingTop: 2,
   },
-  entryActions: {
-    flexDirection: 'column',
-    gap: 6,
-    flexShrink: 0,
+  entryHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+    paddingBottom: 6,
+  },
+  entryActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
   },
   entryActionBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   entryDateTime: {
     fontSize: 11,
-    fontWeight: '600',
-    textAlign: 'right',
-    marginBottom: 10,
+    fontWeight: '700',
   },
   entryTagsRow: {
     flexDirection: 'row',
@@ -839,5 +897,16 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#EF4444',
+  },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  charCounter: {
+    fontSize: 11,
+    fontWeight: '600',
   },
 });

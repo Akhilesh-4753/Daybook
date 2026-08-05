@@ -41,7 +41,23 @@ const createFallbackDB = () => {
       } else if (sql.includes('DELETE FROM tasks')) {
         memoryTasks = memoryTasks.filter(t => t.id !== params[0]);
       } else if (sql.includes('INSERT INTO diary_entries')) {
-        memoryDiary.push({ id: params[0], date: params[1], formatted_date: params[2], title: params[3], mood: params[4], content: params[5] });
+        memoryDiary.push({
+          id: params[0],
+          date: params[1],
+          formatted_date: params[2],
+          title: params[3],
+          mood: params[4],
+          content: params[5],
+          created_at: params[6] || new Date().toISOString(),
+          modified_at: params[7] || null
+        });
+      } else if (sql.includes('UPDATE diary_entries')) {
+        const title = params[0];
+        const mood = params[1];
+        const content = params[2];
+        const modified_at = params[3];
+        const id = params[4];
+        memoryDiary = memoryDiary.map(d => d.id === id ? { ...d, title, mood, content, modified_at } : d);
       } else if (sql.includes('INSERT INTO habits')) {
         memoryHabits.push({ id: params[0], title: params[1], frequency: params[2], progress: params[3], streak: params[4], completed_today: params[5], auto_add_today: params[6], icon: params[7] });
       } else if (sql.includes('INSERT INTO reminders')) {
@@ -52,7 +68,7 @@ const createFallbackDB = () => {
       if (sql.includes('tasks')) return memoryTasks.map(t => ({ ...t, completed: t.completed ? 1 : 0 }));
       if (sql.includes('reminders')) return memoryReminders.map(r => ({ ...r, alarm_tone: r.alarmTone || r.alarm_tone, repeat_rule: r.repeat || r.repeat_rule, notification: r.notification ? 1 : 0 }));
       if (sql.includes('habits')) return memoryHabits.map(h => ({ ...h, completed_today: h.completedToday ? 1 : 0, auto_add_today: h.autoAddToday ? 1 : 0 }));
-      if (sql.includes('diary')) return memoryDiary.map(d => ({ ...d, formatted_date: d.formattedDate || d.formatted_date }));
+      if (sql.includes('diary')) return memoryDiary.map(d => ({ ...d, formatted_date: d.formattedDate || d.formatted_date, created_at: d.created_at || d.createdAt || new Date().toISOString(), modified_at: d.modified_at || d.modifiedAt || null }));
       return [];
     },
     getFirstAsync: async () => ({ count: 1 }),
@@ -87,6 +103,8 @@ export const initDatabase = async () => {
       await db.execAsync(CREATE_HABITS_TABLE).catch(() => {});
       await db.execAsync(CREATE_DIARY_TABLE).catch(() => {});
       await db.execAsync(CREATE_REPORTS_TABLE).catch(() => {});
+      // Database Migrations: Add modified_at column if not exists
+      await db.execAsync('ALTER TABLE diary_entries ADD COLUMN modified_at TEXT;').catch(() => {});
     }
 
     await seedInitialDataIfEmpty(db);

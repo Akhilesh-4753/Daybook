@@ -12,6 +12,8 @@ export const DiaryRepository = {
         title: r.title,
         mood: r.mood,
         content: r.content,
+        createdAt: r.created_at,
+        modifiedAt: r.modified_at,
       }));
     } catch (e) {
       return [];
@@ -21,8 +23,9 @@ export const DiaryRepository = {
   add: async (entry) => {
     const db = await getDB();
     const id = entry.id || 'd_' + Date.now();
+    const nowStr = new Date().toISOString();
     await db.runAsync(
-      `INSERT INTO diary_entries (id, date, formatted_date, title, mood, content) VALUES (?, ?, ?, ?, ?, ?);`,
+      `INSERT INTO diary_entries (id, date, formatted_date, title, mood, content, created_at, modified_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
       [
         id,
         entry.date || new Date().toISOString().split('T')[0],
@@ -30,9 +33,11 @@ export const DiaryRepository = {
         entry.title,
         entry.mood || 'happy',
         entry.content,
+        entry.createdAt || nowStr,
+        null,
       ]
     );
-    return { ...entry, id };
+    return { ...entry, id, createdAt: entry.createdAt || nowStr, modifiedAt: null };
   },
 
   delete: async (entryId) => {
@@ -43,13 +48,15 @@ export const DiaryRepository = {
   update: async (entry) => {
     try {
       const db = await getDB();
+      const modifiedAt = new Date().toISOString();
       await db.runAsync(
-        `UPDATE diary_entries SET title = ?, mood = ?, content = ? WHERE id = ?;`,
-        [entry.title, entry.mood || 'Happy', entry.content, entry.id]
+        `UPDATE diary_entries SET title = ?, mood = ?, content = ?, modified_at = ? WHERE id = ?;`,
+        [entry.title, entry.mood || 'Happy', entry.content, modifiedAt, entry.id]
       );
+      return { ...entry, modifiedAt };
     } catch (e) {
       console.log('Diary update error', e);
+      return entry;
     }
-    return entry;
   },
 };
