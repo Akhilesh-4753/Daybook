@@ -115,8 +115,8 @@ export const AuthProvider = ({ children }) => {
       email: res.user.email || email,
       uid: res.user.uid,
       photoUri: (accountProfile && accountProfile.photoUri) || (savedUser && savedUser.photoUri) || res.user.photoURL || null,
-      productivityScore: 87,
-      streak: 12,
+      productivityScore: (savedUser && savedUser.productivityScore) || 100,
+      streak: (savedUser && savedUser.streak) || 1,
     };
     await PreferencesService.saveSession(userData);
     await PreferencesService.saveUserProfile(userKey, { name: userData.name, photoUri: userData.photoUri });

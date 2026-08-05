@@ -23,13 +23,20 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
   const [isCustomDateModalVisible, setIsCustomDateModalVisible] = useState(false);
   const [validationError, setValidationError] = useState('');
 
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const defaultStartStr = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  }, []);
+
   // Single Input state per Date
-  const [startDateText, setStartDateText] = useState('2026-06-01');
-  const [endDateText, setEndDateText] = useState('2026-07-31');
+  const [startDateText, setStartDateText] = useState(defaultStartStr);
+  const [endDateText, setEndDateText] = useState(todayStr);
 
   // Active Applied Range String (YYYY-MM-DD)
-  const [appliedStartDate, setAppliedStartDate] = useState('2026-06-01');
-  const [appliedEndDate, setAppliedEndDate] = useState('2026-07-31');
+  const [appliedStartDate, setAppliedStartDate] = useState(defaultStartStr);
+  const [appliedEndDate, setAppliedEndDate] = useState(todayStr);
 
   const categories = ['All', 'Work', 'Health', 'Personal', 'Finance'];
 
@@ -66,7 +73,7 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
   // Comprehensive Date Validation Function
   const validateCustomDateRange = (sDate, eDate) => {
     const todayStr = new Date().toISOString().split('T')[0];
-    const userRegDate = user?.createdAt || '2026-06-01';
+    const userRegDate = user?.createdAt || defaultStartStr;
 
     if (sDate.length < 10) return 'Please enter a complete Start Date (YYYY-MM-DD).';
     if (eDate.length < 10) return 'Please enter a complete End Date (YYYY-MM-DD).';
@@ -506,7 +513,7 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
                     borderColor: validationError && validationError.includes('Start Date') ? '#EF4444' : theme.colors.border,
                   },
                 ]}
-                placeholder="2026-06-01"
+                placeholder="YYYY-MM-DD"
                 placeholderTextColor={theme.colors.textMuted}
                 keyboardType="number-pad"
                 maxLength={10}
@@ -529,7 +536,7 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
                     borderColor: validationError && validationError.includes('End Date') ? '#EF4444' : theme.colors.border,
                   },
                 ]}
-                placeholder="2026-07-31"
+                placeholder="YYYY-MM-DD"
                 placeholderTextColor={theme.colors.textMuted}
                 keyboardType="number-pad"
                 maxLength={10}

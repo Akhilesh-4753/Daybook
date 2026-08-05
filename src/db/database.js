@@ -123,7 +123,7 @@ const seedInitialDataIfEmpty = async (db) => {
       for (const t of initialTasks) {
         await db.runAsync(
           `INSERT INTO tasks (id, title, category, priority, time, notes, completed, date) VALUES (?, ?, ?, ?, ?, ?, ?, ?);`,
-          [t.id, t.title, t.category, t.priority, t.time || '', t.notes || '', t.completed ? 1 : 0, t.date || '2026-07-29']
+          [t.id, t.title, t.category, t.priority, t.time || '', t.notes || '', t.completed ? 1 : 0, t.date || new Date().toISOString().split('T')[0]]
         );
       }
     }
