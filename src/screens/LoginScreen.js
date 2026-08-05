@@ -9,8 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { Icon } from '../components/Icons';
-import { GoogleIcon } from '../components/Icons';
+import { GoogleIcon, Icon } from '../components/Icons';
 import { useAuth } from '../context/AuthContext';
 import { resetUserPassword } from '../services/firebase';
 import { useTheme } from '../theme/ThemeContext';
@@ -22,6 +21,8 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showForgotMsg, setShowForgotMsg] = useState(false);
+  const [showGoogleMsg, setShowGoogleMsg] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [focusedField, setFocusedField] = useState(null);
@@ -81,25 +82,9 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
     setErrorMessage('');
-    setLoading(true);
-    try {
-      const result = await loginWithGoogle();
-      const userData = result?.userData || { name: 'Google User', email: '' };
-      setPendingUserData(userData);
-      setIsSuccessModalVisible(true);
-    } catch (error) {
-      let msg = error.message || 'Google sign-in failed. Please try again.';
-      if (error.code === 'SIGN_IN_CANCELLED' || error.code === '12501') {
-        msg = ''; // user cancelled – no error to show
-      } else if (error.code === 'auth/account-exists-with-different-credential') {
-        msg = 'An account already exists with this email. Please sign in with email & password.';
-      }
-      if (msg) setErrorMessage(msg);
-    } finally {
-      setLoading(false);
-    }
+    setShowGoogleMsg(true);
   };
 
   // Tapping "Continue" just closes the modal visually.
@@ -201,6 +186,15 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
         </View>
       </View>
 
+      {/* Forgot Password */}
+      <TouchableOpacity
+        style={styles.forgotLink}
+        onPress={() => setShowForgotMsg(true)}
+        activeOpacity={0.7}
+      >
+        <Text style={[styles.forgotLinkText, { color: theme.colors.primary }]}>Forgot Password?</Text>
+      </TouchableOpacity>
+
       {/* Submit Button */}
       <TouchableOpacity
         style={[styles.submitBtn, { backgroundColor: theme.colors.primary }]}
@@ -273,7 +267,112 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
               Welcome back! You have successfully logged in.
             </Text>
           </View>
+        </View>
+      </Modal>
 
+      {/* Forgot Password Modal */}
+      <Modal
+        visible={showForgotMsg}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowForgotMsg(false)}
+      >
+        <View style={styles.modalOverlay}>
+          {/* Premium split card */}
+          <View style={[styles.forgotModalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+
+            {/* Top coloured banner with layered glowing circles */}
+            <View style={styles.forgotModalBanner}>
+              <View style={styles.forgotDecorCircle1} />
+              <View style={styles.forgotDecorCircle2} />
+
+              {/* Frosted ring with Custom Vector Lock Illustration */}
+              <View style={styles.forgotIconRing}>
+                <View style={styles.shackle} />
+                <View style={styles.lockBody}>
+                  <View style={styles.keyholeDot} />
+                  <View style={styles.keyholeNotch} />
+                </View>
+              </View>
+            </View>
+
+            {/* Bottom content */}
+            <View style={styles.forgotModalBody}>
+              {/* Coming Soon badge with indicator dot */}
+              <View style={styles.forgotBadge}>
+                <View style={styles.badgePulseDot} />
+                <Text style={styles.forgotBadgeText}>Coming Soon</Text>
+              </View>
+
+              <Text style={[styles.forgotModalTitle, { color: theme.colors.textPrimary }]}>
+                Password Reset
+              </Text>
+              <Text style={[styles.forgotModalDesc, { color: theme.colors.textSecondary }]}>
+                Password reset will be available soon. We are working to make account recovery completely seamless.
+              </Text>
+
+              {/* Divider */}
+              <View style={[styles.forgotDivider, { backgroundColor: theme.colors.border }]} />
+
+              <TouchableOpacity
+                style={[styles.forgotModalBtn, { backgroundColor: theme.colors.primary }]}
+                onPress={() => setShowForgotMsg(false)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.forgotModalBtnText}>Got It</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Google Coming Soon Modal */}
+      <Modal
+        visible={showGoogleMsg}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowGoogleMsg(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.forgotModalCard, { backgroundColor: theme.colors.card, borderColor: theme.colors.border }]}>
+            
+            {/* Google themed banner with color glow circles */}
+            <View style={styles.googleModalBanner}>
+              <View style={styles.googleDecorCircle1} />
+              <View style={styles.googleDecorCircle2} />
+              <View style={styles.googleDecorCircle3} />
+              <View style={styles.googleDecorCircle4} />
+
+              <View style={styles.googleIconRing}>
+                <GoogleIcon size={34} />
+              </View>
+            </View>
+
+            <View style={styles.forgotModalBody}>
+              {/* Coming Soon badge */}
+              <View style={styles.forgotBadge}>
+                <View style={styles.badgePulseDot} />
+                <Text style={styles.forgotBadgeText}>Coming Soon</Text>
+              </View>
+
+              <Text style={[styles.forgotModalTitle, { color: theme.colors.textPrimary }]}>
+                Google Sign-In
+              </Text>
+              <Text style={[styles.forgotModalDesc, { color: theme.colors.textSecondary }]}>
+                Google Sign-In will be available soon. We are working on secure one-tap Google login access.
+              </Text>
+
+              <View style={[styles.forgotDivider, { backgroundColor: theme.colors.border }]} />
+
+              <TouchableOpacity
+                style={[styles.forgotModalBtn, { backgroundColor: theme.colors.primary }]}
+                onPress={() => setShowGoogleMsg(false)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.forgotModalBtnText}>Got It</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </Modal>
     </View>
@@ -458,4 +557,165 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+  forgotLink: {
+    alignSelf: 'flex-end',
+    marginBottom: 14,
+    marginTop: 4,
+  },
+  forgotLinkText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  forgotModalCard: {
+    width: '85%',
+    maxWidth: 340,
+    borderRadius: 24,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  forgotModalBanner: {
+    backgroundColor: '#4338CA',
+    height: 130,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  forgotDecorCircle1: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    top: -40,
+    left: -40,
+  },
+  forgotDecorCircle2: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    bottom: -30,
+    right: -20,
+  },
+  forgotIconRing: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.25)',
+  },
+  forgotModalBody: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 24,
+    alignItems: 'center',
+  },
+  forgotBadge: {
+    backgroundColor: 'rgba(245,158,11,0.12)',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 5,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  forgotBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#D97706',
+    letterSpacing: 0.6,
+  },
+  forgotModalTitle: {
+    fontSize: 19,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  forgotModalDesc: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+  forgotDivider: {
+    width: '100%',
+    height: 1,
+    marginBottom: 18,
+  },
+  forgotModalBtn: {
+    height: 46,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  forgotModalBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  googleModalBanner: {
+    backgroundColor: '#EFF6FF',
+    height: 130,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  googleDecorCircle1: {
+    position: 'absolute',
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(66, 133, 244, 0.08)',
+    top: -30,
+    left: -20,
+  },
+  googleDecorCircle2: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: 'rgba(234, 67, 53, 0.06)',
+    top: -40,
+    right: -10,
+  },
+  googleDecorCircle3: {
+    position: 'absolute',
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: 'rgba(251, 188, 5, 0.06)',
+    bottom: -30,
+    left: 20,
+  },
+  googleDecorCircle4: {
+    position: 'absolute',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: 'rgba(52, 168, 83, 0.06)',
+    bottom: -20,
+    right: 40,
+  },
+  googleIconRing: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+    elevation: 3,
+  },
 });
+
+
