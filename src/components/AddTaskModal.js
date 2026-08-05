@@ -27,6 +27,7 @@ export const AddTaskModal = ({ visible, onClose, onSave, taskToEdit }) => {
   const [time, setTime] = useState(taskToEdit ? (taskToEdit.time || '10:00 AM') : '10:00 AM');
   const [notes, setNotes] = useState(taskToEdit ? (taskToEdit.notes || '') : '');
   const [selectedIcon, setSelectedIcon] = useState(taskToEdit ? (taskToEdit.icon || 'note') : 'note');
+  const [validationError, setValidationError] = useState('');
 
   const categories = ['Work', 'Health', 'Personal', 'Finance'];
   const priorities = ['Low', 'Medium', 'High'];
@@ -45,7 +46,10 @@ export const AddTaskModal = ({ visible, onClose, onSave, taskToEdit }) => {
   ];
 
   const handleSave = () => {
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      setValidationError('Task title is required');
+      return;
+    }
     const taskData = {
       title: title.trim(),
       notes: formatMultiLineText(notes),
@@ -79,6 +83,7 @@ export const AddTaskModal = ({ visible, onClose, onSave, taskToEdit }) => {
     setPriority('High');
     setSelectedIcon('note');
     setTime('10:00 AM');
+    setValidationError('');
   };
 
   return (
@@ -121,15 +126,26 @@ export const AddTaskModal = ({ visible, onClose, onSave, taskToEdit }) => {
                 {
                   backgroundColor: theme.colors.surfaceVariant,
                   color: theme.colors.textPrimary,
-                  borderColor: theme.colors.border,
+                  borderColor: validationError ? '#EF4444' : theme.colors.border,
+                  borderWidth: validationError ? 2 : 1,
                 },
               ]}
               placeholder="What do you need to get done?"
               placeholderTextColor={theme.colors.textMuted}
               maxLength={20}
               value={title}
-              onChangeText={setTitle}
+              onChangeText={(text) => {
+                setTitle(text);
+                if (text.trim() && validationError) {
+                  setValidationError('');
+                }
+              }}
             />
+            {validationError ? (
+              <Text style={{ color: '#EF4444', fontSize: 11, fontWeight: '600', marginTop: 4, marginLeft: 2 }}>
+                ⚠️ {validationError}
+              </Text>
+            ) : null}
 
             {/* Choose Task Icon */}
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Choose Icon</Text>

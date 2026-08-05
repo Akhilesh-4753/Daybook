@@ -354,7 +354,11 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
         </Text>
       </View>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Clean User Profile Card */}
         <TouchableOpacity
           style={[
@@ -394,8 +398,14 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
         </TouchableOpacity>
 
         {/* Menu Sections */}
-        {menuSections.map((section) => (
-          <View key={section.title} style={styles.section}>
+        {menuSections.map((section, idx) => (
+          <View
+            key={section.title}
+            style={[
+              styles.section,
+              idx === menuSections.length - 1 && { marginBottom: 0 },
+            ]}
+          >
             <Text style={[styles.sectionTitle, { color: theme.colors.textMuted }]}>
               {section.title}
             </Text>
@@ -454,8 +464,6 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
             </View>
           </View>
         ))}
-
-        <View style={{ height: 20 }} />
       </ScrollView>
 
       {/* Privacy Policy Modal */}

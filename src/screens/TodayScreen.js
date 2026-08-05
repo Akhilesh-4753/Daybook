@@ -1,17 +1,18 @@
-import React, { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
+  Animated,
   Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useTheme } from '../theme/ThemeContext';
 import { Header } from '../components/Header';
+import { Icon } from '../components/Icons';
 import { ProgressCard } from '../components/ProgressCard';
 import { TaskCard } from '../components/TaskCard';
-import { Icon } from '../components/Icons';
+import { useTheme } from '../theme/ThemeContext';
 
 export const TodayScreen = ({
   tasks = [],
@@ -27,6 +28,79 @@ export const TodayScreen = ({
   const { theme, isDarkMode } = useTheme();
 
   const [showCompleted, setShowCompleted] = useState(false);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const rippleScale = useRef(new Animated.Value(1)).current;
+  const rippleOpacity = useRef(new Animated.Value(0.7)).current;
+
+  const isListEmpty = tasks.length === 0;
+
+  // Pulse & Radar Ripple animation loop (runs only when task list is empty)
+  useEffect(() => {
+    if (isListEmpty) {
+      rippleScale.setValue(1);
+      rippleOpacity.setValue(0.7);
+
+      const pulseLoop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.08,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+
+      const rippleLoop = Animated.loop(
+        Animated.parallel([
+          Animated.timing(rippleScale, {
+            toValue: 1.45,
+            duration: 1600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(rippleOpacity, {
+            toValue: 0,
+            duration: 1600,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+
+      pulseLoop.start();
+      rippleLoop.start();
+
+      return () => {
+        pulseLoop.stop();
+        rippleLoop.stop();
+      };
+    } else {
+      pulseAnim.stopAnimation();
+      rippleScale.stopAnimation();
+      rippleOpacity.stopAnimation();
+
+      Animated.parallel([
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rippleScale, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rippleOpacity, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isListEmpty]);
 
   const activeTasks = tasks.filter((t) => !t.completed);
   const completedTasks = tasks.filter((t) => t.completed);
@@ -41,7 +115,11 @@ export const TodayScreen = ({
         onProfilePress={onOpenMore}
       />
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: 8 }}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Progress Card */}
         <ProgressCard
           total={tasks.length}
@@ -54,11 +132,46 @@ export const TodayScreen = ({
           <Text style={[styles.sectionTitle, { color: theme.colors.textPrimary }]}>
             Today's Tasks
           </Text>
-          <TouchableOpacity onPress={onAddTask}>
-            <Text style={[styles.viewAllText, { color: theme.colors.primary }]}>
-              + Add Task
-            </Text>
-          </TouchableOpacity>
+          <View style={{ position: 'relative', justifyContent: 'center', alignItems: 'center' }}>
+            {isListEmpty && (
+              <Animated.View
+                style={[
+                  styles.rippleHalo,
+                  {
+                    borderColor: theme.colors.primary,
+                    transform: [{ scale: rippleScale }],
+                    opacity: rippleOpacity,
+                  },
+                ]}
+              />
+            )}
+            <Animated.View
+              style={{
+                transform: [{ scale: isListEmpty ? pulseAnim : 1 }],
+              }}
+            >
+              <TouchableOpacity
+                onPress={onAddTask}
+                activeOpacity={0.7}
+                style={[
+                  styles.highlightPill,
+                  { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.viewAllText,
+                    {
+                      color: '#FFFFFF',
+                      fontWeight: '700',
+                    },
+                  ]}
+                >
+                  + Add Task
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
         </View>
 
         {/* Common Mark Completed Button */}
@@ -140,8 +253,6 @@ export const TodayScreen = ({
               ))}
           </View>
         )}
-
-        <View style={{ height: 20 }} />
       </ScrollView>
     </View>
   );
@@ -185,6 +296,26 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  highlightPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.28,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  rippleHalo: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 20,
+    borderWidth: 1.5,
   },
   emptyContainer: {
     alignItems: 'center',

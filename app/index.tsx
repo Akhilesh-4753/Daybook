@@ -52,6 +52,7 @@ function MainApp() {
     addHabit,
     addReminder,
     addDiaryEntry,
+    updateDiaryEntry,
     deleteDiaryEntry,
   } = useTasks();
 
@@ -165,6 +166,7 @@ function MainApp() {
           <DiaryScreen
             diaryEntries={diaryEntries}
             onSaveEntry={addDiaryEntry}
+            onUpdateEntry={updateDiaryEntry}
             onDeleteEntry={deleteDiaryEntry}
           />
         );

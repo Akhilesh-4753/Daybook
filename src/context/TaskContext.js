@@ -292,6 +292,11 @@ export const TaskProvider = ({ children }) => {
     setDiaryEntries((prev) => [created, ...prev]);
   }, []);
 
+  const updateDiaryEntry = useCallback(async (updatedEntry) => {
+    await DiaryRepository.update(updatedEntry);
+    setDiaryEntries((prev) => prev.map((d) => (d.id === updatedEntry.id ? updatedEntry : d)));
+  }, []);
+
   const deleteDiaryEntry = useCallback(async (entryId) => {
     await DiaryRepository.delete(entryId);
     setDiaryEntries((prev) => prev.filter((d) => d.id !== entryId));
@@ -317,6 +322,7 @@ export const TaskProvider = ({ children }) => {
       updateReminder,
       deleteReminder,
       addDiaryEntry,
+      updateDiaryEntry,
       deleteDiaryEntry,
       refreshData: loadAllData,
     }),

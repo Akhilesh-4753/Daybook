@@ -1,28 +1,30 @@
-import React, { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  Alert,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useTheme } from '../theme/ThemeContext';
-import { Icon } from '../components/Icons';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';
-import { formatMultiLineText } from '../utils/textUtils';
+import { DiaryDetailModal } from '../components/DiaryDetailModal';
+import { Icon } from '../components/Icons';
+import { useTheme } from '../theme/ThemeContext';
 
-export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) => {
+export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onUpdateEntry, onDeleteEntry }) => {
   const { theme } = useTheme();
 
-  const [title, setTitle] = useState('');
   const [mood, setMood] = useState('Happy');
   const [content, setContent] = useState('');
+  const [selectedTags, setSelectedTags] = useState(['No Tag']);
+  const [contentError, setContentError] = useState('');
   const [showSavedList, setShowSavedList] = useState(false);
   const [entryToDelete, setEntryToDelete] = useState(null);
+  const [entryToEdit, setEntryToEdit] = useState(null);
+  const [selectedEntryDetail, setSelectedEntryDetail] = useState(null);
 
   const [selectedYear, setSelectedYear] = useState('All');
   const [selectedMonth, setSelectedMonth] = useState('All');
@@ -44,6 +46,34 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
     { id: 'Sad', label: 'Sad', emoji: '😔' },
     { id: 'Stressed', label: 'Stressed', emoji: '😫' },
   ];
+
+  const tags = [
+    { id: 'No Tag', label: 'No Tag', emoji: '🏷️' },
+    { id: 'Food', label: 'Food', emoji: '🍽️' },
+    { id: 'Learning', label: 'Learning', emoji: '📚' },
+    { id: 'Entertainment', label: 'Entertainment', emoji: '🎬' },
+    { id: 'Meeting', label: 'Meeting', emoji: '🤝' },
+    { id: 'Travel', label: 'Travel', emoji: '✈️' },
+    { id: 'Office', label: 'Office', emoji: '🏢' },
+    { id: 'Shopping', label: 'Shopping', emoji: '🛍️' },
+    { id: 'Event', label: 'Event', emoji: '🎉' },
+    { id: 'Health', label: 'Health', emoji: '💪' },
+  ];
+
+  // Format entry date as: Wednesday, Aug 5, 2026 • 05:15 PM
+  const formatEntryDateTime = (entry) => {
+    try {
+      const d = entry.date ? new Date(entry.date + 'T12:00:00') : new Date();
+      const datePart = d.toLocaleDateString('en-US', {
+        weekday: 'long', month: 'short', day: 'numeric', year: 'numeric',
+      });
+      // Use saved time if available, else show empty string
+      const timePart = entry.time || '';
+      return timePart ? `${datePart} • ${timePart}` : datePart;
+    } catch {
+      return entry.formattedDate || entry.date || '';
+    }
+  };
 
   // Dynamic Year & Month Lists from actual diary entries
   const yearsList = useMemo(() => {
@@ -83,23 +113,74 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
     });
   }, [diaryEntries, selectedYear, selectedMonth]);
 
+  const toggleTag = (tagId) => {
+    setSelectedTags((prev) => {
+      if (tagId === 'No Tag') return ['No Tag'];
+      const withoutNoTag = prev.filter((t) => t !== 'No Tag');
+      if (withoutNoTag.includes(tagId)) {
+        const next = withoutNoTag.filter((t) => t !== tagId);
+        return next.length === 0 ? ['No Tag'] : next;
+      }
+      return [...withoutNoTag, tagId];
+    });
+  };
+
+  const handleStartEdit = (entry) => {
+    setEntryToEdit(entry);
+    setContent(entry.content ? entry.content.replace(/^•\s*/gm, '') : '');
+    setMood(entry.mood || 'Happy');
+    const existingTags = entry.tags && entry.tags.length > 0
+      ? entry.tags
+      : entry.tag
+        ? [entry.tag]
+        : ['No Tag'];
+    setSelectedTags(existingTags);
+    setContentError('');
+    setShowSavedList(false);
+  };
+
   const handleSave = () => {
-    const cleanContent = formatMultiLineText(content);
+    const cleanContent = content.trim();
     if (!cleanContent) {
-      Alert.alert('Empty Reflection', 'Please write a few thoughts before saving.');
+      setContentError('Please write something before saving.');
       return;
     }
-    const newEntry = {
-      id: 'd_' + Date.now(),
-      date,
-      formattedDate,
-      title: title ? title.trim() : 'Daily Reflection',
-      mood,
-      content: cleanContent,
-    };
-    onSaveEntry(newEntry);
-    setTitle('');
+    const now = new Date();
+    const timePart = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const firstTag = selectedTags.find((t) => t !== 'No Tag') || 'No Tag';
+
+    if (entryToEdit) {
+      const updatedEntry = {
+        ...entryToEdit,
+        mood,
+        tags: selectedTags,
+        content: cleanContent,
+        title: firstTag !== 'No Tag' ? firstTag : (entryToEdit.title || 'Daily Reflection'),
+      };
+      if (onUpdateEntry) {
+        onUpdateEntry(updatedEntry);
+      } else if (onSaveEntry) {
+        onSaveEntry(updatedEntry);
+      }
+      setEntryToEdit(null);
+    } else {
+      const newEntry = {
+        id: 'd_' + Date.now(),
+        date,
+        formattedDate,
+        time: timePart,
+        title: firstTag !== 'No Tag' ? firstTag : 'Daily Reflection',
+        mood,
+        tags: selectedTags,
+        content: cleanContent,
+      };
+      onSaveEntry(newEntry);
+    }
+
     setContent('');
+    setSelectedTags(['No Tag']);
+    setMood('Happy');
+    setContentError('');
     setShowSavedList(true);
   };
 
@@ -126,7 +207,7 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
           onPress={() => setShowSavedList(!showSavedList)}
         >
           <Text style={[styles.historyBtnText, { color: theme.colors.primary }]}>
-            {showSavedList ? 'Write Entry' : 'Past Diary'}
+            {showSavedList ? 'Write Diary' : 'Past Diary'}
           </Text>
 
         </TouchableOpacity>
@@ -140,6 +221,23 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
       >
         {!showSavedList ? (
           <View style={styles.editorContainer}>
+            {entryToEdit && (
+              <View style={[styles.editingBanner, { backgroundColor: 'rgba(99, 102, 241, 0.12)', borderColor: theme.colors.primary }]}>
+                <Text style={[styles.editingBannerText, { color: theme.colors.primary }]}>
+                  ✏️ Editing Diary Entry
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setEntryToEdit(null);
+                    setContent('');
+                    setSelectedTags(['No Tag']);
+                    setMood('Happy');
+                  }}
+                >
+                  <Text style={styles.cancelEditBtnText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            )}
             {/* Date Card */}
             <View
               style={[
@@ -160,23 +258,46 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
               </View>
             </View>
 
-            {/* Entry Title Input */}
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Title</Text>
-            <TextInput
+            {/* Diary Input — TOP */}
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
+              Daily Memories &amp; Thoughts
+            </Text>
+            <View
               style={[
-                styles.titleInput,
+                styles.textEditorCard,
                 {
                   backgroundColor: theme.colors.card,
-                  color: theme.colors.textPrimary,
-                  borderColor: theme.colors.border,
+                  borderColor: contentError ? '#EF4444' : theme.colors.border,
+                  borderWidth: contentError ? 2 : 1,
                 },
               ]}
-              placeholder="e.g., Grateful for family, Achieved workout goal..."
-              placeholderTextColor={theme.colors.textMuted}
-              maxLength={20}
-              value={title}
-              onChangeText={setTitle}
-            />
+            >
+              <TextInput
+                style={[styles.editorArea, { color: theme.colors.textPrimary }]}
+                placeholder="Write about your daily highlights, achievements, learnings, or thoughts..."
+                placeholderTextColor={theme.colors.textMuted}
+                multiline={true}
+                maxLength={1000}
+                numberOfLines={10}
+                value={content}
+                autoCorrect={false}
+                autoCapitalize="sentences"
+                spellCheck={false}
+                autoComplete="off"
+                dataDetectorTypes="none"
+                textContentType="none"
+                importantForAutofill="no"
+                onChangeText={(text) => {
+                  // Ensure no bullet dots or unwanted symbols are added on newline
+                  const cleaned = text.replace(/[•\u2022]/g, '');
+                  setContent(cleaned);
+                  if (cleaned.trim() && contentError) setContentError('');
+                }}
+              />
+            </View>
+            {contentError ? (
+              <Text style={styles.validationError}>⚠️ {contentError}</Text>
+            ) : null}
 
             {/* Mood Selector */}
             <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
@@ -212,26 +333,40 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
               ))}
             </View>
 
-            {/* Reflection Writing Area */}
-            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>
-              Daily Memories & Thoughts
-            </Text>
-            <View
-              style={[
-                styles.textEditorCard,
-                { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
-              ]}
-            >
-              <TextInput
-                style={[styles.editorArea, { color: theme.colors.textPrimary }]}
-                placeholder="Write about your daily highlights, achievements, learnings, or thoughts..."
-                placeholderTextColor={theme.colors.textMuted}
-                multiline={true}
-                maxLength={500}
-                numberOfLines={10}
-                value={content}
-                onChangeText={setContent}
-              />
+            <Text style={[styles.label, { color: theme.colors.textSecondary }]}>Tags (select multiple)</Text>
+            <View style={styles.tagsGrid}>
+              {tags.map((tag) => (
+                <TouchableOpacity
+                  key={tag.id}
+                  style={[
+                    styles.tagPill,
+                    {
+                      backgroundColor:
+                        selectedTags.includes(tag.id)
+                          ? 'rgba(99, 102, 241, 0.18)'
+                          : theme.colors.card,
+                      borderColor:
+                        selectedTags.includes(tag.id) ? theme.colors.primary : theme.colors.border,
+                    },
+                  ]}
+                  onPress={() => toggleTag(tag.id)}
+                >
+                  <Text style={styles.tagEmoji}>{tag.emoji}</Text>
+                  <Text
+                    style={[
+                      styles.tagLabel,
+                      {
+                        color:
+                          selectedTags.includes(tag.id)
+                            ? theme.colors.primary
+                            : theme.colors.textSecondary,
+                      },
+                    ]}
+                  >
+                    {tag.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </View>
 
             {/* Save Button */}
@@ -240,7 +375,9 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
               onPress={handleSave}
               activeOpacity={0.85}
             >
-              <Text style={styles.saveBtnText}>Save Diary Entry</Text>
+              <Text style={styles.saveBtnText}>
+                {entryToEdit ? 'Update Diary Entry' : 'Save Diary Entry'}
+              </Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -305,46 +442,90 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
                 </Text>
               </View>
             ) : (
-              filteredEntries.map((entry) => (
-                <View
-                  key={entry.id}
-                  style={[
-                    styles.entryCard,
-                    { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
-                  ]}
-                >
-                  <View style={styles.entryHeader}>
-                    <View style={styles.entryTitleRow}>
-                      <Text style={styles.entryMoodEmoji}>
-                        {moods.find((m) => m.id === entry.mood)?.emoji || '📝'}
+              filteredEntries.map((entry) => {
+                const moodObj = moods.find((m) => m.id === entry.mood);
+                // Support both old single tag and new multi-tag format
+                const entryTags = entry.tags && entry.tags.length > 0
+                  ? entry.tags
+                  : entry.tag
+                    ? [entry.tag]
+                    : ['No Tag'];
+                const tagObjs = entryTags.map((tid) => tags.find((t) => t.id === tid) || tags[0]);
+                return (
+                  <TouchableOpacity
+                    key={entry.id}
+                    style={[
+                      styles.entryCard,
+                      { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+                    ]}
+                    onPress={() => setSelectedEntryDetail(entry)}
+                    activeOpacity={0.88}
+                  >
+                    {/* Row 1: Mood circle | Content | Edit+Delete */}
+                    <View style={styles.entryTopRow}>
+
+                      {/* Mood circle */}
+                      <View style={[styles.entryMoodCircle, { backgroundColor: 'rgba(99,102,241,0.10)', borderColor: theme.colors.primary }]}>
+                        <Text style={styles.entryMoodEmoji}>
+                          {moodObj?.emoji || '📝'}
+                        </Text>
+                        <Text style={[styles.entryMoodName, { color: theme.colors.primary }]}>
+                          {moodObj?.label || 'Mood'}
+                        </Text>
+                      </View>
+
+                      {/* Diary text */}
+                      <Text style={[styles.entryBodyText, { color: theme.colors.textSecondary }]} numberOfLines={5}>
+                        {entry.content ? entry.content.replace(/^•\s*/gm, '') : ''}
                       </Text>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.entryTitleText, { color: theme.colors.textPrimary }]}>
-                          {entry.title}
-                        </Text>
-                        <Text style={[styles.entryDateText, { color: theme.colors.textMuted }]}>
-                          {entry.formattedDate || entry.date}
-                        </Text>
+
+                      {/* Edit + Delete buttons */}
+                      <View style={styles.entryActions}>
+                        <TouchableOpacity
+                          style={[styles.entryActionBtn, { backgroundColor: 'rgba(99,102,241,0.12)', borderColor: theme.colors.primary }]}
+                          onPress={(e) => {
+                            e.stopPropagation?.();
+                            handleStartEdit(entry);
+                          }}
+                          activeOpacity={0.75}
+                        >
+                          <Icon name="edit" size={14} color={theme.colors.primary} />
+                        </TouchableOpacity>
+                        {onDeleteEntry && (
+                          <TouchableOpacity
+                            style={[styles.entryActionBtn, { backgroundColor: 'rgba(239,68,68,0.10)', borderColor: '#EF4444' }]}
+                            onPress={(e) => {
+                              e.stopPropagation?.();
+                              setEntryToDelete(entry);
+                            }}
+                            activeOpacity={0.75}
+                          >
+                            <Icon name="trash" size={14} color="#EF4444" />
+                          </TouchableOpacity>
+                        )}
                       </View>
                     </View>
 
-                    {onDeleteEntry && (
-                      <TouchableOpacity
-                        onPress={() => setEntryToDelete(entry)}
-                        style={styles.deleteBtn}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        activeOpacity={0.7}
-                      >
-                        <Icon name="trash" size={18} color={theme.colors.danger || '#EF4444'} />
-                      </TouchableOpacity>
-                    )}
-                  </View>
+                    {/* Row 2: Date right-aligned */}
+                    <Text style={[styles.entryDateTime, { color: theme.colors.textMuted }]}>
+                      {formatEntryDateTime(entry)}
+                    </Text>
 
-                  <Text style={[styles.entryBodyText, { color: theme.colors.textSecondary }]}>
-                    {entry.content}
-                  </Text>
-                </View>
-              ))
+                    {/* Row 3: Tag chips (all selected tags) */}
+                    <View style={styles.entryTagsRow}>
+                      {tagObjs.map((tagObj) => (
+                        <View
+                          key={tagObj.id}
+                          style={[styles.entryTagChip, { backgroundColor: 'rgba(99,102,241,0.08)', borderColor: theme.colors.primary }]}
+                        >
+                          <Text style={styles.entryTagEmoji}>{tagObj.emoji}</Text>
+                          <Text style={[styles.entryTagLabel, { color: theme.colors.primary }]}>{tagObj.label}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })
             )}
           </View>
         )}
@@ -360,6 +541,13 @@ export const DiaryScreen = ({ diaryEntries = [], onSaveEntry, onDeleteEntry }) =
         itemType="Diary Entry"
         onConfirm={handleConfirmDelete}
         onCancel={() => setEntryToDelete(null)}
+      />
+
+      {/* Full Diary Detail View Modal */}
+      <DiaryDetailModal
+        visible={!!selectedEntryDetail}
+        entry={selectedEntryDetail}
+        onClose={() => setSelectedEntryDetail(null)}
       />
     </KeyboardAvoidingView>
   );
@@ -482,10 +670,41 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    marginTop: 4,
   },
   saveBtnText: {
     color: '#FFFFFF',
     fontSize: 15,
+    fontWeight: '700',
+  },
+  validationError: {
+    color: '#EF4444',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: -10,
+    marginBottom: 10,
+    marginLeft: 2,
+  },
+  tagsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  tagPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 4,
+  },
+  tagEmoji: {
+    fontSize: 14,
+  },
+  tagLabel: {
+    fontSize: 11,
     fontWeight: '700',
   },
   pastEntriesContainer: {
@@ -528,41 +747,97 @@ const styles = StyleSheet.create({
   },
   entryCard: {
     padding: 16,
-    borderRadius: 18,
+    borderRadius: 20,
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  entryHeader: {
+  entryTopRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: 10,
   },
-  entryTitleRow: {
-    flexDirection: 'row',
+  entryMoodCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 1.5,
     alignItems: 'center',
-    flex: 1,
+    justifyContent: 'center',
+    flexShrink: 0,
   },
   entryMoodEmoji: {
     fontSize: 22,
-    marginRight: 10,
   },
-  entryTitleText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  entryDateText: {
-    fontSize: 11,
+  entryMoodName: {
+    fontSize: 9,
+    fontWeight: '800',
     marginTop: 2,
   },
-  deleteBtn: {
-    padding: 6,
-    borderRadius: 8,
-    backgroundColor: 'rgba(239, 68, 68, 0.12)',
-    marginLeft: 8,
-  },
   entryBodyText: {
+    flex: 1,
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 20,
+    paddingTop: 2,
+  },
+  entryActions: {
+    flexDirection: 'column',
+    gap: 6,
+    flexShrink: 0,
+  },
+  entryActionBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  entryDateTime: {
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'right',
+    marginBottom: 10,
+  },
+  entryTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 2,
+  },
+  entryTagChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 4,
+  },
+  entryTagEmoji: {
+    fontSize: 13,
+  },
+  entryTagLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  editingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 14,
+  },
+  editingBannerText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  cancelEditBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#EF4444',
   },
 });

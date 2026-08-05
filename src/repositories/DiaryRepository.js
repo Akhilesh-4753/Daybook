@@ -39,4 +39,17 @@ export const DiaryRepository = {
     const db = await getDB();
     await db.runAsync('DELETE FROM diary_entries WHERE id = ?;', [entryId]);
   },
+
+  update: async (entry) => {
+    try {
+      const db = await getDB();
+      await db.runAsync(
+        `UPDATE diary_entries SET title = ?, mood = ?, content = ? WHERE id = ?;`,
+        [entry.title, entry.mood || 'Happy', entry.content, entry.id]
+      );
+    } catch (e) {
+      console.log('Diary update error', e);
+    }
+    return entry;
+  },
 };
