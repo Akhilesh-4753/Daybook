@@ -32,6 +32,7 @@
 15. [Key Libraries & Why We Use Them](#15-key-libraries--why-we-use-them)
 16. [Common Developer Tasks](#16-common-developer-tasks)
 17. [Frequently Asked Questions](#17-frequently-asked-questions)
+18. [Recent Updates & Architectural Enhancements](#18-recent-updates--architectural-enhancements)
 
 ---
 
@@ -1338,4 +1339,24 @@ A: Place the `.wav` or `.mp3` file in `assets/sounds/`. In Android, notification
 
 ---
 
-*Documentation for Daybook v1.0.0 — Expo SDK 57 — React Native 0.86.2*
+## 18. Recent Updates & Architectural Enhancements
+
+Since the initial release of Daybook v1.0.0, several key improvements have been made to improve code quality, user experience, and stability.
+
+### 18.1 Navigation & Gesture System
+- **Unified Hardware Back Button Support**: Implemented system-level hardware back button interception using React Native's `BackHandler` native subscriptions. Custom back actions now dismiss active modal overlays (Add/Edit Task, Add/Edit Habit, Reminder Modal, Privacy policy sheets), cancel editor states, and navigate back to previous views cleanly.
+- **Tab Navigation History**: Tracked tab navigation using a state-based history stack in `app/index.tsx`. Pressing Back pops the active screen and takes the user back through their tab history.
+- **Left-Edge Back Swipe Gestures**: Added custom left-edge gesture detection using a global `PanResponder` to support native-style swipe-from-left back navigation on both iOS and Android.
+
+### 18.2 Database Schema Migration
+- **Timestamp Tracking (`modified_at`)**: Added a database migration layer inside `initDatabase()` in `database.js` to support adding the `modified_at` text column to the `diary_entries` table on existing databases.
+- **Diary Created/Modified Labeling**: Integrated `createdAt` and `modifiedAt` timestamps into the repository layer. The Past Diary section and Diary Details modal now dynamically display either `Created: <timestamp>` or `Modified: <timestamp>` depending on whether the reflection was updated.
+
+### 18.3 UI & Spacing Refinements
+- **Character Constraint Validation**: Added immediate validation inside the Habit creator modal, giving instant feedback when attempting to save a blank title.
+- **Task Title Space Optimization**: Extended Task Title length constraints to 15 characters, and repositioned the Priority badge in `TaskCard.js` from the title header to the right actions column to prevent early word-wrapping.
+- **Unified Layout Margins**: Standardized bottom spacing and content padding across scroll views in `TodayScreen.js`, `DiaryScreen.js`, and `MoreScreen.js` for screen-edge uniformity.
+
+---
+
+*Documentation for Daybook v1.1.0 — Expo SDK 57 — React Native 0.86.2*
