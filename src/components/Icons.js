@@ -129,6 +129,7 @@ export const Icon = ({ name, size = 22, color = '#6366F1', style = undefined }) 
     shield: '🛡️',
     sun: '☀️',
     moon: '🌙',
+    camera: '📷',
   };
 
   if (name === 'eye') {

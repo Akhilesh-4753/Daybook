@@ -304,7 +304,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
           id: 'camera_privacy',
           title: 'Camera & Gallery Privacy',
           subtitle: 'Permissions, Sandboxing & Data Protection',
-          icon: 'shield',
+          icon: 'camera',
           onPress: () => setIsCameraPrivacyModalVisible(true),
         },
         {
@@ -1250,47 +1250,53 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
               { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
             ]}
           >
+            {/* Header — same pattern as Privacy Policy & FAQ */}
             <View style={styles.modalHeader}>
               <View style={[styles.modalHeaderIconBg, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
-                <Icon name="shield" size={28} color={theme.colors.primary} />
+                <Icon name="camera" size={26} color={theme.colors.primary} />
               </View>
               <Text style={[styles.modalTitle, { color: theme.colors.textPrimary }]}>
                 Camera & Gallery Privacy
               </Text>
               <Text style={[styles.modalSub, { color: theme.colors.textSecondary }]}>
-                Your Privacy and Security are Our Highest Priorities
+                Your privacy and security are our highest priorities
               </Text>
             </View>
 
-            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={true}>
+            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+
+              {/* Top badge — same as Privacy Policy's green promise box */}
               <View style={[styles.privacyBadgeBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)', borderColor: '#10B981' }]}>
                 <Text style={styles.privacyBadgeTitle}>🔒 Camera & Gallery Privacy Guarantee</Text>
                 <Text style={[styles.privacyBadgeDesc, { color: theme.colors.textPrimary }]}>
-                  Daybook only accesses your camera or photo library when you explicitly choose to update your profile picture or attach an image.
+                  Daybook only accesses your camera or photo library when you{' '}
+                  <Text style={{ fontWeight: '800' }}>explicitly choose</Text>{' '}
+                  to update your profile picture or attach an image.
                 </Text>
               </View>
 
+              {/* Numbered sections — same as Privacy Policy */}
               <View style={styles.privacySection}>
                 <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
-                  1. Your Data Stays Under Your Control
+                  1. Permission is always required
                 </Text>
                 <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
-                  Permission is always required. Daybook never accesses your camera or gallery without your explicit consent.
+                  Daybook never accesses your camera or gallery without your explicit consent.
                 </Text>
               </View>
 
               <View style={styles.privacySection}>
                 <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
-                  2. Only the Selected Image is Accessible
+                  2. Only the selected image is accessible
                 </Text>
                 <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
-                  When you choose a photo, Android or iOS provides Daybook with only that specific image—not your entire photo library.
+                  When you choose a photo, Android or iOS provides Daybook with only that specific image — not your entire photo library.
                 </Text>
               </View>
 
               <View style={styles.privacySection}>
                 <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
-                  3. No Background Access
+                  3. No background access
                 </Text>
                 <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
                   Daybook never runs your camera, gallery, or microphone in the background.
@@ -1299,7 +1305,7 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
 
               <View style={styles.privacySection}>
                 <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
-                  4. Secure Operating System Protection
+                  4. Secure operating system protection
                 </Text>
                 <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
                   Android and iOS isolate every app using system-level sandboxing, preventing Daybook from accessing other apps or your private files.
@@ -1308,30 +1314,36 @@ export const MoreScreen = ({ onNavigateTab, onLogout }) => {
 
               <View style={styles.privacySection}>
                 <Text style={[styles.privacyHeading, { color: theme.colors.textPrimary }]}>
-                  5. Your Journal Remains Private
+                  5. Your journal remains private
                 </Text>
                 <Text style={[styles.privacyText, { color: theme.colors.textSecondary }]}>
                   Your personal notes, images, and app data are stored securely and are never accessed without your permission.
                 </Text>
               </View>
 
-              {/* FAQ Section */}
-              <View style={[styles.faqCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border, marginTop: 14 }]}>
+              {/* FAQ card — same style as Privacy FAQ faqCards */}
+              <View style={[styles.faqCard, { backgroundColor: theme.colors.surfaceVariant, borderColor: theme.colors.border, marginTop: 6 }]}>
                 <Text style={[styles.optionTitle, { color: theme.colors.textPrimary, fontSize: 15, marginBottom: 8 }]}>
-                  ❓ Can Someone Hack My Camera or Gallery Through Daybook?
+                  ⚠️ Can Someone Hack My Camera or Gallery Through Daybook.
+                </Text>
+                <Text style={[styles.storyParagraph, { color: '#EF4444', fontWeight: '800', fontSize: 15, marginBottom: 4 }]}>
+                  No.
                 </Text>
                 <Text style={[styles.storyParagraph, { color: theme.colors.textSecondary, lineHeight: 21 }]}>
-                  <Text style={{ fontWeight: '800', color: theme.colors.primary }}>No.</Text> Granting camera or gallery permission does not allow anyone to remotely control your device. Daybook only uses the official Android and iOS system APIs, and access is limited to the actions you initiate.
+                  Granting camera or gallery permission does not allow anyone to remotely control your device. Daybook only uses the official Android and iOS system APIs, and access is limited to the actions you initiate.
                 </Text>
                 <Text style={[styles.storyParagraph, { color: theme.colors.textMuted, marginTop: 8, fontSize: 12 }]}>
                   Your privacy is protected by both Daybook's security practices and the built-in security architecture of Android and iOS.
                 </Text>
               </View>
+
             </ScrollView>
 
+            {/* Close button — exact same as Privacy Policy */}
             <TouchableOpacity
               style={[styles.closeModalBtn, { backgroundColor: theme.colors.primary, marginTop: 14 }]}
               onPress={() => setIsCameraPrivacyModalVisible(false)}
+              activeOpacity={0.85}
             >
               <Text style={styles.closeModalBtnText}>Got It</Text>
             </TouchableOpacity>
