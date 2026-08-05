@@ -10,13 +10,14 @@ import {
   View,
 } from 'react-native';
 import { Icon } from '../components/Icons';
+import { GoogleIcon } from '../components/Icons';
 import { useAuth } from '../context/AuthContext';
 import { resetUserPassword } from '../services/firebase';
 import { useTheme } from '../theme/ThemeContext';
 
 export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
   const { theme } = useTheme();
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -75,6 +76,27 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
         msg = 'Too many failed login attempts. Please wait a moment and try again.';
       }
       setErrorMessage(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setErrorMessage('');
+    setLoading(true);
+    try {
+      const result = await loginWithGoogle();
+      const userData = result?.userData || { name: 'Google User', email: '' };
+      setPendingUserData(userData);
+      setIsSuccessModalVisible(true);
+    } catch (error) {
+      let msg = error.message || 'Google sign-in failed. Please try again.';
+      if (error.code === 'SIGN_IN_CANCELLED' || error.code === '12501') {
+        msg = ''; // user cancelled – no error to show
+      } else if (error.code === 'auth/account-exists-with-different-credential') {
+        msg = 'An account already exists with this email. Please sign in with email & password.';
+      }
+      if (msg) setErrorMessage(msg);
     } finally {
       setLoading(false);
     }
@@ -191,6 +213,29 @@ export const LoginScreen = ({ onLoginSuccess, onSwitchToSignup }) => {
         ) : (
           <Text style={styles.submitBtnText}>Log In</Text>
         )}
+      </TouchableOpacity>
+
+      {/* OR Divider */}
+      <View style={styles.dividerRow}>
+        <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
+        <Text style={[styles.dividerText, { color: theme.colors.textMuted }]}>or</Text>
+        <View style={[styles.dividerLine, { backgroundColor: theme.colors.border }]} />
+      </View>
+
+      {/* Continue with Google */}
+      <TouchableOpacity
+        style={[
+          styles.googleBtn,
+          { backgroundColor: theme.colors.card, borderColor: theme.colors.border },
+        ]}
+        onPress={handleGoogleLogin}
+        disabled={loading}
+        activeOpacity={0.85}
+      >
+        <GoogleIcon size={22} />
+        <Text style={[styles.googleBtnText, { color: theme.colors.textPrimary }]}>
+          Continue with Google
+        </Text>
       </TouchableOpacity>
 
       {/* Switch to Sign Up */}
@@ -385,5 +430,32 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
   },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+  },
+  dividerText: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginHorizontal: 10,
+  },
+  googleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 46,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    marginBottom: 14,
+    gap: 10,
+  },
+  googleBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
 });
-

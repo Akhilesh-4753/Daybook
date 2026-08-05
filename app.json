@@ -41,11 +41,16 @@
           "imageWidth": 220
         }
       ],
-
       "expo-sqlite",
       "expo-sharing",
       "expo-notifications",
-      "expo-local-authentication"
+      "expo-local-authentication",
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.placeholder"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

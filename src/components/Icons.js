@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 
 export const Icon = ({ name, size = 22, color = '#6366F1', style = undefined }) => {
   // Calendar Icon: Red top header, White body, Black date text
@@ -204,6 +204,17 @@ export const Icon = ({ name, size = 22, color = '#6366F1', style = undefined }) 
     </View>
   );
 };
+
+/**
+ * Official Google 'G' brand icon — uses the PNG asset for pixel-perfect accuracy.
+ */
+export const GoogleIcon = ({ size = 22 }) => (
+  <Image
+    source={require('../../assets/images/google-icon.png')}
+    style={{ width: size, height: size }}
+    resizeMode="contain"
+  />
+);
 
 const styles = StyleSheet.create({
   container: {

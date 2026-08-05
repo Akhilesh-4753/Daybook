@@ -7,6 +7,7 @@
  */
 
 let initializeApp, getApps, getApp, getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile, onAuthStateChanged, sendPasswordResetEmail, getFirestore, doc, setDoc, getDoc;
+let GoogleAuthProvider, signInWithCredential;
 
 try {
   const fbApp = require('firebase/app');
@@ -22,6 +23,8 @@ try {
   updateProfile = fbAuth.updateProfile;
   onAuthStateChanged = fbAuth.onAuthStateChanged;
   sendPasswordResetEmail = fbAuth.sendPasswordResetEmail;
+  GoogleAuthProvider = fbAuth.GoogleAuthProvider;
+  signInWithCredential = fbAuth.signInWithCredential;
 
   const fbFs = require('firebase/firestore');
   getFirestore = fbFs.getFirestore;
@@ -30,6 +33,15 @@ try {
   getDoc = fbFs.getDoc;
 } catch (e) {
   // Firebase package not installed, fall back to offline Demo Mode
+}
+
+// Google Sign-In native module
+let GoogleSignin;
+try {
+  const gsModule = require('@react-native-google-signin/google-signin');
+  GoogleSignin = gsModule.GoogleSignin;
+} catch (e) {
+  // Not available in this environment
 }
 
 const firebaseConfig = {
@@ -58,6 +70,54 @@ try {
 }
 
 export { auth, db };
+
+/**
+ * Configure Google Sign-In.
+ * Call this once at app startup (or before first Google sign-in).
+ * The webClientId is your Firebase project's Web OAuth 2.0 client ID,
+ * found in Firebase Console → Authentication → Sign-in method → Google → Web SDK configuration.
+ */
+export const configureGoogleSignIn = (webClientId) => {
+  if (!GoogleSignin) return;
+  GoogleSignin.configure({
+    webClientId,
+    offlineAccess: true,
+  });
+};
+
+/**
+ * Sign in with Google and authenticate with Firebase.
+ * Returns { user, isDemo } where user is the Firebase user object.
+ */
+export const googleSignInWithFirebase = async () => {
+  if (!GoogleSignin || !isFirebaseConfigured || !auth || !GoogleAuthProvider || !signInWithCredential) {
+    // Demo Mode fallback
+    return {
+      user: {
+        uid: 'demo_google_' + Date.now(),
+        displayName: 'Google User',
+        email: 'googleuser@gmail.com',
+        photoURL: null,
+      },
+      isDemo: true,
+    };
+  }
+
+  try {
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    const signInResult = await GoogleSignin.signIn();
+
+    // Extract the ID token — API shape differs slightly between library versions
+    const idToken = signInResult?.data?.idToken ?? signInResult?.idToken;
+    if (!idToken) throw new Error('No ID token returned from Google Sign-In.');
+
+    const googleCredential = GoogleAuthProvider.credential(idToken);
+    const userCredential = await signInWithCredential(auth, googleCredential);
+    return { user: userCredential.user, isDemo: false };
+  } catch (error) {
+    throw error;
+  }
+};
 
 
 /**
@@ -117,6 +177,10 @@ export const loginUser = async (email, password) => {
 export const logoutUser = async () => {
   if (isFirebaseConfigured && auth) {
     await signOut(auth);
+  }
+  // Also sign out from Google if available
+  if (GoogleSignin) {
+    try { await GoogleSignin.signOut(); } catch (_) {}
   }
 };
 

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { subscribeToAuthChanges, logoutUser, signUpUser, loginUser } from '../services/firebase';
+import { subscribeToAuthChanges, logoutUser, signUpUser, loginUser, googleSignInWithFirebase, configureGoogleSignIn } from '../services/firebase';
 import { PreferencesService } from '../services/PreferencesService';
 
 const AuthContext = createContext();
@@ -12,6 +12,13 @@ export const AuthProvider = ({ children }) => {
   // for ~2.8s so the success modal in LoginScreen has time to display
   // before the screen is unmounted by isAuthenticated becoming true.
   const suppressAuthChange = useRef(false);
+
+  // Configure Google Sign-In once on mount
+  // Replace the webClientId below with your Firebase project's Web client ID:
+  // Firebase Console → Authentication → Sign-in method → Google → Web SDK configuration
+  useEffect(() => {
+    configureGoogleSignIn('YOUR_WEB_CLIENT_ID_FROM_FIREBASE_CONSOLE');
+  }, []);
 
   useEffect(() => {
     loadInitialSession();
@@ -68,6 +75,31 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   };
+
+  const loginWithGoogle = useCallback(async () => {
+    suppressAuthChange.current = true;
+    const res = await googleSignInWithFirebase();
+    const userKey = res.user.uid || res.user.email;
+    const savedUser = await PreferencesService.getSession();
+    const accountProfile = await PreferencesService.getUserProfile(userKey);
+
+    const userData = {
+      name: (accountProfile && accountProfile.name) || res.user.displayName || 'Google User',
+      email: res.user.email,
+      uid: res.user.uid,
+      photoUri: (accountProfile && accountProfile.photoUri) || res.user.photoURL || null,
+      productivityScore: (savedUser && savedUser.productivityScore) || 100,
+      streak: (savedUser && savedUser.streak) || 1,
+    };
+    await PreferencesService.saveSession(userData);
+    await PreferencesService.saveUserProfile(userKey, { name: userData.name, photoUri: userData.photoUri });
+    setTimeout(() => {
+      suppressAuthChange.current = false;
+      setUser(userData);
+      setIsAuthenticated(true);
+    }, 1400);
+    return { res, userData };
+  }, []);
 
   const login = useCallback(async (email, password) => {
     // Block onAuthStateChanged from firing immediately — we want the success
@@ -166,6 +198,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated,
         loading,
         login,
+        loginWithGoogle,
         signup,
         logout,
         setUser: handleSetUser,
