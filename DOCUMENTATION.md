@@ -1351,11 +1351,19 @@ Since the initial release of Daybook v1.0.0, several key improvements have been 
 - **Timestamp Tracking (`modified_at`)**: Added a database migration layer inside `initDatabase()` in `database.js` to support adding the `modified_at` text column to the `diary_entries` table on existing databases.
 - **Diary Created/Modified Labeling**: Integrated `createdAt` and `modifiedAt` timestamps into the repository layer. The Past Diary section and Diary Details modal now dynamically display either `Created: <timestamp>` or `Modified: <timestamp>` depending on whether the reflection was updated.
 
-### 18.3 UI & Spacing Refinements
-- **Character Constraint Validation**: Added immediate validation inside the Habit creator modal, giving instant feedback when attempting to save a blank title.
-- **Task Title Space Optimization**: Extended Task Title length constraints to 15 characters, and repositioned the Priority badge in `TaskCard.js` from the title header to the right actions column to prevent early word-wrapping.
-- **Unified Layout Margins**: Standardized bottom spacing and content padding across scroll views in `TodayScreen.js`, `DiaryScreen.js`, and `MoreScreen.js` for screen-edge uniformity.
+### 18.4 Notification, Calendar & Report Engine Enhancements (v1.2.0)
+- **Unified Repeating Notifications**: Configured `NotificationService.js` to explicitly pass `Notifications.SchedulableTriggerInputTypes` enums (`TIME_INTERVAL`, `DAILY`, `WEEKLY`, `CALENDAR`) across iOS and Android triggers. Added a fallback mechanism inside `scheduleReminder` to ensure `scheduleNotificationAsync` never crashes.
+- **Android Monthly/Yearly Auto-Rescheduling**: Added a background listener in `TaskContext.js` (`loadAllData`) that automatically recalculates and reschedules expired monthly/yearly Android reminders to their next future occurrence on app launch, updating SQLite records accordingly.
+- **Duplicate Time Prevention**: Integrated duplicate date/time checks in `AddReminderModal.js` and `AddTaskModal.js` to block scheduling two reminders or tasks for the exact same timestamp, displaying a clear validation error.
+- **Report Filter Engine Refinement**: Updated `ReportsScreen.js` filter rules:
+  - **Today**: Strictly filters tasks and reminders for today (`todayStr`). Habits rate evaluates habits completed today.
+  - **This Week**: Filters tasks and reminders from Monday to Sunday of the current week (`monStr..sunStr`).
+  - **This Month**: Filters tasks and reminders for the entire current month (`startsWith('YYYY-MM')`).
+  - **Custom Date**: Intercepted with a custom modal notifying users that the date range picker is under development and scheduled for a future release.
+- **Daily Habit Flag Reset**: Updated `TaskContext.js` to automatically reset habit `completedToday` flags to `false` when a new day begins (`lastDateKey !== todayStr`).
+- **Clean Starter Defaults**: Initialized new user accounts with a `0%` Productivity Score, `0` Day Streak, and unchecked habit templates (`autoAddToday: false`).
+- **Static Asset Optimization**: Pruned unused preview images and WAV/MP3 sound files to optimize app binary size.
 
 ---
 
-*Documentation for Daybook v1.1.0 — Expo SDK 57 — React Native 0.86.2*
+*Documentation for Daybook v1.2.0 — Expo SDK 57 — React Native 0.86.2*
