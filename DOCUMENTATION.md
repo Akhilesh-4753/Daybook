@@ -325,7 +325,6 @@ Reusable UI pieces that are used across multiple screens. Think of these as the 
 | `HabitCard.js` | Displays a single habit row with a progress bar, streak counter, and a complete/incomplete toggle button |
 | `Header.js` | The top header bar with the Daybook logo, a greeting message, today's date, and a notification bell |
 | `Icons.js` | A custom icon system. Uses emoji characters for most icons, and custom drawn React Native Views for special icons like the calendar and user avatar. Avoids needing an icon font library |
-| `ImageCropModal.js` | Shows a crop/resize preview after the user picks a profile photo, before saving |
 | `ProgressCard.js` | A summary card showing the productivity score and the ratio of completed vs total tasks |
 | `SecurityLockModal.js` | The full-screen PIN entry pad or biometric prompt shown when the app is locked on startup |
 | `TaskCard.js` | Displays a single task row with its priority colour badge, category tag, time, notes preview, and a completion checkbox |

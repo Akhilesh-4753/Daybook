@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { Platform } from 'react-native';
 import { initDatabase } from '../db/database';
-import { TaskRepository } from '../repositories/TaskRepository';
 import { DiaryRepository } from '../repositories/DiaryRepository';
-import { ReminderRepository } from '../repositories/ReminderRepository';
 import { HabitRepository } from '../repositories/HabitRepository';
+import { ReminderRepository } from '../repositories/ReminderRepository';
+import { TaskRepository } from '../repositories/TaskRepository';
 import { NotificationService } from '../services/NotificationService';
 
 const TaskContext = createContext();
@@ -116,8 +117,71 @@ export const TaskProvider = ({ children }) => {
         }
       }
 
+      // Reschedule expired monthly/yearly reminders on Android
+      const finalReminders = [];
+      const now = new Date();
+      for (const rem of remindersList) {
+        if (Platform.OS === 'android' && (rem.repeat === 'Monthly' || rem.repeat === 'Yearly')) {
+          try {
+            const dateParts = rem.date.split('-').map(Number);
+            let hours = 9, minutes = 0;
+            if (rem.time) {
+              const isPM = rem.time.toUpperCase().includes('PM');
+              const isAM = rem.time.toUpperCase().includes('AM');
+              const clean = rem.time.replace(/(AM|PM|\s)/gi, '');
+              const tParts = clean.split(':').map(Number);
+              if (tParts.length >= 2 && !isNaN(tParts[0]) && !isNaN(tParts[1])) {
+                hours = tParts[0];
+                minutes = tParts[1];
+                if (isPM && hours < 12) hours += 12;
+                if (isAM && hours === 12) hours = 0;
+              }
+            }
+            const targetDateTime = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], hours, minutes, 0, 0);
+
+            if (targetDateTime.getTime() <= now.getTime()) {
+              const nextDate = new Date(targetDateTime.getTime());
+              while (nextDate.getTime() <= now.getTime()) {
+                if (rem.repeat === 'Monthly') {
+                  nextDate.setMonth(nextDate.getMonth() + 1);
+                } else if (rem.repeat === 'Yearly') {
+                  nextDate.setFullYear(nextDate.getFullYear() + 1);
+                } else {
+                  break;
+                }
+              }
+              const nextDateStr = nextDate.toISOString().split('T')[0];
+
+              if (rem.notificationId) {
+                await NotificationService.cancelReminder(rem.notificationId);
+              }
+
+              const newNotifId = await NotificationService.scheduleReminder({
+                ...rem,
+                date: nextDateStr,
+              });
+
+              const updatedRem = {
+                ...rem,
+                date: nextDateStr,
+                notificationId: newNotifId || rem.notificationId,
+              };
+
+              await ReminderRepository.update(updatedRem);
+              finalReminders.push(updatedRem);
+            } else {
+              finalReminders.push(rem);
+            }
+          } catch (err) {
+            finalReminders.push(rem);
+          }
+        } else {
+          finalReminders.push(rem);
+        }
+      }
+
       setTasks(finalTasks);
-      setReminders(remindersList);
+      setReminders(finalReminders);
       setHabits(processedHabits);
       setDiaryEntries(diaryList);
 
@@ -163,7 +227,7 @@ export const TaskProvider = ({ children }) => {
               const isComp = targetTask.completed;
               const newStreak = isComp ? Math.min(totalDays, h.streak + 1) : Math.max(0, h.streak - 1);
               const newProgress = Math.min(100, Math.round((newStreak / totalDays) * 100));
-              
+
               HabitRepository.toggle(h.id);
               return {
                 ...h,

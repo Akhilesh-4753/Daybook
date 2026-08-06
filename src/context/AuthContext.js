@@ -39,8 +39,8 @@ export const AuthProvider = ({ children }) => {
             uid: firebaseUser.uid,
             photoUri: (accountProfile && accountProfile.photoUri) || (savedSession && savedSession.photoUri) || firebaseUser.photoURL || null,
             createdAt: (savedSession && savedSession.createdAt) || new Date().toISOString().split('T')[0],
-            productivityScore: (savedSession && savedSession.productivityScore) || 100,
-            streak: (savedSession && savedSession.streak) || 1,
+            productivityScore: (savedSession && savedSession.productivityScore) || 0,
+            streak: (savedSession && savedSession.streak) || 0,
           };
           setUser(userData);
           setIsAuthenticated(true);
@@ -88,8 +88,8 @@ export const AuthProvider = ({ children }) => {
       email: res.user.email,
       uid: res.user.uid,
       photoUri: (accountProfile && accountProfile.photoUri) || res.user.photoURL || null,
-      productivityScore: (savedUser && savedUser.productivityScore) || 100,
-      streak: (savedUser && savedUser.streak) || 1,
+      productivityScore: (savedUser && savedUser.productivityScore) || 0,
+      streak: (savedUser && savedUser.streak) || 0,
     };
     await PreferencesService.saveSession(userData);
     await PreferencesService.saveUserProfile(userKey, { name: userData.name, photoUri: userData.photoUri });
@@ -115,8 +115,8 @@ export const AuthProvider = ({ children }) => {
       email: res.user.email || email,
       uid: res.user.uid,
       photoUri: (accountProfile && accountProfile.photoUri) || (savedUser && savedUser.photoUri) || res.user.photoURL || null,
-      productivityScore: (savedUser && savedUser.productivityScore) || 100,
-      streak: (savedUser && savedUser.streak) || 1,
+      productivityScore: (savedUser && savedUser.productivityScore) || 0,
+      streak: (savedUser && savedUser.streak) || 0,
     };
     await PreferencesService.saveSession(userData);
     await PreferencesService.saveUserProfile(userKey, { name: userData.name, photoUri: userData.photoUri });
@@ -138,8 +138,8 @@ export const AuthProvider = ({ children }) => {
       email: res.user.email || email,
       uid: res.user.uid,
       photoUri: null,
-      productivityScore: 100,
-      streak: 1,
+      productivityScore: 0,
+      streak: 0,
     };
     setUser(userData);
     setIsAuthenticated(true);

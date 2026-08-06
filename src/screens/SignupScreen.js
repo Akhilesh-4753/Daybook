@@ -63,8 +63,8 @@ export const SignupScreen = ({ onSignupSuccess, onSwitchToLogin }) => {
         name: res.user.displayName || cleanName,
         email: res.user.email || cleanEmail,
         uid: res.user.uid,
-        productivityScore: 100,
-        streak: 1,
+        productivityScore: 0,
+        streak: 0,
       };
       onSignupSuccess && onSignupSuccess(userData);
     } catch (error) {

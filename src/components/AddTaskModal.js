@@ -18,7 +18,9 @@ import { TimePickerInput } from './TimePickerInput';
 const generateTaskId = () => Date.now().toString();
 const getTodayDateString = () => new Date().toISOString().split('T')[0];
 
-export const AddTaskModal = ({ visible, onClose, onSave, taskToEdit }) => {
+import { useTasks } from '../context/TaskContext';
+
+export const AddTaskModal = ({ visible, onClose, onSave, taskToEdit = null }) => {
   const { theme } = useTheme();
 
   const [title, setTitle] = useState(taskToEdit ? (taskToEdit.title || '') : '');
@@ -28,6 +30,14 @@ export const AddTaskModal = ({ visible, onClose, onSave, taskToEdit }) => {
   const [notes, setNotes] = useState(taskToEdit ? (taskToEdit.notes || '') : '');
   const [selectedIcon, setSelectedIcon] = useState(taskToEdit ? (taskToEdit.icon || 'note') : 'note');
   const [validationError, setValidationError] = useState('');
+
+  let existingTasks = [];
+  try {
+    const taskCtx = useTasks();
+    if (taskCtx && taskCtx.tasks) {
+      existingTasks = taskCtx.tasks;
+    }
+  } catch (e) {}
 
   const categories = ['Work', 'Health', 'Personal', 'Finance'];
   const priorities = ['Low', 'Medium', 'High'];
@@ -48,6 +58,21 @@ export const AddTaskModal = ({ visible, onClose, onSave, taskToEdit }) => {
   const handleSave = () => {
     if (!title.trim()) {
       setValidationError('Task title is required');
+      return;
+    }
+
+    const todayStr = getTodayDateString();
+    const isDuplicateTime = (existingTasks || []).some((t) => {
+      if (taskToEdit && t.id === taskToEdit.id) return false;
+      return (
+        t.date === todayStr &&
+        t.time &&
+        t.time.trim().toLowerCase() === time.trim().toLowerCase()
+      );
+    });
+
+    if (isDuplicateTime) {
+      setValidationError('A task is already scheduled for this time. You can edit the existing task time or select another time.');
       return;
     }
     const taskData = {

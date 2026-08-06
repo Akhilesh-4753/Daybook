@@ -21,6 +21,7 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
 
   // Custom Date Range Modal State
   const [isCustomDateModalVisible, setIsCustomDateModalVisible] = useState(false);
+  const [isUnderDevelopmentModalVisible, setIsUnderDevelopmentModalVisible] = useState(false);
   const [validationError, setValidationError] = useState('');
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
@@ -63,11 +64,11 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
   };
 
   const handleSelectFilter = (filter) => {
-    setTimeFilter(filter);
     if (filter === 'Custom Date') {
-      setValidationError('');
-      setIsCustomDateModalVisible(true);
+      setIsUnderDevelopmentModalVisible(true);
+      return;
     }
+    setTimeFilter(filter);
   };
 
   // Comprehensive Date Validation Function
@@ -150,13 +151,13 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
     setIsCustomDateModalVisible(false);
   };
 
-  // Calculate filtered tasks based on selected time filter (including Custom Date range)
-  const filteredTasks = useMemo(() => {
+  // Calculate filtered reminders based on selected time filter
+  const filteredReminders = useMemo(() => {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
 
     if (timeFilter === 'Today') {
-      return tasks.filter((t) => !t.date || t.date === todayStr);
+      return reminders.filter((r) => r.date && r.date.trim() === todayStr);
     } else if (timeFilter === 'This Week') {
       const dayOfWeek = today.getDay();
       const distanceToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
@@ -168,18 +169,40 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
       sunday.setDate(monday.getDate() + 6);
       const sunStr = sunday.toISOString().split('T')[0];
 
-      return tasks.filter((t) => {
-        if (!t.date) return true;
-        return t.date >= monStr && t.date <= sunStr;
-      });
+      return reminders.filter((r) => r.date && r.date.trim() >= monStr && r.date.trim() <= sunStr);
     } else if (timeFilter === 'This Month') {
       const currentMonthStr = todayStr.substring(0, 7); // 'YYYY-MM'
-      return tasks.filter((t) => !t.date || t.date.startsWith(currentMonthStr));
+      return reminders.filter((r) => r.date && r.date.trim().startsWith(currentMonthStr));
     } else if (timeFilter === 'Custom Date') {
-      return tasks.filter((t) => {
-        if (!t.date) return true;
-        return t.date >= appliedStartDate && t.date <= appliedEndDate;
-      });
+      return reminders.filter((r) => r.date && r.date.trim() >= appliedStartDate && r.date.trim() <= appliedEndDate);
+    }
+    return reminders;
+  }, [reminders, timeFilter, appliedStartDate, appliedEndDate]);
+
+  // Calculate filtered tasks based on selected time filter
+  const filteredTasks = useMemo(() => {
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    if (timeFilter === 'Today') {
+      return tasks.filter((t) => t.date && t.date.trim() === todayStr);
+    } else if (timeFilter === 'This Week') {
+      const dayOfWeek = today.getDay();
+      const distanceToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + distanceToMon);
+      const monStr = monday.toISOString().split('T')[0];
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      const sunStr = sunday.toISOString().split('T')[0];
+
+      return tasks.filter((t) => t.date && t.date.trim() >= monStr && t.date.trim() <= sunStr);
+    } else if (timeFilter === 'This Month') {
+      const currentMonthStr = todayStr.substring(0, 7); // 'YYYY-MM'
+      return tasks.filter((t) => t.date && t.date.trim().startsWith(currentMonthStr));
+    } else if (timeFilter === 'Custom Date') {
+      return tasks.filter((t) => t.date && t.date.trim() >= appliedStartDate && t.date.trim() <= appliedEndDate);
     }
     return tasks;
   }, [tasks, timeFilter, appliedStartDate, appliedEndDate]);
@@ -195,7 +218,7 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
   const totalTasksCount = completedCount + pendingCount;
 
   const productivityScore = useMemo(() => {
-    if (totalTasksCount === 0) return 100;
+    if (totalTasksCount === 0) return 0;
     return Math.round((completedCount / totalTasksCount) * 100);
   }, [completedCount, totalTasksCount]);
 
@@ -203,18 +226,27 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
     if (!habits || habits.length === 0) return 0;
 
     const completedHabitsCount = habits.filter((h) => {
-      if (h.completedToday) return true;
-      const matchingTask = filteredTasks.find(
-        (t) =>
-          (t.habitId && t.habitId === h.id && t.completed) ||
-          (t.title && t.title.trim().toLowerCase() === h.title.trim().toLowerCase() && t.completed)
-      );
-      return Boolean(matchingTask);
+      if (timeFilter === 'Today') {
+        if (h.completedToday) return true;
+        const matchingTask = filteredTasks.find(
+          (t) =>
+            (t.habitId && t.habitId === h.id && t.completed) ||
+            (t.title && t.title.trim().toLowerCase() === h.title.trim().toLowerCase() && t.completed)
+        );
+        return Boolean(matchingTask);
+      } else {
+        const matchingTask = filteredTasks.find(
+          (t) =>
+            (t.habitId && t.habitId === h.id && t.completed) ||
+            (t.title && t.title.trim().toLowerCase() === h.title.trim().toLowerCase() && t.completed)
+        );
+        return Boolean(matchingTask);
+      }
     }).length;
 
     if (completedHabitsCount === 0) return 0;
     return Math.round((completedHabitsCount / habits.length) * 100);
-  }, [habits, filteredTasks]);
+  }, [habits, filteredTasks, timeFilter]);
 
   // Calculate real daily progress data for current week or custom filter
   const weeklyProgressData = useMemo(() => {
@@ -386,7 +418,7 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
             ]}
           >
             <Text style={[styles.statVal, { color: theme.colors.primary }]}>
-              {reminders.length}
+              {filteredReminders.length}
             </Text>
             <Text style={[styles.statLabel, { color: theme.colors.textMuted }]}>
               Reminders
@@ -464,6 +496,43 @@ export const ReportsScreen = ({ tasks = [], habits = [], reminders = [], user })
 
         <View style={{ height: 20 }} />
       </ScrollView>
+
+      {/* Under Development Feature Modal for Custom Date */}
+      <Modal
+        visible={isUnderDevelopmentModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsUnderDevelopmentModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View
+            style={[
+              styles.modalCard,
+              { backgroundColor: theme.colors.card, borderColor: theme.colors.border, alignItems: 'center' },
+            ]}
+          >
+            <View style={[styles.iconCircle, { backgroundColor: 'rgba(99, 102, 241, 0.15)' }]}>
+              <Icon name="calendar" size={30} color={theme.colors.primary} />
+            </View>
+
+            <Text style={[styles.devModalTitle, { color: theme.colors.textPrimary }]}>
+              Custom Date Filter
+            </Text>
+
+            <Text style={[styles.devModalSub, { color: theme.colors.textSecondary }]}>
+              This feature is currently under development and will be available in a future update.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.devModalOkBtn, { backgroundColor: theme.colors.primary }]}
+              onPress={() => setIsUnderDevelopmentModalVisible(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.devModalOkBtnText}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Custom Date Range Filter Modal */}
       <Modal
@@ -789,6 +858,44 @@ const styles = StyleSheet.create({
   applyBtnText: {
     color: '#FFFFFF',
     fontSize: 14,
+    fontWeight: '700',
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  devModalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  devModalSub: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 19,
+    marginBottom: 20,
+    paddingHorizontal: 8,
+  },
+  devModalOkBtn: {
+    width: '100%',
+    height: 46,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#6366F1',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  devModalOkBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '700',
   },
 });

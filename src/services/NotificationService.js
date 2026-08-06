@@ -51,6 +51,27 @@ const parseReminderDateTime = (dateStr, timeStr) => {
   }
 };
 
+const getNextOccurrence = (dateStr, timeStr, repeat) => {
+  const targetDate = parseReminderDateTime(dateStr, timeStr);
+  const now = new Date();
+
+  if (targetDate.getTime() > now.getTime()) {
+    return targetDate;
+  }
+
+  const nextDate = new Date(targetDate.getTime());
+  while (nextDate.getTime() <= now.getTime()) {
+    if (repeat === 'Monthly') {
+      nextDate.setMonth(nextDate.getMonth() + 1);
+    } else if (repeat === 'Yearly') {
+      nextDate.setFullYear(nextDate.getFullYear() + 1);
+    } else {
+      break;
+    }
+  }
+  return nextDate;
+};
+
 export const NotificationService = {
   setupAndroidChannel: async () => {
     if (Platform.OS === 'android') {
@@ -99,47 +120,130 @@ export const NotificationService = {
       const targetDate = parseReminderDateTime(reminder.date, reminder.time);
       const now = new Date();
 
-      if (reminder.repeat === 'Daily') {
-        trigger = Notifications.SchedulableTriggerInputTypes?.DAILY
-          ? { type: Notifications.SchedulableTriggerInputTypes.DAILY, hour: targetDate.getHours(), minute: targetDate.getMinutes() }
-          : { hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
-      } else if (reminder.repeat === 'Weekly') {
-        trigger = Notifications.SchedulableTriggerInputTypes?.WEEKLY
-          ? { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: targetDate.getDay() + 1, hour: targetDate.getHours(), minute: targetDate.getMinutes() }
-          : { weekday: targetDate.getDay() + 1, hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
-      } else if (reminder.repeat === 'Monthly') {
-        trigger = Notifications.SchedulableTriggerInputTypes?.MONTHLY
-          ? { type: Notifications.SchedulableTriggerInputTypes.MONTHLY, day: targetDate.getDate(), hour: targetDate.getHours(), minute: targetDate.getMinutes() }
-          : { day: targetDate.getDate(), hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
-      } else if (reminder.repeat === 'Yearly') {
-        trigger = Notifications.SchedulableTriggerInputTypes?.YEARLY
-          ? { type: Notifications.SchedulableTriggerInputTypes.YEARLY, month: targetDate.getMonth() + 1, day: targetDate.getDate(), hour: targetDate.getHours(), minute: targetDate.getMinutes() }
-          : { month: targetDate.getMonth() + 1, day: targetDate.getDate(), hour: targetDate.getHours(), minute: targetDate.getMinutes(), repeats: true };
-      } else {
-        // Standard One-Time Notification at Exact Target Date & Time (Does not repeat)
-        const secondsFromNow = Math.max(1, Math.floor((targetDate.getTime() - now.getTime()) / 1000));
-        if (Notifications.SchedulableTriggerInputTypes?.TIME_INTERVAL) {
+      // Ensure Android channel is set up
+      await NotificationService.setupAndroidChannel();
+
+      const TriggerTypes = Notifications.SchedulableTriggerInputTypes;
+
+      if (Platform.OS === 'ios') {
+        // iOS Schedulable Triggers (Native Repeating Calendar Rules)
+        if (reminder.repeat === 'Daily') {
           trigger = {
-            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            type: TriggerTypes?.CALENDAR || 'calendar',
+            hour: targetDate.getHours(),
+            minute: targetDate.getMinutes(),
+            repeats: true,
+          };
+        } else if (reminder.repeat === 'Weekly') {
+          trigger = {
+            type: TriggerTypes?.CALENDAR || 'calendar',
+            weekday: targetDate.getDay() + 1, // Sunday = 1, Saturday = 7
+            hour: targetDate.getHours(),
+            minute: targetDate.getMinutes(),
+            repeats: true,
+          };
+        } else if (reminder.repeat === 'Monthly') {
+          trigger = {
+            type: TriggerTypes?.CALENDAR || 'calendar',
+            day: targetDate.getDate(),
+            hour: targetDate.getHours(),
+            minute: targetDate.getMinutes(),
+            repeats: true,
+          };
+        } else if (reminder.repeat === 'Yearly') {
+          trigger = {
+            type: TriggerTypes?.CALENDAR || 'calendar',
+            month: targetDate.getMonth() + 1,
+            day: targetDate.getDate(),
+            hour: targetDate.getHours(),
+            minute: targetDate.getMinutes(),
+            repeats: true,
+          };
+        } else {
+          // No Repeat
+          const secondsFromNow = Math.max(1, Math.floor((targetDate.getTime() - now.getTime()) / 1000));
+          trigger = {
+            type: TriggerTypes?.TIME_INTERVAL || 'timeInterval',
+            seconds: secondsFromNow,
+            repeats: false,
+          };
+        }
+      } else {
+        // Android Schedulable Triggers
+        if (reminder.repeat === 'Daily') {
+          trigger = {
+            type: TriggerTypes?.DAILY || 'daily',
+            hour: targetDate.getHours(),
+            minute: targetDate.getMinutes(),
+            repeats: true,
+          };
+        } else if (reminder.repeat === 'Weekly') {
+          trigger = {
+            type: TriggerTypes?.WEEKLY || 'weekly',
+            weekday: targetDate.getDay() + 1, // Sunday = 1, Saturday = 7
+            hour: targetDate.getHours(),
+            minute: targetDate.getMinutes(),
+            repeats: true,
+          };
+        } else if (reminder.repeat === 'Monthly') {
+          const nextOccur = getNextOccurrence(reminder.date, reminder.time, 'Monthly');
+          const secondsFromNow = Math.max(1, Math.floor((nextOccur.getTime() - now.getTime()) / 1000));
+          trigger = {
+            type: TriggerTypes?.TIME_INTERVAL || 'timeInterval',
+            seconds: secondsFromNow,
+            repeats: false,
+          };
+        } else if (reminder.repeat === 'Yearly') {
+          const nextOccur = getNextOccurrence(reminder.date, reminder.time, 'Yearly');
+          const secondsFromNow = Math.max(1, Math.floor((nextOccur.getTime() - now.getTime()) / 1000));
+          trigger = {
+            type: TriggerTypes?.TIME_INTERVAL || 'timeInterval',
             seconds: secondsFromNow,
             repeats: false,
           };
         } else {
-          trigger = { seconds: secondsFromNow };
+          // No Repeat
+          const secondsFromNow = Math.max(1, Math.floor((targetDate.getTime() - now.getTime()) / 1000));
+          trigger = {
+            type: TriggerTypes?.TIME_INTERVAL || 'timeInterval',
+            seconds: secondsFromNow,
+            repeats: false,
+          };
         }
       }
 
-      const notificationId = await Notifications.scheduleNotificationAsync({
-        content: {
-          title: `⏰ Daybook Reminder: ${reminder.title}`,
-          body: `${reminder.importance || reminder.notes || 'Time for your scheduled activity.'}`,
-          sound: true, // Native system notification chime
-          priority: Notifications.AndroidNotificationPriority.MAX,
-          channelId: 'daybook_alarms',
-          data: { reminderId: reminder.id },
-        },
-        trigger,
-      });
+      let notificationId = null;
+      try {
+        notificationId = await Notifications.scheduleNotificationAsync({
+          content: {
+            title: `⏰ Daybook Reminder: ${reminder.title}`,
+            body: `${reminder.importance || reminder.notes || 'Time for your scheduled activity.'}`,
+            sound: true,
+            priority: Notifications.AndroidNotificationPriority?.MAX || 'max',
+            channelId: 'daybook_alarms',
+            data: { reminderId: reminder.id },
+          },
+          trigger,
+        });
+      } catch (schedErr) {
+        // Fallback to simple time interval trigger if native repeating format fails
+        const secondsFromNow = Math.max(1, Math.floor((targetDate.getTime() - now.getTime()) / 1000));
+        notificationId = await Notifications.scheduleNotificationAsync({
+          content: {
+            title: `⏰ Daybook Reminder: ${reminder.title}`,
+            body: `${reminder.importance || reminder.notes || 'Time for your scheduled activity.'}`,
+            sound: true,
+            priority: Notifications.AndroidNotificationPriority?.MAX || 'max',
+            channelId: 'daybook_alarms',
+            data: { reminderId: reminder.id },
+          },
+          trigger: {
+            type: TriggerTypes?.TIME_INTERVAL || 'timeInterval',
+            seconds: secondsFromNow,
+            repeats: false,
+          },
+        });
+      }
 
       return notificationId;
     } catch (error) {

@@ -15,6 +15,8 @@ import { formatMultiLineText } from '../utils/textUtils';
 import { Icon } from './Icons';
 import { TimePickerInput } from './TimePickerInput';
 
+import { useTasks } from '../context/TaskContext';
+
 export const AddReminderModal = ({ visible, onClose, onSave, selectedDate = null, editingReminder = null }) => {
   const { theme } = useTheme();
 
@@ -30,6 +32,14 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate = null
   const repeatOptions = ['No Repeat', 'Daily', 'Weekly', 'Monthly', 'Yearly'];
   const priorityOptions = ['Normal', 'High', 'Critical'];
   const categoryOptions = ['Work', 'Health', 'Personal', 'Finance'];
+
+  let existingReminders = [];
+  try {
+    const taskCtx = useTasks();
+    if (taskCtx && taskCtx.reminders) {
+      existingReminders = taskCtx.reminders;
+    }
+  } catch (e) {}
 
   const parseDateTime = (dStr, tStr) => {
     try {
@@ -106,6 +116,21 @@ export const AddReminderModal = ({ visible, onClose, onSave, selectedDate = null
         setValidationError('Reminder time must be greater than current time when setting a reminder for today.');
         return;
       }
+    }
+
+    // 4. Duplicate date & time check
+    const isDuplicateTime = (existingReminders || []).some((r) => {
+      if (editingReminder && r.id === editingReminder.id) return false;
+      return (
+        r.date === activeDateStr &&
+        r.time &&
+        r.time.trim().toLowerCase() === time.trim().toLowerCase()
+      );
+    });
+
+    if (isDuplicateTime) {
+      setValidationError('A reminder is already scheduled for this time. You can edit the existing reminder time or select another time.');
+      return;
     }
 
     const cleanTitle = title.trim();

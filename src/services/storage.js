@@ -99,8 +99,8 @@ export const initialUser = {
   name: 'User',
   email: 'user@daybook.app',
   profilePic: null,
-  streak: 1,
-  productivityScore: 100,
+  streak: 0,
+  productivityScore: 0,
 };
 
 export const StorageService = {
