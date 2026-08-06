@@ -44,13 +44,7 @@
       "expo-sqlite",
       "expo-sharing",
       "expo-notifications",
-      "expo-local-authentication",
-      [
-        "@react-native-google-signin/google-signin",
-        {
-          "iosUrlScheme": "com.googleusercontent.apps.placeholder"
-        }
-      ]
+      "expo-local-authentication"
     ],
     "experiments": {
       "typedRoutes": true,
